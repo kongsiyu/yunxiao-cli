@@ -121,3 +121,10 @@ export async function listSprints(client, orgId, projectId, opts = {}) {
   });
   return res.data;
 }
+
+// Platform
+export async function getCurrentUser(client) {
+  const url = "/oapi/v1/platform/user";
+  const res = await client.get(url);
+  return res.data;
+}

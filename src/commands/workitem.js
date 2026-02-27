@@ -16,7 +16,7 @@ function statusColor(name) {
   return chalk.blue(name);
 }
 
-export function registerWorkitemCommands(program, client, orgId, defaultProjectId, withErrorHandling) {
+export function registerWorkitemCommands(program, client, orgId, defaultProjectId, withErrorHandling, currentUserId) {
   const wi = program.command("workitem").alias("wi").description("Manage work items");
 
   wi
@@ -115,7 +115,7 @@ export function registerWorkitemCommands(program, client, orgId, defaultProjectI
         console.error(chalk.red("Error: project ID required (--project or YUNXIAO_PROJECT_ID)"));
         process.exit(1);
       }
-      const assignedTo = opts.assignedTo || process.env.YUNXIAO_USER_ID;
+      const assignedTo = opts.assignedTo || process.env.YUNXIAO_USER_ID || currentUserId;
       if (!assignedTo) {
         console.error(chalk.red("Error: --assigned-to or YUNXIAO_USER_ID env var is required"));
         process.exit(1);
@@ -215,3 +215,4 @@ export function registerWorkitemCommands(program, client, orgId, defaultProjectI
       }
     }));
 }
+
