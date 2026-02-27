@@ -32,21 +32,37 @@ function withErrorHandling(fn) {
 const client = createClient();
 const { orgId, projectId } = getConfig();
 
-// 自动获取当前用户 ID（如果 YUNXIAO_USER_ID 未设置则从 API 获取）
+// 自动获取当前用户 ID
 let currentUserId = process.env.YUNXIAO_USER_ID || null;
+let currentUser = null;
 
 async function initCurrentUser() {
   if (!currentUserId) {
     try {
-      const user = await getCurrentUser(client);
-      currentUserId = user.id;
+      currentUser = await getCurrentUser(client);
+      currentUserId = currentUser.id;
     } catch (e) {
-      // 获取失败不影响其他功能，create 时再报错
+      // 获取失败不影响其他功能
     }
   }
 }
 
 await initCurrentUser();
+
+// whoami 命令
+program
+  .command("whoami")
+  .description("Show current authenticated user")
+  .action(withErrorHandling(async () => {
+    const user = currentUser || await getCurrentUser(client);
+    console.log(chalk.bold("\nCurrent user:\n"));
+    console.log("  " + chalk.gray("ID:      ") + user.id);
+    console.log("  " + chalk.gray("Name:    ") + (user.name || "-"));
+    console.log("  " + chalk.gray("Email:   ") + (user.email || "-"));
+    console.log("  " + chalk.gray("Org:     ") + (user.lastOrganization || "-"));
+    console.log("  " + chalk.gray("Created: ") + (user.createdAt ? user.createdAt.split("T")[0] : "-"));
+    console.log();
+  }));
 
 registerProjectCommands(program, client, orgId, withErrorHandling);
 registerWorkitemCommands(program, client, orgId, projectId, withErrorHandling, currentUserId);
