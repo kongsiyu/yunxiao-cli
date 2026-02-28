@@ -6,6 +6,7 @@ import { getCurrentUser, loadSavedConfig, createClientWithPat } from "./api.js";
 import { registerProjectCommands } from "./commands/project.js";
 import { registerWorkitemCommands } from "./commands/workitem.js";
 import { registerAuthCommands } from "./commands/auth.js";
+import { registerSprintCommands } from "./commands/sprint.js";
 
 const program = new Command();
 
@@ -82,6 +83,7 @@ program
 if (client && orgId) {
   registerProjectCommands(program, client, orgId, withErrorHandling);
   registerWorkitemCommands(program, client, orgId, projectId, withErrorHandling, currentUserId);
+  registerSprintCommands(program, client, orgId, projectId, withErrorHandling);
 }
 
 program.parse();
