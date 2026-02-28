@@ -96,4 +96,39 @@ yunxiao wi types --category Bug
 
 ## 版本历史
 
+- **v0.1.1** - 认证命令：auth login/status/logout
 - **v0.1.0** - 基础功能：项目管理 + 工作项 CRUD + 评论
+
+---
+
+## Roadmap
+
+### T0: Infrastructure
+
+| # | Task | Status |
+|---|------|--------|
+| #3 | Setup GitHub Actions CI | 🔴 Open |
+
+### T1: Core Features (Week 1-2)
+
+| # | Task | Status |
+|---|------|--------|
+| #4 | Enhance workitem view with full details | 🔴 Open |
+| #5 | Support flexible workitem ID resolution | 🔴 Open |
+| #6 | Add JSON input support for wi create/update | 🔴 Open |
+| #7 | Add sprint/iteration management commands | 🔴 Open |
+| #8 | Add user search and list commands | 🔴 Open |
+| #9 | Add status list command | 🔴 Open |
+
+### T2: Extended Features (Week 3-4)
+
+| # | Task | Status |
+|---|------|--------|
+| #10 | Add wi delete and link commands | 🔴 Open |
+| #11 | Add comment edit/delete commands | 🔴 Open |
+| #12 | Add attachment management commands | 🔴 Open |
+| #13 | Advanced search and saved queries | 🔴 Open |
+
+---
+
+> 💡 See all issues: https://github.com/kongsiyu/yunxiao-cli/issues
