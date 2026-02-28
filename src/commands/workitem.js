@@ -184,8 +184,59 @@ export function registerWorkitemCommands(program, client, orgId, defaultProjectI
       for (const c of comments) {
         console.log(chalk.cyan(c.creator?.name || "unknown") + " " + chalk.gray(formatDate(c.gmtCreate)));
         console.log("  " + (c.content || c.commentText || "(empty)"));
+        if (c.id) console.log("  " + chalk.gray("ID: " + c.id));
         console.log();
       }
+    }));
+
+  wi
+    .command("comment-edit <commentId>")
+    .description("Edit a comment on a work item")
+    .option("-p, --project <id>", "Project ID (needed for serial number)")
+    .option("-w, --workitem <id>", "Work item ID (required)")
+    .option("-c, --content <text>", "New comment content")
+    .action(withErrorHandling(async (commentId, opts) => {
+      const spaceId = opts.project || defaultProjectId;
+      if (!opts.content) {
+        console.error(chalk.red("Error: --content is required"));
+        process.exit(1);
+      }
+      if (!opts.workitem) {
+        console.error(chalk.red("Error: --workitem <id> is required"));
+        process.exit(1);
+      }
+      const resolvedWiId = await resolveWorkitemId(client, orgId, spaceId, opts.workitem);
+      await updateComment(client, orgId, resolvedWiId, commentId, opts.content);
+      console.log(chalk.green("\n✓ Comment " + commentId + " updated!\n"));
+    }));
+
+  wi
+    .command("comment-delete <commentId>")
+    .description("Delete a comment from a work item")
+    .option("-p, --project <id>", "Project ID (needed for serial number)")
+    .option("-w, --workitem <id>", "Work item ID (required)")
+    .option("-f, --force", "Skip confirmation")
+    .action(withErrorHandling(async (commentId, opts) => {
+      const spaceId = opts.project || defaultProjectId;
+      if (!opts.workitem) {
+        console.error(chalk.red("Error: --workitem <id> is required"));
+        process.exit(1);
+      }
+      const resolvedWiId = await resolveWorkitemId(client, orgId, spaceId, opts.workitem);
+      
+      if (!opts.force) {
+        const readline = await import("readline");
+        const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
+        const answer = await new Promise(resolve => rl.question(chalk.yellow("Delete comment " + commentId + "? [y/N] "), resolve));
+        rl.close();
+        if (answer.toLowerCase() !== "y") {
+          console.log(chalk.gray("Cancelled"));
+          return;
+        }
+      }
+      
+      await deleteComment(client, orgId, resolvedWiId, commentId);
+      console.log(chalk.green("\n✓ Comment " + commentId + " deleted!\n"));
     }));
 
   wi
