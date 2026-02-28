@@ -113,7 +113,7 @@ yunxiao wi types --category Bug
 
 | Issue | 任务 | 状态 |
 |-------|------|------|
-| [#4](https://github.com/kongsiyu/yunxiao-cli/issues/4) | 完善工作项详情显示 | 🔴 待开始 |
+| [#4](https://github.com/kongsiyu/yunxiao-cli/issues/4) | 完善工作项详情显示 | ✅ 完成 |
 | [#5](https://github.com/kongsiyu/yunxiao-cli/issues/5) | 支持灵活的工作项 ID 解析 | ✅ 完成 |
 | [#6](https://github.com/kongsiyu/yunxiao-cli/issues/6) | 添加 JSON 格式输入支持 | 🔴 待开始 |
 | [#7](https://github.com/kongsiyu/yunxiao-cli/issues/7) | 迭代/ Sprint 管理命令 | 🔴 待开始 |
