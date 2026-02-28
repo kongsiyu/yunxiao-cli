@@ -2,7 +2,7 @@
 // src/index.js - yunxiao CLI entry point
 import { Command } from "commander";
 import chalk from "chalk";
-import { createClient, getConfig, getCurrentUser, loadSavedConfig, createClientWithPat } from "./api.js";
+import { getCurrentUser, loadSavedConfig, createClientWithPat } from "./api.js";
 import { registerProjectCommands } from "./commands/project.js";
 import { registerWorkitemCommands } from "./commands/workitem.js";
 import { registerAuthCommands } from "./commands/auth.js";
