@@ -107,7 +107,7 @@ yunxiao wi types --category Bug
 
 | Issue | 任务 | 状态 |
 |-------|------|------|
-| [#3](https://github.com/kongsiyu/yunxiao-cli/issues/3) | 配置 GitHub Actions CI | 🔴 待开始 |
+| [#3](https://github.com/kongsiyu/yunxiao-cli/issues/3) | 配置 GitHub Actions CI | ✅ 完成 |
 
 ### T1: 核心功能（第 1-2 周）
 
