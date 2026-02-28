@@ -60,10 +60,27 @@ export function registerWorkitemCommands(program, client, orgId, defaultProjectI
     .command("view <id>")
     .description("View work item details by ID or serial number (e.g. GJBL-1)")
     .option("-p, --project <id>", "Project ID (needed for serial number lookup)")
+    .option("-c, --category <type>", "Category: Req, Task, Bug", "Req")
     .action(withErrorHandling(async (id, opts) => {
-      const spaceId = opts.project || defaultProjectId;
-      const resolvedId = await resolveWorkitemId(client, orgId, spaceId, id);
-      const item = await getWorkitem(client, orgId, resolvedId);
+      let item;
+      if (/^[A-Z]+-\d+$/i.test(id)) {
+        const spaceId = opts.project || defaultProjectId;
+        if (!spaceId) {
+          console.error(chalk.red("Error: project ID required for serial number lookup"));
+          process.exit(1);
+        }
+        // Search in specified category only
+        const items = await searchWorkitems(client, orgId, spaceId, { category: opts.category, perPage: 100 });
+        item = (items || []).find(i => i.serialNumber === id.toUpperCase());
+        if (!item) {
+          console.error(chalk.red("Work item " + id + " not found in category " + opts.category));
+          console.error(chalk.gray("Try: yunxiao wi view " + id + " -c <category>"));
+          process.exit(1);
+        }
+        item = await getWorkitem(client, orgId, item.id);
+      } else {
+        item = await getWorkitem(client, orgId, id);
+      }
       console.log(chalk.bold("\nWork Item Details:\n"));
       console.log("  " + chalk.gray("Serial:     ") + (item.serialNumber || "-"));
       console.log("  " + chalk.gray("ID:         ") + item.id);
