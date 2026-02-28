@@ -101,34 +101,34 @@ yunxiao wi types --category Bug
 
 ---
 
-## Roadmap
+## 开发计划
 
-### T0: Infrastructure
+### T0: 基础设施
 
-| # | Task | Status |
-|---|------|--------|
-| #3 | Setup GitHub Actions CI | 🔴 Open |
+| Issue | 任务 | 状态 |
+|-------|------|------|
+| [#3](https://github.com/kongsiyu/yunxiao-cli/issues/3) | 配置 GitHub Actions CI | 🔴 待开始 |
 
-### T1: Core Features (Week 1-2)
+### T1: 核心功能（第 1-2 周）
 
-| # | Task | Status |
-|---|------|--------|
-| #4 | Enhance workitem view with full details | 🔴 Open |
-| #5 | Support flexible workitem ID resolution | 🔴 Open |
-| #6 | Add JSON input support for wi create/update | 🔴 Open |
-| #7 | Add sprint/iteration management commands | 🔴 Open |
-| #8 | Add user search and list commands | 🔴 Open |
-| #9 | Add status list command | 🔴 Open |
+| Issue | 任务 | 状态 |
+|-------|------|------|
+| [#4](https://github.com/kongsiyu/yunxiao-cli/issues/4) | 完善工作项详情显示 | 🔴 待开始 |
+| [#5](https://github.com/kongsiyu/yunxiao-cli/issues/5) | 支持灵活的工作项 ID 解析 | 🔴 待开始 |
+| [#6](https://github.com/kongsiyu/yunxiao-cli/issues/6) | 添加 JSON 格式输入支持 | 🔴 待开始 |
+| [#7](https://github.com/kongsiyu/yunxiao-cli/issues/7) | 迭代/ Sprint 管理命令 | 🔴 待开始 |
+| [#8](https://github.com/kongsiyu/yunxiao-cli/issues/8) | 用户搜索和列表命令 | 🔴 待开始 |
+| [#9](https://github.com/kongsiyu/yunxiao-cli/issues/9) | 状态列表命令 | 🔴 待开始 |
 
-### T2: Extended Features (Week 3-4)
+### T2: 扩展功能（第 3-4 周）
 
-| # | Task | Status |
-|---|------|--------|
-| #10 | Add wi delete and link commands | 🔴 Open |
-| #11 | Add comment edit/delete commands | 🔴 Open |
-| #12 | Add attachment management commands | 🔴 Open |
-| #13 | Advanced search and saved queries | 🔴 Open |
+| Issue | 任务 | 状态 |
+|-------|------|------|
+| [#10](https://github.com/kongsiyu/yunxiao-cli/issues/10) | 工作项删除和关联命令 | 🔴 待开始 |
+| [#11](https://github.com/kongsiyu/yunxiao-cli/issues/11) | 评论编辑/删除命令 | 🔴 待开始 |
+| [#12](https://github.com/kongsiyu/yunxiao-cli/issues/12) | 附件管理命令 | 🔴 待开始 |
+| [#13](https://github.com/kongsiyu/yunxiao-cli/issues/13) | 高级搜索和保存查询 | 🔴 待开始 |
 
 ---
 
-> 💡 See all issues: https://github.com/kongsiyu/yunxiao-cli/issues
+> 💡 查看所有 Issue：https://github.com/kongsiyu/yunxiao-cli/issues
