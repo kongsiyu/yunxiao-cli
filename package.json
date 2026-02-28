@@ -1,13 +1,14 @@
 ﻿{
   "name": "yunxiao-cli",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "CLI for Aliyun Yunxiao DevOps platform",
   "type": "module",
   "bin": {
     "yunxiao": "./src/index.js"
   },
   "scripts": {
-    "test": "node src/index.js"
+    "lint": "node src/index.js --version",
+    "test": "node src/index.js --help"
   },
   "keywords": ["yunxiao", "aliyun", "devops", "cli"],
   "license": "MIT",
