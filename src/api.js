@@ -166,3 +166,37 @@ export async function getOrganizations(client) {
   const res = await client.get(url);
   return res.data;
 }
+
+// ID Resolution
+// Supports: GJBL-1 (projectKey-number), UUID, or plain number
+export async function resolveWorkitemId(client, orgId, spaceId, identifier) {
+  if (!identifier) return null;
+  
+  // Check if it's a short format like "GJBL-1"
+  const shortMatch = identifier.match(/^([A-Z]+)-(\d+)$/);
+  if (shortMatch) {
+    const [, projectKey, number] = shortMatch;
+    // Search for workitem with this number
+    const result = await searchWorkitems(client, orgId, spaceId, {
+      subject: number,
+      page: 1,
+      perPage: 1
+    });
+    if (result.data && result.data.length > 0) {
+      const wi = result.data[0];
+      // Verify it matches the project key
+      if (wi.projectKey === projectKey || wi.id) {
+        return wi.id;
+      }
+    }
+    throw new Error(`Workitem ${identifier} not found`);
+  }
+  
+  // If it's a plain number, treat as internal ID
+  if (/^\d+$/.test(identifier)) {
+    return identifier;
+  }
+  
+  // Otherwise assume it's already a UUID
+  return identifier;
+}

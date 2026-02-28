@@ -1,6 +1,6 @@
 ﻿// src/commands/workitem.js
 import chalk from "chalk";
-import { searchWorkitems, getWorkitem, createWorkitem, updateWorkitem, addComment, listComments, getWorkitemTypes } from "../api.js";
+import { searchWorkitems, getWorkitem, createWorkitem, updateWorkitem, addComment, listComments, getWorkitemTypes, resolveWorkitemId } from "../api.js";
 
 function formatDate(ts) {
   if (!ts) return "-";
@@ -61,26 +61,9 @@ export function registerWorkitemCommands(program, client, orgId, defaultProjectI
     .description("View work item details by ID or serial number (e.g. GJBL-1)")
     .option("-p, --project <id>", "Project ID (needed for serial number lookup)")
     .action(withErrorHandling(async (id, opts) => {
-      let item;
-      if (/^[A-Z]+-\d+$/i.test(id)) {
-        const spaceId = opts.project || defaultProjectId;
-        if (!spaceId) {
-          console.error(chalk.red("Error: project ID required for serial number lookup"));
-          process.exit(1);
-        }
-        for (const cat of ["Req", "Task", "Bug"]) {
-          const items = await searchWorkitems(client, orgId, spaceId, { category: cat, perPage: 50 });
-          const found = (items || []).find(i => i.serialNumber === id.toUpperCase());
-          if (found) { item = found; break; }
-        }
-        if (!item) {
-          console.error(chalk.red("Work item " + id + " not found"));
-          process.exit(1);
-        }
-        item = await getWorkitem(client, orgId, item.id);
-      } else {
-        item = await getWorkitem(client, orgId, id);
-      }
+      const spaceId = opts.project || defaultProjectId;
+      const resolvedId = await resolveWorkitemId(client, orgId, spaceId, id);
+      const item = await getWorkitem(client, orgId, resolvedId);
       console.log(chalk.bold("\nWork Item Details:\n"));
       console.log("  " + chalk.gray("Serial:  ") + (item.serialNumber || "-"));
       console.log("  " + chalk.gray("ID:      ") + item.id);
@@ -158,13 +141,17 @@ export function registerWorkitemCommands(program, client, orgId, defaultProjectI
 
   wi
     .command("update <id>")
-    .description("Update a work item by ID")
+    .description("Update a work item by ID or serial number")
+    .option("-p, --project <id>", "Project ID (needed for serial number)")
     .option("-t, --title <title>", "New title")
     .option("-d, --description <desc>", "New description")
     .option("-s, --status <statusId>", "New status ID")
     .option("--assigned-to <userId>", "New assignee user ID")
     .option("--json <json>", "JSON string with additional fields (merged into request body)")
     .action(withErrorHandling(async (id, opts) => {
+      const spaceId = opts.project || defaultProjectId;
+      const resolvedId = await resolveWorkitemId(client, orgId, spaceId, id);
+      
       let jsonFields = {};
       if (opts.json) {
         try {
@@ -183,25 +170,31 @@ export function registerWorkitemCommands(program, client, orgId, defaultProjectI
         console.error(chalk.yellow("No fields to update. Use --title, --description, --status, --assigned-to, or --json"));
         process.exit(1);
       }
-      await updateWorkitem(client, orgId, id, fields);
+      await updateWorkitem(client, orgId, resolvedId, fields);
       console.log(chalk.green("\n✓ Work item " + id + " updated!\n"));
     }));
 
   wi
     .command("comment <id> <content>")
-    .description("Add a comment to a work item")
-    .action(withErrorHandling(async (id, content) => {
-      const result = await addComment(client, orgId, id, content);
+    .description("Add a comment to a work item by ID or serial number")
+    .option("-p, --project <id>", "Project ID (needed for serial number)")
+    .action(withErrorHandling(async (id, content, opts) => {
+      const spaceId = opts.project || defaultProjectId;
+      const resolvedId = await resolveWorkitemId(client, orgId, spaceId, id);
+      const result = await addComment(client, orgId, resolvedId, content);
       console.log(chalk.green("\n✓ Comment added! (id: " + (result.id || result) + ")\n"));
     }));
 
   wi
     .command("comments <id>")
     .description("List comments on a work item")
+    .option("-p, --project <id>", "Project ID (needed for serial number)")
     .option("--page <n>", "Page number", "1")
     .option("--limit <n>", "Per page", "20")
     .action(withErrorHandling(async (id, opts) => {
-      const comments = await listComments(client, orgId, id, {
+      const spaceId = opts.project || defaultProjectId;
+      const resolvedId = await resolveWorkitemId(client, orgId, spaceId, id);
+      const comments = await listComments(client, orgId, resolvedId, {
         page: parseInt(opts.page),
         perPage: parseInt(opts.limit),
       });
