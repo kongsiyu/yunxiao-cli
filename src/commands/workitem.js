@@ -109,6 +109,7 @@ export function registerWorkitemCommands(program, client, orgId, defaultProjectI
     .option("-d, --description <desc>", "Description")
     .option("--type-id <id>", "Work item type ID (auto-detected if not set)")
     .option("--assigned-to <userId>", "Assignee user ID (or set YUNXIAO_USER_ID)")
+    .option("--json <json>", "JSON string with additional fields (merged into request body)")
     .action(withErrorHandling(async (opts) => {
       const spaceId = opts.project || defaultProjectId;
       if (!spaceId) {
@@ -131,11 +132,21 @@ export function registerWorkitemCommands(program, client, orgId, defaultProjectI
         typeId = defaultType.id;
         console.log(chalk.gray("Using type: " + defaultType.name + " (" + typeId + ")"));
       }
+      let jsonFields = {};
+      if (opts.json) {
+        try {
+          jsonFields = JSON.parse(opts.json);
+        } catch {
+          console.error(chalk.red("Error: --json value is not valid JSON"));
+          process.exit(1);
+        }
+      }
       const data = {
         spaceId,
         subject: opts.title,
         workitemTypeId: typeId,
         assignedTo,
+        ...jsonFields,
       };
       if (opts.description) data.description = opts.description;
       const created = await createWorkitem(client, orgId, data);
@@ -152,14 +163,24 @@ export function registerWorkitemCommands(program, client, orgId, defaultProjectI
     .option("-d, --description <desc>", "New description")
     .option("-s, --status <statusId>", "New status ID")
     .option("--assigned-to <userId>", "New assignee user ID")
+    .option("--json <json>", "JSON string with additional fields (merged into request body)")
     .action(withErrorHandling(async (id, opts) => {
-      const fields = {};
+      let jsonFields = {};
+      if (opts.json) {
+        try {
+          jsonFields = JSON.parse(opts.json);
+        } catch {
+          console.error(chalk.red("Error: --json value is not valid JSON"));
+          process.exit(1);
+        }
+      }
+      const fields = { ...jsonFields };
       if (opts.title) fields.subject = opts.title;
       if (opts.description) fields.description = opts.description;
       if (opts.status) fields.status = opts.status;
       if (opts.assignedTo) fields.assignedTo = opts.assignedTo;
       if (Object.keys(fields).length === 0) {
-        console.error(chalk.yellow("No fields to update. Use --title, --description, --status, or --assigned-to"));
+        console.error(chalk.yellow("No fields to update. Use --title, --description, --status, --assigned-to, or --json"));
         process.exit(1);
       }
       await updateWorkitem(client, orgId, id, fields);
