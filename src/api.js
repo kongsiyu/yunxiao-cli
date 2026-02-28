@@ -145,6 +145,13 @@ export async function getWorkitemTypes(client, orgId, projectId, category = "Req
   return res.data;
 }
 
+// Get workitem statuses for a project
+export async function getWorkitemStatuses(client, orgId, projectId, category = "Req") {
+  const url = `/oapi/v1/projex/organizations/${orgId}/projects/${projectId}/workitemStatuses`;
+  const res = await client.get(url, { params: { category } });
+  return res.data;
+}
+
 // Sprints
 export async function listSprints(client, orgId, projectId, opts = {}) {
   const url = `/oapi/v1/projex/organizations/${orgId}/sprints`;
