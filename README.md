@@ -96,4 +96,39 @@ yunxiao wi types --category Bug
 
 ## 版本历史
 
+- **v0.1.1** - 认证命令：auth login/status/logout
 - **v0.1.0** - 基础功能：项目管理 + 工作项 CRUD + 评论
+
+---
+
+## 开发计划
+
+### T0: 基础设施
+
+| Issue | 任务 | 状态 |
+|-------|------|------|
+| [#3](https://github.com/kongsiyu/yunxiao-cli/issues/3) | 配置 GitHub Actions CI | 🔴 待开始 |
+
+### T1: 核心功能（第 1-2 周）
+
+| Issue | 任务 | 状态 |
+|-------|------|------|
+| [#4](https://github.com/kongsiyu/yunxiao-cli/issues/4) | 完善工作项详情显示 | 🔴 待开始 |
+| [#5](https://github.com/kongsiyu/yunxiao-cli/issues/5) | 支持灵活的工作项 ID 解析 | 🔴 待开始 |
+| [#6](https://github.com/kongsiyu/yunxiao-cli/issues/6) | 添加 JSON 格式输入支持 | 🔴 待开始 |
+| [#7](https://github.com/kongsiyu/yunxiao-cli/issues/7) | 迭代/ Sprint 管理命令 | 🔴 待开始 |
+| [#8](https://github.com/kongsiyu/yunxiao-cli/issues/8) | 用户搜索和列表命令 | 🔴 待开始 |
+| [#9](https://github.com/kongsiyu/yunxiao-cli/issues/9) | 状态列表命令 | 🔴 待开始 |
+
+### T2: 扩展功能（第 3-4 周）
+
+| Issue | 任务 | 状态 |
+|-------|------|------|
+| [#10](https://github.com/kongsiyu/yunxiao-cli/issues/10) | 工作项删除和关联命令 | 🔴 待开始 |
+| [#11](https://github.com/kongsiyu/yunxiao-cli/issues/11) | 评论编辑/删除命令 | 🔴 待开始 |
+| [#12](https://github.com/kongsiyu/yunxiao-cli/issues/12) | 附件管理命令 | 🔴 待开始 |
+| [#13](https://github.com/kongsiyu/yunxiao-cli/issues/13) | 高级搜索和保存查询 | 🔴 待开始 |
+
+---
+
+> 💡 查看所有 Issue：https://github.com/kongsiyu/yunxiao-cli/issues

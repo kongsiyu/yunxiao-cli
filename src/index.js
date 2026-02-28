@@ -2,9 +2,10 @@
 // src/index.js - yunxiao CLI entry point
 import { Command } from "commander";
 import chalk from "chalk";
-import { createClient, getConfig, getCurrentUser } from "./api.js";
+import { getCurrentUser, loadSavedConfig, createClientWithPat } from "./api.js";
 import { registerProjectCommands } from "./commands/project.js";
 import { registerWorkitemCommands } from "./commands/workitem.js";
+import { registerAuthCommands } from "./commands/auth.js";
 
 const program = new Command();
 
@@ -29,31 +30,45 @@ function withErrorHandling(fn) {
   };
 }
 
-const client = createClient();
-const { orgId, projectId } = getConfig();
+// Register auth commands first (they don't require a client)
+registerAuthCommands(program);
 
-// 自动获取当前用户 ID
-let currentUserId = process.env.YUNXIAO_USER_ID || null;
+// Try to load config from file or environment
+const savedConfig = loadSavedConfig();
+const pat = process.env.YUNXIAO_PAT || (savedConfig?.pat);
+
+let client = null;
+let currentUserId = process.env.YUNXIAO_USER_ID || (savedConfig?.userId);
 let currentUser = null;
+let orgId = process.env.YUNXIAO_ORG_ID || (savedConfig?.orgId);
+let projectId = process.env.YUNXIAO_PROJECT_ID || (savedConfig?.projectId);
 
-async function initCurrentUser() {
-  if (!currentUserId) {
-    try {
-      currentUser = await getCurrentUser(client);
-      currentUserId = currentUser.id;
-    } catch (e) {
-      // 获取失败不影响其他功能
+// Create client if PAT is available
+if (pat) {
+  client = createClientWithPat(pat);
+  
+  async function initCurrentUser() {
+    if (!currentUserId && client) {
+      try {
+        currentUser = await getCurrentUser(client);
+        currentUserId = currentUser.id;
+      } catch (e) {
+        // 获取失败不影响其他功能
+      }
     }
   }
+  await initCurrentUser();
 }
-
-await initCurrentUser();
 
 // whoami 命令
 program
   .command("whoami")
   .description("Show current authenticated user")
   .action(withErrorHandling(async () => {
+    if (!client) {
+      console.log(chalk.yellow("Not authenticated. Run: yunxiao auth login"));
+      return;
+    }
     const user = currentUser || await getCurrentUser(client);
     console.log(chalk.bold("\nCurrent user:\n"));
     console.log("  " + chalk.gray("ID:      ") + user.id);
@@ -64,7 +79,9 @@ program
     console.log();
   }));
 
-registerProjectCommands(program, client, orgId, withErrorHandling);
-registerWorkitemCommands(program, client, orgId, projectId, withErrorHandling, currentUserId);
+if (client && orgId) {
+  registerProjectCommands(program, client, orgId, withErrorHandling);
+  registerWorkitemCommands(program, client, orgId, projectId, withErrorHandling, currentUserId);
+}
 
 program.parse();

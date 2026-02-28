@@ -1,14 +1,37 @@
 ﻿// src/api.js - Yunxiao API client
 import axios from "axios";
+import { readFileSync, writeFileSync, mkdirSync, existsSync } from "fs";
+import { homedir } from "os";
+import { join } from "path";
 
 const API_BASE = "https://openapi-rdc.aliyuncs.com";
 
-export function createClient() {
-  const pat = process.env.YUNXIAO_PAT;
-  if (!pat) {
-    console.error("Error: YUNXIAO_PAT environment variable is not set");
-    process.exit(1);
+const CONFIG_DIR = join(homedir(), ".yunxiao");
+const CONFIG_FILE = join(CONFIG_DIR, "config.json");
+
+// Config file helpers
+export function loadSavedConfig() {
+  try {
+    if (!existsSync(CONFIG_FILE)) return null;
+    const data = JSON.parse(readFileSync(CONFIG_FILE, "utf8"));
+    return data && data.pat ? data : null;
+  } catch {
+    return null;
   }
+}
+
+export function saveConfig(config) {
+  mkdirSync(CONFIG_DIR, { recursive: true });
+  writeFileSync(CONFIG_FILE, JSON.stringify(config, null, 2), "utf8");
+}
+
+export function clearConfig() {
+  if (existsSync(CONFIG_FILE)) {
+    writeFileSync(CONFIG_FILE, "{}", "utf8");
+  }
+}
+
+export function createClientWithPat(pat) {
   return axios.create({
     baseURL: API_BASE,
     headers: {
@@ -16,6 +39,15 @@ export function createClient() {
       "Content-Type": "application/json",
     },
   });
+}
+
+export function createClient() {
+  const pat = process.env.YUNXIAO_PAT;
+  if (!pat) {
+    console.error("Error: YUNXIAO_PAT environment variable is not set");
+    process.exit(1);
+  }
+  return createClientWithPat(pat);
 }
 
 export function getConfig() {
@@ -125,6 +157,12 @@ export async function listSprints(client, orgId, projectId, opts = {}) {
 // Platform
 export async function getCurrentUser(client) {
   const url = "/oapi/v1/platform/user";
+  const res = await client.get(url);
+  return res.data;
+}
+
+export async function getOrganizations(client) {
+  const url = "/oapi/v1/platform/organizations";
   const res = await client.get(url);
   return res.data;
 }
