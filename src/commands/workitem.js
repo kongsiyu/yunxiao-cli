@@ -1,4 +1,4 @@
-﻿// src/commands/workitem.js
+// src/commands/workitem.js
 import chalk from "chalk";
 import { searchWorkitems, getWorkitem, createWorkitem, updateWorkitem, addComment, listComments, getWorkitemTypes, resolveWorkitemId } from "../api.js";
 
@@ -87,37 +87,6 @@ export function registerWorkitemCommands(program, client, orgId, defaultProjectI
       const spaceId = opts.project || defaultProjectId;
       const resolvedId = await resolveWorkitemId(client, orgId, spaceId, id);
       const item = await getWorkitem(client, orgId, resolvedId);
-      console.log(chalk.bold("\nWork Item Details:\n"));
-      console.log("  " + chalk.gray("Serial:  ") + (item.serialNumber || "-"));
-      console.log("  " + chalk.gray("ID:      ") + item.id);
-      console.log("  " + chalk.gray("Subject: ") + item.subject);
-      console.log("  " + chalk.gray("Status:  ") + statusColor(item.status?.displayName || item.status?.name));
-      console.log("  " + chalk.gray("Type:    ") + (item.workitemType?.name || "-"));
-      console.log("  " + chalk.gray("Project: ") + (item.space?.name || "-"));
-      console.log("  " + chalk.gray("Assignee:") + " " + (item.assignedTo?.name || "-"));
-      console.log("  " + chalk.gray("Creator: ") + (item.creator?.name || "-"));
-      console.log("  " + chalk.gray("Created: ") + formatDate(item.gmtCreate));
-      console.log("  " + chalk.gray("Updated: ") + formatDate(item.gmtModified));
-      let item;
-      if (/^[A-Z]+-\d+$/i.test(id)) {
-        const spaceId = opts.project || defaultProjectId;
-        if (!spaceId) {
-          console.error(chalk.red("Error: project ID required for serial number lookup"));
-          process.exit(1);
-        }
-        for (const cat of ["Req", "Task", "Bug"]) {
-          const items = await searchWorkitems(client, orgId, spaceId, { category: cat, perPage: 50 });
-          const found = (items || []).find(i => i.serialNumber === id.toUpperCase());
-          if (found) { item = found; break; }
-        }
-        if (!item) {
-          console.error(chalk.red("Work item " + id + " not found"));
-          process.exit(1);
-        }
-        item = await getWorkitem(client, orgId, item.id);
-      } else {
-        item = await getWorkitem(client, orgId, id);
-      }
       const sep = chalk.gray("─".repeat(60));
 
       // Header: serial + title
