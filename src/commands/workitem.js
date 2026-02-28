@@ -7,6 +7,11 @@ function formatDate(ts) {
   return new Date(ts).toISOString().split("T")[0];
 }
 
+function formatDateTime(ts) {
+  if (!ts) return "-";
+  return new Date(ts).toISOString().replace("T", " ").slice(0, 16) + " UTC";
+}
+
 function statusColor(name) {
   if (!name) return chalk.gray("-");
   const n = (name || "").toLowerCase();
@@ -14,6 +19,24 @@ function statusColor(name) {
   if (n.includes("progress") || n.includes("design") || n.includes("review")) return chalk.yellow(name);
   if (n.includes("cancel") || n.includes("reject")) return chalk.gray(name);
   return chalk.blue(name);
+}
+
+function priorityLabel(p) {
+  if (p === null || p === undefined || p === "" ) return chalk.gray("-");
+  const n = typeof p === "number" ? p : parseInt(p, 10);
+  if (!isNaN(n)) {
+    if (n === 0) return chalk.gray("None");
+    if (n === 1) return chalk.red("Urgent");
+    if (n === 2) return chalk.yellow("High");
+    if (n === 3) return chalk.blue("Medium");
+    if (n === 4) return chalk.gray("Low");
+  }
+  const s = String(p).toLowerCase();
+  if (s.includes("urgent") || s.includes("critical")) return chalk.red(String(p));
+  if (s.includes("high")) return chalk.yellow(String(p));
+  if (s.includes("medium") || s.includes("normal")) return chalk.blue(String(p));
+  if (s.includes("low")) return chalk.gray(String(p));
+  return chalk.white(String(p));
 }
 
 export function registerWorkitemCommands(program, client, orgId, defaultProjectId, withErrorHandling, currentUserId) {
@@ -81,23 +104,80 @@ export function registerWorkitemCommands(program, client, orgId, defaultProjectI
       } else {
         item = await getWorkitem(client, orgId, id);
       }
-      console.log(chalk.bold("\nWork Item Details:\n"));
-      console.log("  " + chalk.gray("Serial:  ") + (item.serialNumber || "-"));
-      console.log("  " + chalk.gray("ID:      ") + item.id);
-      console.log("  " + chalk.gray("Subject: ") + item.subject);
-      console.log("  " + chalk.gray("Status:  ") + statusColor(item.status?.displayName || item.status?.name));
-      console.log("  " + chalk.gray("Type:    ") + (item.workitemType?.name || "-"));
-      console.log("  " + chalk.gray("Project: ") + (item.space?.name || "-"));
-      console.log("  " + chalk.gray("Assignee:") + " " + (item.assignedTo?.name || "-"));
-      console.log("  " + chalk.gray("Creator: ") + (item.creator?.name || "-"));
-      console.log("  " + chalk.gray("Created: ") + formatDate(item.gmtCreate));
-      console.log("  " + chalk.gray("Updated: ") + formatDate(item.gmtModified));
-      if (item.description) {
-        console.log("\n" + chalk.gray("Description:"));
-        const desc = item.description.slice(0, 500);
-        console.log(desc);
-        if (item.description.length > 500) console.log(chalk.gray("... (truncated)"));
+      const sep = chalk.gray("─".repeat(60));
+
+      // Header: serial + title
+      const serial = item.serialNumber || item.id.slice(0, 8);
+      console.log("\n" + chalk.bold(chalk.cyan(serial) + "  " + item.subject));
+
+      // Status line
+      const statusStr = statusColor(item.status?.displayName || item.status?.name || "?");
+      const creatorName = item.creator?.name || "?";
+      console.log(statusStr + chalk.gray("  •  ") + chalk.white(creatorName) + chalk.gray("  •  created ") + formatDateTime(item.gmtCreate) + chalk.gray("  •  updated ") + formatDateTime(item.gmtModified));
+      console.log();
+
+      // Metadata fields
+      const G = (s) => chalk.gray(s);
+      const assigneeRaw = item.assignedTo;
+      const assigneeName = Array.isArray(assigneeRaw)
+        ? assigneeRaw.map(a => a.name).filter(Boolean).join(", ") || "-"
+        : (assigneeRaw?.name || "-");
+
+      console.log("  " + G("Priority:") + " " + priorityLabel(item.priority));
+      console.log("  " + G("Type:    ") + " " + (item.workitemType?.name || "-"));
+      console.log("  " + G("Sprint:  ") + " " + (item.sprint?.name || "-"));
+      console.log("  " + G("Assignee:") + " " + assigneeName);
+      console.log("  " + G("Project: ") + " " + (item.space?.name || "-"));
+      console.log("  " + G("ID:      ") + " " + item.id);
+
+      // Labels / Tags
+      const rawTags = item.tags || item.labels || [];
+      const tagNames = rawTags.map(t => (typeof t === "string" ? t : t.name)).filter(Boolean);
+      if (tagNames.length > 0) {
+        console.log("\n  " + G("Labels:") + " " + tagNames.map(t => chalk.magenta(t)).join(chalk.gray(", ")));
       }
+
+      // Description
+      console.log("\n" + sep);
+      if (item.description) {
+        console.log("\n" + chalk.bold("Description") + "\n");
+        console.log(item.description);
+      } else {
+        console.log(chalk.gray("\nNo description."));
+      }
+
+      // Relations: parent, children, and related work items
+      const relations = [];
+
+      if (item.parent || item.parentId) {
+        const parent = item.parent;
+        const parentSerial = parent?.serialNumber || (item.parentId ? item.parentId.slice(0, 8) : null) || "-";
+        const parentTitle = parent?.subject || "";
+        relations.push({ kind: "Parent   ", serial: parentSerial, title: parentTitle });
+      }
+
+      const children = item.children || item.childrenWorkItems || [];
+      for (const child of children) {
+        const childSerial = child.serialNumber || child.id?.slice(0, 8) || "-";
+        relations.push({ kind: "Child    ", serial: childSerial, title: child.subject || "" });
+      }
+
+      const related = item.relatedWorkItems || item.relations || [];
+      for (const r of related) {
+        const rtype = r.type || r.relationType || "Related";
+        const rSerial = r.serialNumber || r.id?.slice(0, 8) || "-";
+        relations.push({ kind: String(rtype).padEnd(9), serial: rSerial, title: r.subject || "" });
+      }
+
+      if (relations.length > 0) {
+        console.log("\n" + sep);
+        console.log("\n" + chalk.bold("Relations") + "\n");
+        for (const r of relations) {
+          console.log("  " + G(r.kind) + " " + chalk.cyan(r.serial) + "  " + r.title);
+        }
+      }
+
+      console.log();
     }));
 
   wi
