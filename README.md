@@ -115,9 +115,9 @@ yunxiao wi types --category Bug
 |-------|------|------|
 | [#4](https://github.com/kongsiyu/yunxiao-cli/issues/4) | 完善工作项详情显示 | 🔴 待开始 |
 | [#5](https://github.com/kongsiyu/yunxiao-cli/issues/5) | 支持灵活的工作项 ID 解析 | ✅ 完成 |
-| [#6](https://github.com/kongsiyu/yunxiao-cli/issues/6) | 添加 JSON 格式输入支持 | 🔴 待开始 |
-| [#7](https://github.com/kongsiyu/yunxiao-cli/issues/7) | 迭代/ Sprint 管理命令 | 🔴 待开始 |
-| [#8](https://github.com/kongsiyu/yunxiao-cli/issues/8) | 用户搜索和列表命令 | 🔴 待开始 |
+| [#6](https://github.com/kongsiyu/yunxiao-cli/issues/6) | 添加 JSON 格式输入支持 | ✅ 完成 |
+| [#7](https://github.com/kongsiyu/yunxiao-cli/issues/7) | 迭代/ Sprint 管理命令 | ✅ 完成 |
+| [#8](https://github.com/kongsiyu/yunxiao-cli/issues/8) | 用户搜索和列表命令 | ✅ 完成 |
 | [#9](https://github.com/kongsiyu/yunxiao-cli/issues/9) | 状态列表命令 | 🔴 待开始 |
 
 ### T2: 扩展功能（第 3-4 周）
