@@ -65,21 +65,30 @@ export function registerWorkitemCommands(program, client, orgId, defaultProjectI
       const resolvedId = await resolveWorkitemId(client, orgId, spaceId, id);
       const item = await getWorkitem(client, orgId, resolvedId);
       console.log(chalk.bold("\nWork Item Details:\n"));
-      console.log("  " + chalk.gray("Serial:  ") + (item.serialNumber || "-"));
-      console.log("  " + chalk.gray("ID:      ") + item.id);
-      console.log("  " + chalk.gray("Subject: ") + item.subject);
-      console.log("  " + chalk.gray("Status:  ") + statusColor(item.status?.displayName || item.status?.name));
-      console.log("  " + chalk.gray("Type:    ") + (item.workitemType?.name || "-"));
-      console.log("  " + chalk.gray("Project: ") + (item.space?.name || "-"));
-      console.log("  " + chalk.gray("Assignee:") + " " + (item.assignedTo?.name || "-"));
-      console.log("  " + chalk.gray("Creator: ") + (item.creator?.name || "-"));
-      console.log("  " + chalk.gray("Created: ") + formatDate(item.gmtCreate));
-      console.log("  " + chalk.gray("Updated: ") + formatDate(item.gmtModified));
+      console.log("  " + chalk.gray("Serial:     ") + (item.serialNumber || "-"));
+      console.log("  " + chalk.gray("ID:         ") + item.id);
+      console.log("  " + chalk.gray("Subject:    ") + item.subject);
+      console.log("  " + chalk.gray("Status:     ") + statusColor(item.status?.displayName || item.status?.name));
+      console.log("  " + chalk.gray("Type:       ") + (item.workitemType?.name || "-"));
+      console.log("  " + chalk.gray("Priority:   ") + (item.priority?.displayName || item.priority?.name || "-"));
+      console.log("  " + chalk.gray("Sprint:     ") + (item.iteration?.name || item.sprint?.name || "-"));
+      console.log("  " + chalk.gray("Project:    ") + (item.space?.name || "-"));
+      console.log("  " + chalk.gray("Assignee:   ") + (item.assignedTo?.name || "-"));
+      console.log("  " + chalk.gray("Creator:    ") + (item.creator?.name || "-"));
+      console.log("  " + chalk.gray("Created:    ") + formatDate(item.gmtCreate));
+      console.log("  " + chalk.gray("Updated:    ") + formatDate(item.gmtModified));
+      if (item.labels && item.labels.length > 0) {
+        console.log("  " + chalk.gray("Labels:     ") + item.labels.map(l => l.name).join(", "));
+      }
+      if (item.parentWorkitem) {
+        console.log("  " + chalk.gray("Parent:     ") + (item.parentWorkitem.serialNumber || item.parentWorkitem.id));
+      }
+      if (item.children && item.children.length > 0) {
+        console.log("  " + chalk.gray("Children:   ") + item.children.map(c => c.serialNumber || c.id).join(", "));
+      }
       if (item.description) {
         console.log("\n" + chalk.gray("Description:"));
-        const desc = item.description.slice(0, 500);
-        console.log(desc);
-        if (item.description.length > 500) console.log(chalk.gray("... (truncated)"));
+        console.log(item.description);
       }
     }));
 
