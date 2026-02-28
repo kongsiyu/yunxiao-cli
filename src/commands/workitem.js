@@ -206,5 +206,29 @@ export function registerWorkitemCommands(program, client, orgId, defaultProjectI
         console.log("  " + chalk.cyan(t.id) + "  " + t.name + def);
       }
     }));
+
+  wi
+    .command("delete <id>")
+    .description("Delete a work item by ID or serial number")
+    .option("-p, --project <id>", "Project ID (needed for serial number)")
+    .option("-f, --force", "Skip confirmation prompt")
+    .action(withErrorHandling(async (id, opts) => {
+      const spaceId = opts.project || defaultProjectId;
+      const resolvedId = await resolveWorkitemId(client, orgId, spaceId, id);
+      
+      if (!opts.force) {
+        const readline = await import("readline");
+        const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
+        const answer = await new Promise(resolve => rl.question(chalk.yellow("Are you sure you want to delete work item " + id + "? [y/N] "), resolve));
+        rl.close();
+        if (answer.toLowerCase() !== "y") {
+          console.log(chalk.gray("Cancelled"));
+          return;
+        }
+      }
+      
+      await deleteWorkitem(client, orgId, resolvedId);
+      console.log(chalk.green("\n✓ Work item " + id + " deleted!\n"));
+    }));
 }
 
