@@ -180,24 +180,28 @@ export function registerWorkitemCommands(program, client, orgId, defaultProjectI
 
   wi
     .command("comment <id> <content>")
+    .alias("comments add")
     .description("Add a comment to a work item by ID or serial number")
     .option("-p, --project <id>", "Project ID (needed for serial number)")
+    .option("-c, --category <type>", "Category: Req, Task, Bug (for serial number lookup)", "Req")
     .action(withErrorHandling(async (id, content, opts) => {
       const spaceId = opts.project || defaultProjectId;
-      const resolvedId = await resolveWorkitemId(client, orgId, spaceId, id);
+      const resolvedId = await resolveWorkitemId(client, orgId, spaceId, id, opts.category);
       const result = await addComment(client, orgId, resolvedId, content);
       console.log(chalk.green("\n✓ Comment added! (id: " + (result.id || result) + ")\n"));
     }));
 
   wi
     .command("comments <id>")
+    .alias("comment list")
     .description("List comments on a work item")
     .option("-p, --project <id>", "Project ID (needed for serial number)")
+    .option("-c, --category <type>", "Category: Req, Task, Bug (for serial number lookup)", "Req")
     .option("--page <n>", "Page number", "1")
     .option("--limit <n>", "Per page", "20")
     .action(withErrorHandling(async (id, opts) => {
       const spaceId = opts.project || defaultProjectId;
-      const resolvedId = await resolveWorkitemId(client, orgId, spaceId, id);
+      const resolvedId = await resolveWorkitemId(client, orgId, spaceId, id, opts.category);
       const comments = await listComments(client, orgId, resolvedId, {
         page: parseInt(opts.page),
         perPage: parseInt(opts.limit),
