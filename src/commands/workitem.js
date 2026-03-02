@@ -87,7 +87,10 @@ export function registerWorkitemCommands(program, client, orgId, defaultProjectI
       console.log("  " + chalk.gray("Subject:    ") + item.subject);
       console.log("  " + chalk.gray("Status:     ") + statusColor(item.status?.displayName || item.status?.name));
       console.log("  " + chalk.gray("Type:       ") + (item.workitemType?.name || "-"));
-      console.log("  " + chalk.gray("Priority:   ") + (item.priority?.displayName || item.priority?.name || "-"));
+      // Priority from custom fields (API returns it in customFieldValues)
+      const priorityField = item.customFieldValues?.find(f => f.fieldName === "优先级");
+      const priority = priorityField?.values?.[0]?.displayValue || item.priority?.displayName || item.priority?.name || "-";
+      console.log("  " + chalk.gray("Priority:   ") + priority);
       console.log("  " + chalk.gray("Sprint:     ") + (item.iteration?.name || item.sprint?.name || "-"));
       console.log("  " + chalk.gray("Project:    ") + (item.space?.name || "-"));
       console.log("  " + chalk.gray("Assignee:   ") + (item.assignedTo?.name || "-"));
