@@ -139,6 +139,17 @@ export async function listComments(client, orgId, workitemId, opts = {}) {
   return res.data;
 }
 
+export async function updateComment(client, orgId, workitemId, commentId, content) {
+  const url = `/oapi/v1/projex/organizations/${orgId}/workitems/${workitemId}/comments/${commentId}`;
+  const res = await client.put(url, { content });
+  return res.data;
+}
+
+export async function deleteComment(client, orgId, workitemId, commentId) {
+  const url = `/oapi/v1/projex/organizations/${orgId}/workitems/${workitemId}/comments/${commentId}`;
+  await client.delete(url);
+}
+
 export async function getWorkitemTypes(client, orgId, projectId, category = "Req") {
   const url = `/oapi/v1/projex/organizations/${orgId}/projects/${projectId}/workitemTypes`;
   const res = await client.get(url, { params: { category } });
@@ -169,23 +180,24 @@ export async function getOrganizations(client) {
 
 // ID Resolution
 // Supports: GJBL-1 (projectKey-number), UUID, or plain number
-export async function resolveWorkitemId(client, orgId, spaceId, identifier) {
+export async function resolveWorkitemId(client, orgId, spaceId, identifier, category = "Req") {
   if (!identifier) return null;
   
   // Check if it's a short format like "GJBL-1"
   const shortMatch = identifier.match(/^([A-Z]+)-(\d+)$/);
   if (shortMatch) {
     const [, projectKey, number] = shortMatch;
-    // Search for workitem with this number
+    // Search recent workitems and find by serial number
+    // Note: We search without subject filter and match serial number client-side
     const result = await searchWorkitems(client, orgId, spaceId, {
-      subject: number,
+      category,
       page: 1,
-      perPage: 1
+      perPage: 100  // Get more results to find the match
     });
-    if (result.data && result.data.length > 0) {
-      const wi = result.data[0];
-      // Verify it matches the project key
-      if (wi.projectKey === projectKey || wi.id) {
+    if (result && result.length > 0) {
+      // Find exact serial number match
+      const wi = result.find(w => w.serialNumber === identifier);
+      if (wi) {
         return wi.id;
       }
     }

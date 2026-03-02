@@ -60,26 +60,52 @@ export function registerWorkitemCommands(program, client, orgId, defaultProjectI
     .command("view <id>")
     .description("View work item details by ID or serial number (e.g. GJBL-1)")
     .option("-p, --project <id>", "Project ID (needed for serial number lookup)")
+    .option("-c, --category <type>", "Category: Req, Task, Bug", "Req")
     .action(withErrorHandling(async (id, opts) => {
-      const spaceId = opts.project || defaultProjectId;
-      const resolvedId = await resolveWorkitemId(client, orgId, spaceId, id);
-      const item = await getWorkitem(client, orgId, resolvedId);
+      let item;
+      if (/^[A-Z]+-\d+$/i.test(id)) {
+        const spaceId = opts.project || defaultProjectId;
+        if (!spaceId) {
+          console.error(chalk.red("Error: project ID required for serial number lookup"));
+          process.exit(1);
+        }
+        // Search in specified category only
+        const items = await searchWorkitems(client, orgId, spaceId, { category: opts.category, perPage: 100 });
+        item = (items || []).find(i => i.serialNumber === id.toUpperCase());
+        if (!item) {
+          console.error(chalk.red("Work item " + id + " not found in category " + opts.category));
+          console.error(chalk.gray("Try: yunxiao wi view " + id + " -c <category>"));
+          process.exit(1);
+        }
+        item = await getWorkitem(client, orgId, item.id);
+      } else {
+        item = await getWorkitem(client, orgId, id);
+      }
       console.log(chalk.bold("\nWork Item Details:\n"));
-      console.log("  " + chalk.gray("Serial:  ") + (item.serialNumber || "-"));
-      console.log("  " + chalk.gray("ID:      ") + item.id);
-      console.log("  " + chalk.gray("Subject: ") + item.subject);
-      console.log("  " + chalk.gray("Status:  ") + statusColor(item.status?.displayName || item.status?.name));
-      console.log("  " + chalk.gray("Type:    ") + (item.workitemType?.name || "-"));
-      console.log("  " + chalk.gray("Project: ") + (item.space?.name || "-"));
-      console.log("  " + chalk.gray("Assignee:") + " " + (item.assignedTo?.name || "-"));
-      console.log("  " + chalk.gray("Creator: ") + (item.creator?.name || "-"));
-      console.log("  " + chalk.gray("Created: ") + formatDate(item.gmtCreate));
-      console.log("  " + chalk.gray("Updated: ") + formatDate(item.gmtModified));
+      console.log("  " + chalk.gray("Serial:     ") + (item.serialNumber || "-"));
+      console.log("  " + chalk.gray("ID:         ") + item.id);
+      console.log("  " + chalk.gray("Subject:    ") + item.subject);
+      console.log("  " + chalk.gray("Status:     ") + statusColor(item.status?.displayName || item.status?.name));
+      console.log("  " + chalk.gray("Type:       ") + (item.workitemType?.name || "-"));
+      console.log("  " + chalk.gray("Priority:   ") + (item.priority?.displayName || item.priority?.name || "-"));
+      console.log("  " + chalk.gray("Sprint:     ") + (item.iteration?.name || item.sprint?.name || "-"));
+      console.log("  " + chalk.gray("Project:    ") + (item.space?.name || "-"));
+      console.log("  " + chalk.gray("Assignee:   ") + (item.assignedTo?.name || "-"));
+      console.log("  " + chalk.gray("Creator:    ") + (item.creator?.name || "-"));
+      console.log("  " + chalk.gray("Created:    ") + formatDate(item.gmtCreate));
+      console.log("  " + chalk.gray("Updated:    ") + formatDate(item.gmtModified));
+      if (item.labels && item.labels.length > 0) {
+        console.log("  " + chalk.gray("Labels:     ") + item.labels.map(l => l.name).join(", "));
+      }
+      if (item.parentWorkitem) {
+        console.log("  " + chalk.gray("Parent:     ") + (item.parentWorkitem.serialNumber || item.parentWorkitem.id));
+      }
+      if (item.children && item.children.length > 0) {
+        console.log("  " + chalk.gray("Children:   ") + item.children.map(c => c.serialNumber || c.id).join(", "));
+      }
       if (item.description) {
         console.log("\n" + chalk.gray("Description:"));
-        const desc = item.description.slice(0, 500);
-        console.log(desc);
-        if (item.description.length > 500) console.log(chalk.gray("... (truncated)"));
+        console.log(item.description);
       }
     }));
 
@@ -154,24 +180,28 @@ export function registerWorkitemCommands(program, client, orgId, defaultProjectI
 
   wi
     .command("comment <id> <content>")
+    .alias("comments add")
     .description("Add a comment to a work item by ID or serial number")
     .option("-p, --project <id>", "Project ID (needed for serial number)")
+    .option("-c, --category <type>", "Category: Req, Task, Bug (for serial number lookup)", "Req")
     .action(withErrorHandling(async (id, content, opts) => {
       const spaceId = opts.project || defaultProjectId;
-      const resolvedId = await resolveWorkitemId(client, orgId, spaceId, id);
+      const resolvedId = await resolveWorkitemId(client, orgId, spaceId, id, opts.category);
       const result = await addComment(client, orgId, resolvedId, content);
       console.log(chalk.green("\n✓ Comment added! (id: " + (result.id || result) + ")\n"));
     }));
 
   wi
     .command("comments <id>")
+    .alias("comment list")
     .description("List comments on a work item")
     .option("-p, --project <id>", "Project ID (needed for serial number)")
+    .option("-c, --category <type>", "Category: Req, Task, Bug (for serial number lookup)", "Req")
     .option("--page <n>", "Page number", "1")
     .option("--limit <n>", "Per page", "20")
     .action(withErrorHandling(async (id, opts) => {
       const spaceId = opts.project || defaultProjectId;
-      const resolvedId = await resolveWorkitemId(client, orgId, spaceId, id);
+      const resolvedId = await resolveWorkitemId(client, orgId, spaceId, id, opts.category);
       const comments = await listComments(client, orgId, resolvedId, {
         page: parseInt(opts.page),
         perPage: parseInt(opts.limit),
@@ -184,8 +214,59 @@ export function registerWorkitemCommands(program, client, orgId, defaultProjectI
       for (const c of comments) {
         console.log(chalk.cyan(c.creator?.name || "unknown") + " " + chalk.gray(formatDate(c.gmtCreate)));
         console.log("  " + (c.content || c.commentText || "(empty)"));
+        if (c.id) console.log("  " + chalk.gray("ID: " + c.id));
         console.log();
       }
+    }));
+
+  wi
+    .command("comment-edit <commentId>")
+    .description("Edit a comment on a work item")
+    .option("-p, --project <id>", "Project ID (needed for serial number)")
+    .option("-w, --workitem <id>", "Work item ID (required)")
+    .option("-c, --content <text>", "New comment content")
+    .action(withErrorHandling(async (commentId, opts) => {
+      const spaceId = opts.project || defaultProjectId;
+      if (!opts.content) {
+        console.error(chalk.red("Error: --content is required"));
+        process.exit(1);
+      }
+      if (!opts.workitem) {
+        console.error(chalk.red("Error: --workitem <id> is required"));
+        process.exit(1);
+      }
+      const resolvedWiId = await resolveWorkitemId(client, orgId, spaceId, opts.workitem);
+      await updateComment(client, orgId, resolvedWiId, commentId, opts.content);
+      console.log(chalk.green("\n✓ Comment " + commentId + " updated!\n"));
+    }));
+
+  wi
+    .command("comment-delete <commentId>")
+    .description("Delete a comment from a work item")
+    .option("-p, --project <id>", "Project ID (needed for serial number)")
+    .option("-w, --workitem <id>", "Work item ID (required)")
+    .option("-f, --force", "Skip confirmation")
+    .action(withErrorHandling(async (commentId, opts) => {
+      const spaceId = opts.project || defaultProjectId;
+      if (!opts.workitem) {
+        console.error(chalk.red("Error: --workitem <id> is required"));
+        process.exit(1);
+      }
+      const resolvedWiId = await resolveWorkitemId(client, orgId, spaceId, opts.workitem);
+      
+      if (!opts.force) {
+        const readline = await import("readline");
+        const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
+        const answer = await new Promise(resolve => rl.question(chalk.yellow("Delete comment " + commentId + "? [y/N] "), resolve));
+        rl.close();
+        if (answer.toLowerCase() !== "y") {
+          console.log(chalk.gray("Cancelled"));
+          return;
+        }
+      }
+      
+      await deleteComment(client, orgId, resolvedWiId, commentId);
+      console.log(chalk.green("\n✓ Comment " + commentId + " deleted!\n"));
     }));
 
   wi
