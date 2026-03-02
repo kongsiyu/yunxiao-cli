@@ -154,6 +154,37 @@ export async function listSprints(client, orgId, projectId, opts = {}) {
   return res.data;
 }
 
+export async function getSprint(client, orgId, sprintId) {
+  const url = `/oapi/v1/projex/organizations/${orgId}/sprints/${sprintId}`;
+  const res = await client.get(url);
+  return res.data;
+}
+
+export async function searchWorkitemsBySprint(client, orgId, spaceId, sprintId, opts = {}) {
+  const url = `/oapi/v1/projex/organizations/${orgId}/workitems:search`;
+  const body = {
+    spaceId,
+    category: opts.category || "Req",
+    page: opts.page || 1,
+    perPage: opts.perPage || 20,
+    orderBy: opts.orderBy || "gmtCreate",
+    sort: opts.sort || "desc",
+  };
+  // Filter by sprint
+  body.conditions = JSON.stringify({
+    conditionGroups: [[{
+      className: "sprint",
+      fieldIdentifier: "sprint",
+      format: "list",
+      operator: "CONTAINS",
+      toValue: null,
+      value: [sprintId]
+    }]]
+  });
+  const res = await client.post(url, body);
+  return res.data;
+}
+
 // Platform
 export async function getCurrentUser(client) {
   const url = "/oapi/v1/platform/user";
