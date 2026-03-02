@@ -6,6 +6,7 @@ import { getCurrentUser, loadSavedConfig, createClientWithPat } from "./api.js";
 import { registerProjectCommands } from "./commands/project.js";
 import { registerWorkitemCommands } from "./commands/workitem.js";
 import { registerAuthCommands } from "./commands/auth.js";
+import { registerUserCommands } from "./commands/user.js";
 
 const program = new Command();
 
@@ -42,6 +43,7 @@ let currentUserId = process.env.YUNXIAO_USER_ID || (savedConfig?.userId);
 let currentUser = null;
 let orgId = process.env.YUNXIAO_ORG_ID || (savedConfig?.orgId);
 let projectId = process.env.YUNXIAO_PROJECT_ID || (savedConfig?.projectId);
+const defaultProjectId = projectId;
 
 // Create client if PAT is available
 if (pat) {
@@ -82,6 +84,7 @@ program
 if (client && orgId) {
   registerProjectCommands(program, client, orgId, withErrorHandling);
   registerWorkitemCommands(program, client, orgId, projectId, withErrorHandling, currentUserId);
+  registerUserCommands(program, client, orgId, defaultProjectId, withErrorHandling);
 }
 
 program.parse();

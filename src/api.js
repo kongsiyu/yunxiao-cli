@@ -167,6 +167,13 @@ export async function getOrganizations(client) {
   return res.data;
 }
 
+// Project Members
+export async function getProjectMembers(client, orgId, projectId) {
+  const url = `/oapi/v1/projex/organizations/${orgId}/projects/${projectId}/members`;
+  const res = await client.get(url);
+  return res.data;
+}
+
 // ID Resolution
 // Supports: GJBL-1 (projectKey-number), UUID, or plain number
 export async function resolveWorkitemId(client, orgId, spaceId, identifier) {
