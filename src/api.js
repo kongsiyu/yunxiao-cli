@@ -153,6 +153,11 @@ export async function listComments(client, orgId, workitemId, opts = {}) {
   return res.data;
 }
 
+export async function deleteWorkitem(client, orgId, workitemId) {
+  const url = `/oapi/v1/projex/organizations/${orgId}/workitems/${workitemId}`;
+  await client.delete(url);
+}
+
 export async function getWorkitemTypes(client, orgId, projectId, category = "Req") {
   const url = `/oapi/v1/projex/organizations/${orgId}/projects/${projectId}/workitemTypes`;
   const res = await client.get(url, { params: { category } });
