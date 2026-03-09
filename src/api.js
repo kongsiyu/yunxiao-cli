@@ -94,6 +94,20 @@ export async function searchWorkitems(client, orgId, spaceId, opts = {}) {
   if (opts.subject) {
     conditionGroups.push({ className: "string", fieldIdentifier: "subject", format: "input", operator: "CONTAINS", toValue: null, value: [opts.subject] });
   }
+  if (opts.sprint) {
+    conditionGroups.push({ className: "sprint", fieldIdentifier: "iteration", format: "list", operator: "CONTAINS", toValue: null, value: [opts.sprint] });
+  }
+  if (opts.priority) {
+    conditionGroups.push({ className: "priority", fieldIdentifier: "priority", format: "list", operator: "CONTAINS", toValue: null, value: [opts.priority] });
+  }
+  if (opts.label) {
+    conditionGroups.push({ className: "string", fieldIdentifier: "label", format: "input", operator: "CONTAINS", toValue: null, value: [opts.label] });
+  }
+  if (opts.createdAfter || opts.createdBefore) {
+    const from = opts.createdAfter ? new Date(opts.createdAfter).getTime() : null;
+    const to = opts.createdBefore ? new Date(opts.createdBefore).getTime() : null;
+    conditionGroups.push({ className: "date", fieldIdentifier: "gmtCreate", format: "date", operator: "BETWEEN", value: from ? [String(from)] : null, toValue: to ? String(to) : null });
+  }
   const body = {
     spaceId,
     category: opts.category || "Req",

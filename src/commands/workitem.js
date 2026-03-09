@@ -1,6 +1,7 @@
 ﻿// src/commands/workitem.js
 import chalk from "chalk";
 import { searchWorkitems, getWorkitem, createWorkitem, updateWorkitem, addComment, listComments, getWorkitemTypes, resolveWorkitemId } from "../api.js";
+import { setQuery } from "./storage.js";
 
 function formatDate(ts) {
   if (!ts) return "-";
@@ -21,25 +22,56 @@ export function registerWorkitemCommands(program, client, orgId, defaultProjectI
 
   wi
     .command("list")
-    .description("List work items")
+    .description("List work items with optional advanced filters")
     .option("-p, --project <id>", "Project ID (default: YUNXIAO_PROJECT_ID)")
     .option("-c, --category <type>", "Category: Req, Task, Bug", "Req")
     .option("-s, --status <id>", "Filter by status ID")
     .option("-a, --assigned-to <userId>", "Filter by assignee user ID")
     .option("-q, --query <keyword>", "Search by subject keyword")
+    .option("--sprint <id>", "Filter by sprint/iteration ID")
+    .option("--priority <level>", "Filter by priority")
+    .option("--label <name>", "Filter by label")
+    .option("--created-after <date>", "Filter items created after date (YYYY-MM-DD)")
+    .option("--created-before <date>", "Filter items created before date (YYYY-MM-DD)")
+    .option("--sort <field>", "Sort field: gmtCreate, gmtModified, subject", "gmtCreate")
+    .option("--asc", "Sort ascending (default: desc)")
     .option("--page <n>", "Page number", "1")
     .option("--limit <n>", "Per page", "20")
+    .option("--save-as <name>", "Save these filters as a named query")
     .action(withErrorHandling(async (opts) => {
       const spaceId = opts.project || defaultProjectId;
       if (!spaceId) {
         console.error(chalk.red("Error: project ID required (--project or YUNXIAO_PROJECT_ID)"));
         process.exit(1);
       }
+      if (opts.saveAs) {
+        const filters = { project: spaceId, category: opts.category };
+        if (opts.status) filters.status = opts.status;
+        if (opts.assignedTo) filters.assignedTo = opts.assignedTo;
+        if (opts.query) filters.query = opts.query;
+        if (opts.sprint) filters.sprint = opts.sprint;
+        if (opts.priority) filters.priority = opts.priority;
+        if (opts.label) filters.label = opts.label;
+        if (opts.createdAfter) filters.createdAfter = opts.createdAfter;
+        if (opts.createdBefore) filters.createdBefore = opts.createdBefore;
+        if (opts.sort) filters.sort = opts.sort;
+        if (opts.asc) filters.asc = true;
+        filters.limit = opts.limit;
+        setQuery(opts.saveAs, filters);
+        console.log(chalk.green(`\n✓ Query "${opts.saveAs}" saved! Run with: yunxiao query run ${opts.saveAs}\n`));
+      }
       const items = await searchWorkitems(client, orgId, spaceId, {
         category: opts.category,
         status: opts.status,
         assignedTo: opts.assignedTo,
         subject: opts.query,
+        sprint: opts.sprint,
+        priority: opts.priority,
+        label: opts.label,
+        createdAfter: opts.createdAfter,
+        createdBefore: opts.createdBefore,
+        orderBy: opts.sort || "gmtCreate",
+        sort: opts.asc ? "asc" : "desc",
         page: parseInt(opts.page),
         perPage: parseInt(opts.limit),
       });
