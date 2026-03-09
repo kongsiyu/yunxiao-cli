@@ -129,6 +129,7 @@ yunxiao wi types --category Bug
 | [#10](https://github.com/kongsiyu/yunxiao-cli/issues/10) | 工作项删除和关联命令 | ✅ 完成 |
 | [#11](https://github.com/kongsiyu/yunxiao-cli/issues/11) | 评论编辑/删除命令 | ✅ 完成 |
 | [#12](https://github.com/kongsiyu/yunxiao-cli/issues/12) | 附件管理命令 | ✅ 完成 |
+| [#13](https://github.com/kongsiyu/yunxiao-cli/issues/13) | 高级搜索和保存查询 | ✅ 完成 |
 
 ---
 
