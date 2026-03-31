@@ -1,6 +1,6 @@
 // src/commands/workitem.js
 import chalk from "chalk";
-import { searchWorkitems, getWorkitem, createWorkitem, updateWorkitem, deleteWorkitem, addComment, listComments, getWorkitemTypes, resolveWorkitemId } from "../api.js";
+import { getWorkitem, createWorkitem, updateWorkitem, deleteWorkitem, addComment, listComments, getWorkitemTypes, resolveWorkitemId, searchWorkitems } from "../api.js";
 import { printJson, printError } from "../output.js";
 
 function formatDate(ts) {
@@ -79,29 +79,14 @@ export function registerWorkitemCommands(program, client, orgId, defaultProjectI
     .command("view <id>")
     .description("View work item details by ID or serial number (e.g. GJBL-1)")
     .option("-p, --project <id>", "Project ID (needed for serial number lookup)")
-    .option("-c, --category <type>", "Category: Req, Task, Bug", "Req")
     .action(withErrorHandling(async (id, opts) => {
-      let item;
-      if (/^[A-Z]+-\d+$/i.test(id)) {
-        const spaceId = opts.project || defaultProjectId;
-        if (!spaceId) {
-          printError("INVALID_ARGS", "project ID required for serial number lookup", jsonMode);
-          process.exit(1);
-        }
-        // Search in specified category only
-        const items = await searchWorkitems(client, orgId, spaceId, { category: opts.category, perPage: 100 });
-        item = (items || []).find(i => i.serialNumber === id.toUpperCase());
-        if (!item) {
-          printError("NOT_FOUND", `Work item ${id} not found in category ${opts.category}`, jsonMode);
-          if (!jsonMode) {
-            process.stderr.write(chalk.gray("Try: yunxiao wi view " + id + " -c <category>") + '\n');
-          }
-          process.exit(1);
-        }
-        item = await getWorkitem(client, orgId, item.id);
-      } else {
-        item = await getWorkitem(client, orgId, id);
+      const spaceId = opts.project || defaultProjectId;
+      if (/^[A-Z]+-\d+$/i.test(id) && !spaceId) {
+        printError("INVALID_ARGS", "project ID required for serial number lookup", jsonMode);
+        process.exit(1);
       }
+      const resolvedId = await resolveWorkitemId(client, orgId, spaceId, id);
+      const item = await getWorkitem(client, orgId, resolvedId);
       if (jsonMode) {
         printJson(item);
         return;
