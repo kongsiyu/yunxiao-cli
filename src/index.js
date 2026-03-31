@@ -2,12 +2,11 @@
 // src/index.js - yunxiao CLI entry point
 import { Command } from "commander";
 import chalk from "chalk";
-import { getCurrentUser, loadSavedConfig, createClientWithPat } from "./api.js";
+import { getCurrentUser, createClientWithPat } from "./api.js";
+import { loadConfig } from "./config.js";
 import { registerProjectCommands } from "./commands/project.js";
 import { registerWorkitemCommands } from "./commands/workitem.js";
 import { registerAuthCommands } from "./commands/auth.js";
-import { registerAttachmentCommands } from "./commands/attachment.js";
-import { registerQueryCommands } from "./commands/query.js";
 
 const program = new Command();
 
@@ -35,19 +34,19 @@ function withErrorHandling(fn) {
 // Register auth commands first (they don't require a client)
 registerAuthCommands(program);
 
-// Try to load config from file or environment
-const savedConfig = loadSavedConfig();
-const pat = process.env.YUNXIAO_PAT || (savedConfig?.pat);
+// Load config with correct priority: file > env vars (CLI args handled per-command)
+const config = loadConfig();
+const token = config.token;
 
 let client = null;
-let currentUserId = process.env.YUNXIAO_USER_ID || (savedConfig?.userId);
+let currentUserId = config.userId;
 let currentUser = null;
-let orgId = process.env.YUNXIAO_ORG_ID || (savedConfig?.orgId);
-let projectId = process.env.YUNXIAO_PROJECT_ID || (savedConfig?.projectId);
+let orgId = config.orgId;
+let projectId = config.projectId;
 
-// Create client if PAT is available
-if (pat) {
-  client = createClientWithPat(pat);
+// Create client if token is available
+if (token) {
+  client = createClientWithPat(token);
   
   async function initCurrentUser() {
     if (!currentUserId && client) {
@@ -84,8 +83,6 @@ program
 if (client && orgId) {
   registerProjectCommands(program, client, orgId, withErrorHandling);
   registerWorkitemCommands(program, client, orgId, projectId, withErrorHandling, currentUserId);
-  registerAttachmentCommands(program, client, orgId, withErrorHandling);
-  registerQueryCommands(program, client, orgId, projectId, withErrorHandling);
 }
 
 program.parse();

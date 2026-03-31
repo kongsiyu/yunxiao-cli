@@ -1,7 +1,6 @@
 ﻿// src/commands/workitem.js
 import chalk from "chalk";
 import { searchWorkitems, getWorkitem, createWorkitem, updateWorkitem, addComment, listComments, getWorkitemTypes, resolveWorkitemId } from "../api.js";
-import { setQuery } from "./storage.js";
 
 function formatDate(ts) {
   if (!ts) return "-";
@@ -37,28 +36,11 @@ export function registerWorkitemCommands(program, client, orgId, defaultProjectI
     .option("--asc", "Sort ascending (default: desc)")
     .option("--page <n>", "Page number", "1")
     .option("--limit <n>", "Per page", "20")
-    .option("--save-as <name>", "Save these filters as a named query")
     .action(withErrorHandling(async (opts) => {
       const spaceId = opts.project || defaultProjectId;
       if (!spaceId) {
         console.error(chalk.red("Error: project ID required (--project or YUNXIAO_PROJECT_ID)"));
         process.exit(1);
-      }
-      if (opts.saveAs) {
-        const filters = { project: spaceId, category: opts.category };
-        if (opts.status) filters.status = opts.status;
-        if (opts.assignedTo) filters.assignedTo = opts.assignedTo;
-        if (opts.query) filters.query = opts.query;
-        if (opts.sprint) filters.sprint = opts.sprint;
-        if (opts.priority) filters.priority = opts.priority;
-        if (opts.label) filters.label = opts.label;
-        if (opts.createdAfter) filters.createdAfter = opts.createdAfter;
-        if (opts.createdBefore) filters.createdBefore = opts.createdBefore;
-        if (opts.sort) filters.sort = opts.sort;
-        if (opts.asc) filters.asc = true;
-        filters.limit = opts.limit;
-        setQuery(opts.saveAs, filters);
-        console.log(chalk.green(`\n✓ Query "${opts.saveAs}" saved! Run with: yunxiao query run ${opts.saveAs}\n`));
       }
       const items = await searchWorkitems(client, orgId, spaceId, {
         category: opts.category,

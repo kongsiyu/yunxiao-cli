@@ -8,7 +8,7 @@
   },
   "scripts": {
     "lint": "node src/index.js --version",
-    "test": "node src/index.js --help"
+    "test": "node --test test/**/*.test.js"
   },
   "keywords": ["yunxiao", "aliyun", "devops", "cli"],
   "license": "MIT",
