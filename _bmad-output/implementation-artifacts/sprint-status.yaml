@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-03-31
-last_updated: 2026-03-31
+last_updated: 2026-03-31  # story 1-7 done
 project: yunxiao-cli
 project_key: NOKEY
 tracking_system: file-system
@@ -50,7 +50,7 @@ development_status:
   1-4-errors-module: done
   1-5-auth-commands: backlog
   1-6-whoami-always-register: backlog
-  1-7-api-verification-spike: ready-for-dev
+  1-7-api-verification-spike: done
   epic-1-retrospective: optional
 
   # Epic 2: 工作项生命周期管理
