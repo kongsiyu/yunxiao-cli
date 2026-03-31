@@ -1,6 +1,6 @@
 # Story 1.5：auth 命令
 
-Status: review
+Status: done
 
 ## Story
 
