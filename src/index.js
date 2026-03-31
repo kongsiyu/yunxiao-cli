@@ -6,8 +6,6 @@ import { getCurrentUser, loadSavedConfig, createClientWithPat } from "./api.js";
 import { registerProjectCommands } from "./commands/project.js";
 import { registerWorkitemCommands } from "./commands/workitem.js";
 import { registerAuthCommands } from "./commands/auth.js";
-import { registerAttachmentCommands } from "./commands/attachment.js";
-import { registerQueryCommands } from "./commands/query.js";
 
 const program = new Command();
 
@@ -84,8 +82,6 @@ program
 if (client && orgId) {
   registerProjectCommands(program, client, orgId, withErrorHandling);
   registerWorkitemCommands(program, client, orgId, projectId, withErrorHandling, currentUserId);
-  registerAttachmentCommands(program, client, orgId, withErrorHandling);
-  registerQueryCommands(program, client, orgId, projectId, withErrorHandling);
 }
 
 program.parse();

@@ -41,24 +41,6 @@ export function createClientWithPat(pat) {
   });
 }
 
-export function createClient() {
-  const pat = process.env.YUNXIAO_PAT;
-  if (!pat) {
-    console.error("Error: YUNXIAO_PAT environment variable is not set");
-    process.exit(1);
-  }
-  return createClientWithPat(pat);
-}
-
-export function getConfig() {
-  const pat = process.env.YUNXIAO_PAT;
-  const orgId = process.env.YUNXIAO_ORG_ID;
-  const projectId = process.env.YUNXIAO_PROJECT_ID;
-  if (!pat) { console.error("Error: YUNXIAO_PAT is not set"); process.exit(1); }
-  if (!orgId) { console.error("Error: YUNXIAO_ORG_ID is not set"); process.exit(1); }
-  return { pat, orgId, projectId };
-}
-
 // Projects
 export async function searchProjects(client, orgId, opts = {}) {
   const url = `/oapi/v1/projex/organizations/${orgId}/projects:search`;
