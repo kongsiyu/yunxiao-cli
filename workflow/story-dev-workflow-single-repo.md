@@ -8,47 +8,36 @@
 
 ## 启动确认
 
-工作流启动时，依次弹出两个确认框，用户回复后立即开始执行。
-
-### 第一步：可选步骤（多选）
-
-使用 `AskUserQuestion` 工具，**multiSelect: true**，询问：
+工作流启动时，使用 `AskUserQuestion` 工具发出**一次**调用，包含两个问题，用户一次回复后立即开始执行。
 
 ```
-question: "请选择需要执行的可选步骤？"
-header: "可选步骤"
-multiSelect: true
-options:
-  - label: "编译验证"
-    description: "编译项目，开发完成后验证编译通过"
-  - label: "单元测试"
-    description: "运行单元测试，确保所有测试通过"
-  - label: "代码审查"
-    description: "执行 bmad-code-review，审查代码质量，根据结果修复关键问题"
-  - label: "Worktree 模式"
-    description: "在本仓库中用 git worktree 创建隔离工作目录，支持多 Story 并行开发互不干扰"
-  - label: "以上均不需要"
-    description: "跳过所有可选步骤，直接按默认流程执行"
+questions:
+  - question: "请选择需要执行的可选步骤？"
+    header: "可选步骤"
+    multiSelect: true
+    options:
+      - label: "编译验证"
+        description: "编译项目，开发完成后验证编译通过"
+      - label: "单元测试"
+        description: "运行单元测试，确保所有测试通过"
+      - label: "代码审查"
+        description: "执行 bmad-code-review，审查代码质量，根据结果修复关键问题"
+      - label: "Worktree 模式"
+        description: "在本仓库中用 git worktree 创建隔离工作目录，支持多 Story 并行开发互不干扰"
+
+  - question: "请选择执行过程中的确认模式？"
+    header: "确认模式"
+    multiSelect: false
+    options:
+      - label: "AI 判断（推荐）"
+        description: "由 AI 根据步骤风险决定是否暂停确认"
+      - label: "全部确认"
+        description: "每个步骤完成后暂停，展示结果并等待确认后继续"
+      - label: "全部跳过"
+        description: "所有步骤自动执行，不暂停"
 ```
 
-用户选择"以上均不需要"或仅选该项 → 四项可选步骤均跳过。其余选项按选中状态生效。
-
-### 第二步：确认模式（单选）
-
-使用 `AskUserQuestion` 工具，**multiSelect: false**，询问：
-
-```
-question: "请选择执行过程中的确认模式？"
-header: "确认模式"
-multiSelect: false
-options:
-  - label: "AI 判断"
-    description: "由 AI 根据步骤风险决定是否暂停确认（推荐）"
-  - label: "全部确认"
-    description: "每个步骤完成后暂停，展示结果并等待确认后继续"
-  - label: "全部跳过"
-    description: "所有步骤自动执行，不暂停"
-```
+可选步骤：不选任何项 → 四项可选步骤均跳过；选中哪项则执行哪项。
 
 ### AI 判断规则
 

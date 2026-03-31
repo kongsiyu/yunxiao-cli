@@ -1,35 +1,7 @@
 ﻿// src/api.js - Yunxiao API client
 import axios from "axios";
-import { readFileSync, writeFileSync, mkdirSync, existsSync } from "fs";
-import { homedir } from "os";
-import { join } from "path";
 
 const API_BASE = "https://openapi-rdc.aliyuncs.com";
-
-const CONFIG_DIR = join(homedir(), ".yunxiao");
-const CONFIG_FILE = join(CONFIG_DIR, "config.json");
-
-// Config file helpers
-export function loadSavedConfig() {
-  try {
-    if (!existsSync(CONFIG_FILE)) return null;
-    const data = JSON.parse(readFileSync(CONFIG_FILE, "utf8"));
-    return data && data.pat ? data : null;
-  } catch {
-    return null;
-  }
-}
-
-export function saveConfig(config) {
-  mkdirSync(CONFIG_DIR, { recursive: true });
-  writeFileSync(CONFIG_FILE, JSON.stringify(config, null, 2), "utf8");
-}
-
-export function clearConfig() {
-  if (existsSync(CONFIG_FILE)) {
-    writeFileSync(CONFIG_FILE, "{}", "utf8");
-  }
-}
 
 export function createClientWithPat(pat) {
   return axios.create({

@@ -1,7 +1,8 @@
 // src/commands/auth.js - yunxiao auth login/status/logout
 import readline from "readline";
 import chalk from "chalk";
-import { createClientWithPat, loadSavedConfig, saveConfig, clearConfig } from "../api.js";
+import { createClientWithPat } from "../api.js";
+import { loadSavedConfig, saveConfig, clearConfig } from "../config.js";
 
 function prompt(question) {
   return new Promise((resolve) => {
@@ -106,7 +107,7 @@ export function registerAuthCommands(program) {
         }
 
         const config = {
-          pat: pat.trim(),
+          token: pat.trim(),
           userId: user.id,
           userName: user.name || null,
           orgId: selectedOrg.id,
@@ -131,11 +132,14 @@ export function registerAuthCommands(program) {
     .action(() => {
       const config = loadSavedConfig();
       console.log(chalk.bold("\nAuthentication Status:\n"));
-      if (!config || !config.pat) {
+      const token = config?.token || config?.pat;
+      if (!config || !token) {
         console.log("  " + chalk.yellow("Not authenticated"));
         console.log("  " + chalk.gray("Run: yunxiao auth login"));
       } else {
-        const maskedPat = config.pat.substring(0, 8) + "..." + config.pat.slice(-4);
+        const maskedPat = token.length > 12
+          ? token.substring(0, 8) + "..." + token.slice(-4)
+          : "****" + token.slice(-4);
         console.log("  " + chalk.gray("Status:  ") + chalk.green("Authenticated"));
         console.log("  " + chalk.gray("User:    ") + (config.userName || "-"));
         console.log("  " + chalk.gray("User ID: ") + (config.userId || "-"));
@@ -152,7 +156,7 @@ export function registerAuthCommands(program) {
     .description("Clear local authentication configuration")
     .action(() => {
       const config = loadSavedConfig();
-      if (!config || !config.pat) {
+      if (!config || !(config.token || config.pat)) {
         console.log(chalk.yellow("Not currently authenticated."));
         return;
       }
