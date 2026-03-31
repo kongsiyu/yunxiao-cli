@@ -1,5 +1,5 @@
 # generated: 2026-03-31
-# last_updated: 2026-03-31
+# last_updated: 2026-03-31 (fix: Story 2.8→2.1 reorder)
 # project: yunxiao-cli
 # project_key: NOKEY
 # tracking_system: file-system
@@ -55,14 +55,14 @@ development_status:
 
   # Epic 2: 工作项生命周期管理
   epic-2: backlog
-  2-1-wi-list: backlog
-  2-2-wi-view: backlog
-  2-3-wi-create: backlog
-  2-4-wi-update: backlog
-  2-5-wi-delete: backlog
-  2-6-wi-comment: backlog
-  2-7-wi-comments: backlog
-  2-8-serial-number-resolve: backlog
+  2-1-serial-number-resolve: backlog
+  2-2-wi-list: backlog
+  2-3-wi-view: backlog
+  2-4-wi-create: backlog
+  2-5-wi-update: backlog
+  2-6-wi-delete: backlog
+  2-7-wi-comment: backlog
+  2-8-wi-comments: backlog
   epic-2-retrospective: optional
 
   # Epic 3: 前置查询命令
