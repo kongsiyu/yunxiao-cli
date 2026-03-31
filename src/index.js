@@ -4,6 +4,7 @@ import { Command } from "commander";
 import chalk from "chalk";
 import { getCurrentUser, createClientWithPat } from "./api.js";
 import { loadConfig } from "./config.js";
+import { AppError, ERROR_CODE } from "./errors.js";
 import { registerProjectCommands } from "./commands/project.js";
 import { registerWorkitemCommands } from "./commands/workitem.js";
 import { registerAuthCommands } from "./commands/auth.js";
@@ -20,11 +21,13 @@ function withErrorHandling(fn) {
     try {
       await fn(...args);
     } catch (err) {
-      if (err.response) {
-        console.error(chalk.red("API Error:"), err.response.data?.errorMessage || err.response.statusText);
-        console.error(chalk.gray("Status: " + err.response.status));
+      if (err instanceof AppError) {
+        process.stderr.write(`Error [${err.code}]: ${err.message}\n`);
+      } else if (err.response) {
+        process.stderr.write(`API Error: ${err.response.data?.errorMessage || err.response.statusText}\n`);
+        process.stderr.write(`Status: ${err.response.status}\n`);
       } else {
-        console.error(chalk.red("Error:"), err.message);
+        process.stderr.write(`Error: ${err.message}\n`);
       }
       process.exit(1);
     }
@@ -83,6 +86,17 @@ program
 if (client && orgId) {
   registerProjectCommands(program, client, orgId, withErrorHandling);
   registerWorkitemCommands(program, client, orgId, projectId, withErrorHandling, currentUserId);
+} else {
+  const authRequiredAction = withErrorHandling(async () => {
+    throw new AppError(ERROR_CODE.AUTH_MISSING, 'Authentication required. Run: yunxiao auth login');
+  });
+  for (const name of ['project', 'workitem', 'sprint']) {
+    program
+      .command(`${name} [args...]`)
+      .allowUnknownOption(true)
+      .description(`Manage ${name}s (requires auth)`)
+      .action(authRequiredAction);
+  }
 }
 
 program.parse();
