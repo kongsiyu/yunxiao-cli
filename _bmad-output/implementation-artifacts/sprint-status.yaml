@@ -1,0 +1,111 @@
+# generated: 2026-03-31
+# last_updated: 2026-03-31
+# project: yunxiao-cli
+# project_key: NOKEY
+# tracking_system: file-system
+# story_location: yunxiao-cli/_bmad-output/implementation-artifacts
+
+# STATUS DEFINITIONS:
+# ==================
+# Epic Status:
+#   - backlog: Epic not yet started
+#   - in-progress: Epic actively being worked on
+#   - done: All stories in epic completed
+#
+# Epic Status Transitions:
+#   - backlog → in-progress: Automatically when first story is created (via create-story)
+#   - in-progress → done: Manually when all stories reach 'done' status
+#
+# Story Status:
+#   - backlog: Story only exists in epic file
+#   - ready-for-dev: Story file created in stories folder
+#   - in-progress: Developer actively working on implementation
+#   - review: Ready for code review (via Dev's code-review workflow)
+#   - done: Story completed
+#
+# Retrospective Status:
+#   - optional: Can be completed but not required
+#   - done: Retrospective has been completed
+#
+# WORKFLOW NOTES:
+# ===============
+# - Epic transitions to 'in-progress' automatically when first story is created
+# - Stories can be worked in parallel if team capacity allows
+# - SM typically creates next story after previous one is 'done' to incorporate learnings
+# - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
+
+generated: 2026-03-31
+last_updated: 2026-03-31
+project: yunxiao-cli
+project_key: NOKEY
+tracking_system: file-system
+story_location: yunxiao-cli/_bmad-output/implementation-artifacts
+
+development_status:
+  # Epic 1: 核心基础设施与认证
+  epic-1: backlog
+  1-1-cli-skeleton-refactor: backlog
+  1-2-config-module: backlog
+  1-3-output-module: backlog
+  1-4-errors-module: backlog
+  1-5-auth-commands: backlog
+  1-6-whoami-always-register: backlog
+  1-7-api-verification-spike: backlog
+  epic-1-retrospective: optional
+
+  # Epic 2: 工作项生命周期管理
+  epic-2: backlog
+  2-1-wi-list: backlog
+  2-2-wi-view: backlog
+  2-3-wi-create: backlog
+  2-4-wi-update: backlog
+  2-5-wi-delete: backlog
+  2-6-wi-comment: backlog
+  2-7-wi-comments: backlog
+  2-8-serial-number-resolve: backlog
+  epic-2-retrospective: optional
+
+  # Epic 3: 前置查询命令
+  epic-3: backlog
+  3-1-wi-types: backlog
+  3-2-status-list: backlog
+  3-3-user-list-search: backlog
+  3-4-project-list: backlog
+  epic-3-retrospective: optional
+
+  # Epic 4: Sprint 管理
+  epic-4: backlog
+  4-1-sprint-list: backlog
+  4-2-sprint-view: backlog
+  epic-4-retrospective: optional
+
+  # Epic 5: 流水线触发
+  epic-5: backlog
+  5-1-pipeline-list: backlog
+  5-2-pipeline-run: backlog
+  5-3-pipeline-status: backlog
+  epic-5-retrospective: optional
+
+  # Epic 6: 发布与分发
+  epic-6: backlog
+  6-1-npm-package-config: backlog
+  6-2-manual-publish-verification: backlog
+  6-3-github-actions-ci: backlog
+  6-4-github-actions-cd: backlog
+  epic-6-retrospective: optional
+
+  # Epic 7: 测试覆盖
+  epic-7: backlog
+  7-1-test-infrastructure: backlog
+  7-2-api-layer-tests: backlog
+  7-3-serial-number-tests: backlog
+  7-4-command-layer-tests: backlog
+  epic-7-retrospective: optional
+
+  # Epic 8: 文档
+  epic-8: backlog
+  8-1-readme-install-config: backlog
+  8-2-readme-command-reference: backlog
+  8-3-readme-workflow-examples: backlog
+  8-4-skill-file-optimization: backlog
+  epic-8-retrospective: optional
