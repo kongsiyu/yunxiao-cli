@@ -1,17 +1,39 @@
 {
-  "name": "yunxiao-cli",
+  "name": "@kongsiyu/yunxiao-cli",
   "version": "0.1.1",
   "description": "CLI for Aliyun Yunxiao DevOps platform",
   "type": "module",
   "bin": {
     "yunxiao": "./src/index.js"
   },
+  "files": [
+    "src/",
+    "README.md"
+  ],
   "scripts": {
     "lint": "node src/index.js --version",
     "test": "node --test test/*.test.js"
   },
-  "keywords": ["yunxiao", "aliyun", "devops", "cli"],
+  "keywords": [
+    "yunxiao",
+    "aliyun",
+    "devops",
+    "cli",
+    "yunxiao-cli"
+  ],
+  "author": "kongsiyu",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/kongsiyu/yunxiao-cli.git"
+  },
+  "homepage": "https://github.com/kongsiyu/yunxiao-cli#readme",
+  "bugs": {
+    "url": "https://github.com/kongsiyu/yunxiao-cli/issues"
+  },
+  "engines": {
+    "node": ">=18"
+  },
   "dependencies": {
     "axios": "^1.7.0",
     "chalk": "^5.3.0",
