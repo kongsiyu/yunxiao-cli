@@ -1,6 +1,7 @@
 // src/commands/sprint.js
 import chalk from "chalk";
-import { listSprints, getSprint, listSprintWorkitems } from "../api.js";
+import { listSprints } from "../api.js";
+import { printJson, printError } from "../output.js";
 
 function formatDate(ts) {
   if (!ts) return "-";
@@ -16,7 +17,7 @@ function statusColor(status) {
   return chalk.white(status);
 }
 
-export function registerSprintCommands(program, client, orgId, defaultProjectId, withErrorHandling) {
+export function registerSprintCommands(program, client, orgId, defaultProjectId, withErrorHandling, jsonMode) {
   const sp = program.command("sprint").description("Manage sprints/iterations");
 
   sp
@@ -29,7 +30,7 @@ export function registerSprintCommands(program, client, orgId, defaultProjectId,
     .action(withErrorHandling(async (opts) => {
       const spaceId = opts.project || defaultProjectId;
       if (!spaceId) {
-        console.error(chalk.red("Error: project ID required (--project or YUNXIAO_PROJECT_ID)"));
+        printError("INVALID_ARGS", "project ID required (--project or YUNXIAO_PROJECT_ID)", jsonMode);
         process.exit(1);
       }
       const sprints = await listSprints(client, orgId, spaceId, {
@@ -37,6 +38,10 @@ export function registerSprintCommands(program, client, orgId, defaultProjectId,
         page: parseInt(opts.page),
         perPage: parseInt(opts.limit),
       });
+      if (jsonMode) {
+        printJson({ sprints: sprints || [], total: (sprints || []).length });
+        return;
+      }
       if (!sprints || sprints.length === 0) {
         console.log(chalk.yellow("No sprints found"));
         return;
@@ -55,11 +60,27 @@ export function registerSprintCommands(program, client, orgId, defaultProjectId,
 
   sp
     .command("view <id>")
-    .description("View sprint details and work items")
+    .description("View sprint by ID (lists all sprints and filters by id)")
     .option("-p, --project <id>", "Project ID (default: YUNXIAO_PROJECT_ID)")
     .action(withErrorHandling(async (id, opts) => {
       const spaceId = opts.project || defaultProjectId;
-      const sprint = await getSprint(client, orgId, id);
+      if (!spaceId) {
+        printError("INVALID_ARGS", "project ID required (--project or YUNXIAO_PROJECT_ID)", jsonMode);
+        process.exit(1);
+      }
+      // Fetch all sprints and find by id since getSprint API is not yet available
+      const sprints = await listSprints(client, orgId, spaceId, { perPage: 100 });
+      const sprint = (sprints || []).find(s => s.id === id || s.id === parseInt(id, 10));
+      if (!sprint) {
+        printError("NOT_FOUND", `Sprint ${id} not found`, jsonMode);
+        process.exit(1);
+      }
+
+      if (jsonMode) {
+        printJson(sprint);
+        return;
+      }
+
       console.log(chalk.bold("\nSprint Details:\n"));
       console.log(`  ${chalk.gray("ID:")}      ${sprint.id}`);
       console.log(`  ${chalk.gray("Name:")}    ${sprint.name || "-"}`);
@@ -69,31 +90,6 @@ export function registerSprintCommands(program, client, orgId, defaultProjectId,
       console.log(`  ${chalk.gray("Period:")}  ${start} ~ ${end}`);
       if (sprint.goal) {
         console.log(`  ${chalk.gray("Goal:")}    ${sprint.goal}`);
-      }
-
-      // Fetch work items in this sprint
-      const projectId = spaceId || sprint.spaceId;
-      if (!projectId) {
-        console.log(chalk.yellow("\nNo project ID available to fetch work items."));
-        return;
-      }
-      let workitems;
-      try {
-        workitems = await listSprintWorkitems(client, orgId, id);
-      } catch {
-        // Some API versions may not support this endpoint
-        workitems = null;
-      }
-      if (!workitems || workitems.length === 0) {
-        console.log(chalk.gray("\nNo work items in this sprint."));
-        return;
-      }
-      console.log(chalk.bold(`\nWork Items (${workitems.length}):\n`));
-      for (const item of workitems) {
-        const sn = chalk.cyan((item.serialNumber || item.id?.slice(0, 8) || "-").padEnd(10));
-        const statusName = item.status?.displayName || item.status?.name || "-";
-        console.log(`${sn} ${chalk.white(item.subject || "-")}`);
-        console.log(`  ${chalk.gray("Status:")} ${statusName}  ${chalk.gray("Assignee:")} ${item.assignedTo?.name || "-"}`);
       }
     }));
 }

@@ -46,7 +46,7 @@ development_status:
   epic-1: in-progress
   1-1-cli-skeleton-refactor: done
   1-2-config-module: done
-  1-3-output-module: backlog
+  1-3-output-module: done
   1-4-errors-module: done
   1-5-auth-commands: backlog
   1-6-whoami-always-register: backlog

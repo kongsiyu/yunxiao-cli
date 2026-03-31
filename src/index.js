@@ -1,20 +1,26 @@
-﻿#!/usr/bin/env node
+#!/usr/bin/env node
 // src/index.js - yunxiao CLI entry point
 import { Command } from "commander";
 import chalk from "chalk";
 import { getCurrentUser, createClientWithPat } from "./api.js";
 import { loadConfig } from "./config.js";
 import { AppError, ERROR_CODE } from "./errors.js";
+import { printError } from "./output.js";
 import { registerProjectCommands } from "./commands/project.js";
 import { registerWorkitemCommands } from "./commands/workitem.js";
 import { registerAuthCommands } from "./commands/auth.js";
+import { registerSprintCommands } from "./commands/sprint.js";
 
 const program = new Command();
+
+// Detect --json mode before parse so withErrorHandling and command handlers can use it
+const jsonMode = process.argv.includes('--json');
 
 program
   .name("yunxiao")
   .description("CLI for Aliyun Yunxiao (云效) DevOps platform")
-  .version("0.1.1");
+  .version("0.1.1")
+  .option("--json", "Output results as JSON (pure JSON to stdout, no chalk)");
 
 function withErrorHandling(fn) {
   return async (...args) => {
@@ -22,12 +28,11 @@ function withErrorHandling(fn) {
       await fn(...args);
     } catch (err) {
       if (err instanceof AppError) {
-        process.stderr.write(`Error [${err.code}]: ${err.message}\n`);
+        printError(err.code, err.message, jsonMode);
       } else if (err.response) {
-        process.stderr.write(`API Error: ${err.response.data?.errorMessage || err.response.statusText}\n`);
-        process.stderr.write(`Status: ${err.response.status}\n`);
+        printError(ERROR_CODE.API_ERROR, err.response.data?.errorMessage || err.response.statusText, jsonMode);
       } else {
-        process.stderr.write(`Error: ${err.message}\n`);
+        printError(ERROR_CODE.API_ERROR, err.message, jsonMode);
       }
       process.exit(1);
     }
@@ -50,7 +55,7 @@ let projectId = config.projectId;
 // Create client if token is available
 if (token) {
   client = createClientWithPat(token);
-  
+
   async function initCurrentUser() {
     if (!currentUserId && client) {
       try {
@@ -84,8 +89,9 @@ program
   }));
 
 if (client && orgId) {
-  registerProjectCommands(program, client, orgId, withErrorHandling);
-  registerWorkitemCommands(program, client, orgId, projectId, withErrorHandling, currentUserId);
+  registerProjectCommands(program, client, orgId, withErrorHandling, jsonMode);
+  registerWorkitemCommands(program, client, orgId, projectId, withErrorHandling, currentUserId, jsonMode);
+  registerSprintCommands(program, client, orgId, projectId, withErrorHandling, jsonMode);
 } else {
   const authRequiredAction = withErrorHandling(async () => {
     throw new AppError(ERROR_CODE.AUTH_MISSING, 'Authentication required. Run: yunxiao auth login');

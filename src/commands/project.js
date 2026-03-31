@@ -1,13 +1,14 @@
-﻿// src/commands/project.js
+// src/commands/project.js
 import chalk from "chalk";
 import { searchProjects, getProject } from "../api.js";
+import { printJson } from "../output.js";
 
 function formatDate(ts) {
   if (!ts) return "-";
   return new Date(ts).toISOString().split("T")[0];
 }
 
-export function registerProjectCommands(program, client, orgId, withErrorHandling) {
+export function registerProjectCommands(program, client, orgId, withErrorHandling, jsonMode) {
   const proj = program.command("project").description("Manage Yunxiao projects");
 
   proj
@@ -22,6 +23,10 @@ export function registerProjectCommands(program, client, orgId, withErrorHandlin
         page: parseInt(opts.page),
         perPage: parseInt(opts.limit),
       });
+      if (jsonMode) {
+        printJson({ projects: projects || [], total: (projects || []).length });
+        return;
+      }
       if (!projects || projects.length === 0) {
         console.log(chalk.yellow("No projects found"));
         return;
@@ -38,6 +43,10 @@ export function registerProjectCommands(program, client, orgId, withErrorHandlin
     .description("View project details")
     .action(withErrorHandling(async (id) => {
       const p = await getProject(client, orgId, id);
+      if (jsonMode) {
+        printJson(p);
+        return;
+      }
       console.log(chalk.bold("\nProject Details:\n"));
       console.log(`  ${chalk.gray("Name:")}     ${p.name}`);
       console.log(`  ${chalk.gray("ID:")}       ${p.id}`);
