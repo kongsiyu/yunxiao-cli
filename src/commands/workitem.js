@@ -1,6 +1,7 @@
-﻿// src/commands/workitem.js
+// src/commands/workitem.js
 import chalk from "chalk";
-import { searchWorkitems, getWorkitem, createWorkitem, updateWorkitem, addComment, listComments, getWorkitemTypes, resolveWorkitemId } from "../api.js";
+import { searchWorkitems, getWorkitem, createWorkitem, updateWorkitem, deleteWorkitem, addComment, listComments, getWorkitemTypes, resolveWorkitemId } from "../api.js";
+import { printJson, printError } from "../output.js";
 
 function formatDate(ts) {
   if (!ts) return "-";
@@ -16,14 +17,14 @@ function statusColor(name) {
   return chalk.blue(name);
 }
 
-export function registerWorkitemCommands(program, client, orgId, defaultProjectId, withErrorHandling, currentUserId) {
+export function registerWorkitemCommands(program, client, orgId, defaultProjectId, withErrorHandling, currentUserId, jsonMode) {
   const wi = program.command("workitem").alias("wi").description("Manage work items");
 
   wi
     .command("list")
     .description("List work items with optional advanced filters")
     .option("-p, --project <id>", "Project ID (default: YUNXIAO_PROJECT_ID)")
-    .option("-c, --category <type>", "Category: Req, Task, Bug", "Req")
+    .option("-c, --category <type>", "Category: Req, Task, Bug (default: Req,Task,Bug)", "Req,Task,Bug")
     .option("-s, --status <id>", "Filter by status ID")
     .option("-a, --assigned-to <userId>", "Filter by assignee user ID")
     .option("-q, --query <keyword>", "Search by subject keyword")
@@ -39,7 +40,7 @@ export function registerWorkitemCommands(program, client, orgId, defaultProjectI
     .action(withErrorHandling(async (opts) => {
       const spaceId = opts.project || defaultProjectId;
       if (!spaceId) {
-        console.error(chalk.red("Error: project ID required (--project or YUNXIAO_PROJECT_ID)"));
+        printError("INVALID_ARGS", "project ID required (--project or YUNXIAO_PROJECT_ID)", jsonMode);
         process.exit(1);
       }
       const items = await searchWorkitems(client, orgId, spaceId, {
@@ -57,6 +58,10 @@ export function registerWorkitemCommands(program, client, orgId, defaultProjectI
         page: parseInt(opts.page),
         perPage: parseInt(opts.limit),
       });
+      if (jsonMode) {
+        printJson({ items: items || [], total: (items || []).length });
+        return;
+      }
       if (!items || items.length === 0) {
         console.log(chalk.yellow("No work items found"));
         return;
@@ -80,20 +85,26 @@ export function registerWorkitemCommands(program, client, orgId, defaultProjectI
       if (/^[A-Z]+-\d+$/i.test(id)) {
         const spaceId = opts.project || defaultProjectId;
         if (!spaceId) {
-          console.error(chalk.red("Error: project ID required for serial number lookup"));
+          printError("INVALID_ARGS", "project ID required for serial number lookup", jsonMode);
           process.exit(1);
         }
         // Search in specified category only
         const items = await searchWorkitems(client, orgId, spaceId, { category: opts.category, perPage: 100 });
         item = (items || []).find(i => i.serialNumber === id.toUpperCase());
         if (!item) {
-          console.error(chalk.red("Work item " + id + " not found in category " + opts.category));
-          console.error(chalk.gray("Try: yunxiao wi view " + id + " -c <category>"));
+          printError("NOT_FOUND", `Work item ${id} not found in category ${opts.category}`, jsonMode);
+          if (!jsonMode) {
+            process.stderr.write(chalk.gray("Try: yunxiao wi view " + id + " -c <category>") + '\n');
+          }
           process.exit(1);
         }
         item = await getWorkitem(client, orgId, item.id);
       } else {
         item = await getWorkitem(client, orgId, id);
+      }
+      if (jsonMode) {
+        printJson(item);
+        return;
       }
       console.log(chalk.bold("\nWork Item Details:\n"));
       console.log("  " + chalk.gray("Serial:     ") + (item.serialNumber || "-"));
@@ -101,7 +112,6 @@ export function registerWorkitemCommands(program, client, orgId, defaultProjectI
       console.log("  " + chalk.gray("Subject:    ") + item.subject);
       console.log("  " + chalk.gray("Status:     ") + statusColor(item.status?.displayName || item.status?.name));
       console.log("  " + chalk.gray("Type:       ") + (item.workitemType?.name || "-"));
-      // Priority from custom fields (API returns it in customFieldValues)
       const priorityField = item.customFieldValues?.find(f => f.fieldName === "优先级");
       const priority = priorityField?.values?.[0]?.displayValue || item.priority?.displayName || item.priority?.name || "-";
       console.log("  " + chalk.gray("Priority:   ") + priority);
@@ -135,16 +145,17 @@ export function registerWorkitemCommands(program, client, orgId, defaultProjectI
     .option("-d, --description <desc>", "Description")
     .option("--type-id <id>", "Work item type ID (auto-detected if not set)")
     .option("--assigned-to <userId>", "Assignee user ID (or set YUNXIAO_USER_ID)")
-    .option("--json <json>", "JSON string with additional fields (merged into request body)")
+    .option("--sprint <sprintId>", "Sprint ID to assign this work item to")
+    .option("--extra-json <json>", "JSON string with additional fields (merged into request body)")
     .action(withErrorHandling(async (opts) => {
       const spaceId = opts.project || defaultProjectId;
       if (!spaceId) {
-        console.error(chalk.red("Error: project ID required (--project or YUNXIAO_PROJECT_ID)"));
+        printError("INVALID_ARGS", "project ID required (--project or YUNXIAO_PROJECT_ID)", jsonMode);
         process.exit(1);
       }
       const assignedTo = opts.assignedTo || process.env.YUNXIAO_USER_ID || currentUserId;
       if (!assignedTo) {
-        console.error(chalk.red("Error: --assigned-to or YUNXIAO_USER_ID env var is required"));
+        printError("INVALID_ARGS", "--assigned-to or YUNXIAO_USER_ID env var is required", jsonMode);
         process.exit(1);
       }
       let typeId = opts.typeId;
@@ -152,18 +163,20 @@ export function registerWorkitemCommands(program, client, orgId, defaultProjectI
         const types = await getWorkitemTypes(client, orgId, spaceId, opts.category);
         const defaultType = types.find(t => t.defaultType) || types[0];
         if (!defaultType) {
-          console.error(chalk.red("No work item types found for category: " + opts.category));
+          printError("NOT_FOUND", `No work item types found for category: ${opts.category}`, jsonMode);
           process.exit(1);
         }
         typeId = defaultType.id;
-        console.log(chalk.gray("Using type: " + defaultType.name + " (" + typeId + ")"));
+        if (!jsonMode) {
+          console.log(chalk.gray("Using type: " + defaultType.name + " (" + typeId + ")"));
+        }
       }
       let jsonFields = {};
-      if (opts.json) {
+      if (opts.extraJson) {
         try {
-          jsonFields = JSON.parse(opts.json);
+          jsonFields = JSON.parse(opts.extraJson);
         } catch {
-          console.error(chalk.red("Error: --json value is not valid JSON"));
+          printError("INVALID_ARGS", "--extra-json value is not valid JSON", jsonMode);
           process.exit(1);
         }
       }
@@ -175,7 +188,12 @@ export function registerWorkitemCommands(program, client, orgId, defaultProjectI
         ...jsonFields,
       };
       if (opts.description) data.description = opts.description;
+      if (opts.sprint) data.sprintId = opts.sprint;
       const created = await createWorkitem(client, orgId, data);
+      if (jsonMode) {
+        printJson(created);
+        return;
+      }
       console.log(chalk.green("\n✓ Work item created!\n"));
       console.log("  " + chalk.gray("ID:      ") + created.id);
       console.log("  " + chalk.gray("Serial:  ") + (created.serialNumber || "(pending)"));
@@ -190,17 +208,18 @@ export function registerWorkitemCommands(program, client, orgId, defaultProjectI
     .option("-d, --description <desc>", "New description")
     .option("-s, --status <statusId>", "New status ID")
     .option("--assigned-to <userId>", "New assignee user ID")
-    .option("--json <json>", "JSON string with additional fields (merged into request body)")
+    .option("--sprint <sprintId>", "New sprint ID")
+    .option("--extra-json <json>", "JSON string with additional fields (merged into request body)")
     .action(withErrorHandling(async (id, opts) => {
       const spaceId = opts.project || defaultProjectId;
       const resolvedId = await resolveWorkitemId(client, orgId, spaceId, id);
-      
+
       let jsonFields = {};
-      if (opts.json) {
+      if (opts.extraJson) {
         try {
-          jsonFields = JSON.parse(opts.json);
+          jsonFields = JSON.parse(opts.extraJson);
         } catch {
-          console.error(chalk.red("Error: --json value is not valid JSON"));
+          printError("INVALID_ARGS", "--extra-json value is not valid JSON", jsonMode);
           process.exit(1);
         }
       }
@@ -209,11 +228,16 @@ export function registerWorkitemCommands(program, client, orgId, defaultProjectI
       if (opts.description) fields.description = opts.description;
       if (opts.status) fields.status = opts.status;
       if (opts.assignedTo) fields.assignedTo = opts.assignedTo;
+      if (opts.sprint) fields.sprintId = opts.sprint;
       if (Object.keys(fields).length === 0) {
-        console.error(chalk.yellow("No fields to update. Use --title, --description, --status, --assigned-to, or --json"));
+        printError("INVALID_ARGS", "No fields to update. Use --title, --description, --status, --assigned-to, --sprint, or --extra-json", jsonMode);
         process.exit(1);
       }
       await updateWorkitem(client, orgId, resolvedId, fields);
+      if (jsonMode) {
+        printJson({ success: true, id: resolvedId });
+        return;
+      }
       console.log(chalk.green("\n✓ Work item " + id + " updated!\n"));
     }));
 
@@ -225,6 +249,10 @@ export function registerWorkitemCommands(program, client, orgId, defaultProjectI
       const spaceId = opts.project || defaultProjectId;
       const resolvedId = await resolveWorkitemId(client, orgId, spaceId, id);
       const result = await addComment(client, orgId, resolvedId, content);
+      if (jsonMode) {
+        printJson({ success: true, id: result.id || result, workitemId: resolvedId });
+        return;
+      }
       console.log(chalk.green("\n✓ Comment added! (id: " + (result.id || result) + ")\n"));
     }));
 
@@ -241,6 +269,10 @@ export function registerWorkitemCommands(program, client, orgId, defaultProjectI
         page: parseInt(opts.page),
         perPage: parseInt(opts.limit),
       });
+      if (jsonMode) {
+        printJson({ comments: comments || [], total: (comments || []).length });
+        return;
+      }
       if (!comments || comments.length === 0) {
         console.log(chalk.yellow("No comments found"));
         return;
@@ -261,10 +293,14 @@ export function registerWorkitemCommands(program, client, orgId, defaultProjectI
     .action(withErrorHandling(async (opts) => {
       const spaceId = opts.project || defaultProjectId;
       if (!spaceId) {
-        console.error(chalk.red("Error: project ID required (--project or YUNXIAO_PROJECT_ID)"));
+        printError("INVALID_ARGS", "project ID required (--project or YUNXIAO_PROJECT_ID)", jsonMode);
         process.exit(1);
       }
       const types = await getWorkitemTypes(client, orgId, spaceId, opts.category);
+      if (jsonMode) {
+        printJson({ types: types || [], total: (types || []).length });
+        return;
+      }
       console.log(chalk.bold("\nWork item types (" + opts.category + "):\n"));
       for (const t of types) {
         const def = t.defaultType ? chalk.green(" [default]") : "";
@@ -280,8 +316,9 @@ export function registerWorkitemCommands(program, client, orgId, defaultProjectI
     .action(withErrorHandling(async (id, opts) => {
       const spaceId = opts.project || defaultProjectId;
       const resolvedId = await resolveWorkitemId(client, orgId, spaceId, id);
-      
-      if (!opts.force) {
+
+      // In --json mode, skip interactive prompt (machine callers must use --force)
+      if (!opts.force && !jsonMode) {
         const readline = await import("readline");
         const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
         const answer = await new Promise(resolve => rl.question(chalk.yellow("Are you sure you want to delete work item " + id + "? [y/N] "), resolve));
@@ -291,9 +328,12 @@ export function registerWorkitemCommands(program, client, orgId, defaultProjectI
           return;
         }
       }
-      
+
       await deleteWorkitem(client, orgId, resolvedId);
+      if (jsonMode) {
+        printJson({ success: true, id: resolvedId });
+        return;
+      }
       console.log(chalk.green("\n✓ Work item " + id + " deleted!\n"));
     }));
 }
-
