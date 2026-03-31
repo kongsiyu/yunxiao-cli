@@ -50,7 +50,7 @@ development_status:
   1-4-errors-module: done
   1-5-auth-commands: backlog
   1-6-whoami-always-register: backlog
-  1-7-api-verification-spike: backlog
+  1-7-api-verification-spike: ready-for-dev
   epic-1-retrospective: optional
 
   # Epic 2: 工作项生命周期管理
