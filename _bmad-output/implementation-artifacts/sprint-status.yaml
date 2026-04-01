@@ -74,9 +74,9 @@ development_status:
   epic-3-retrospective: optional
 
   # Epic 4: Sprint 管理
-  epic-4: backlog
+  epic-4: in-progress
   4-1-sprint-list: backlog
-  4-2-sprint-view: backlog
+  4-2-sprint-view: done
   epic-4-retrospective: optional
 
   # Epic 5: 流水线触发
