@@ -43,10 +43,18 @@ export function registerWorkitemCommands(program, client, orgId, defaultProjectI
         printError("INVALID_ARGS", "project ID required (--project or YUNXIAO_PROJECT_ID)", jsonMode);
         process.exit(1);
       }
-      const items = await searchWorkitems(client, orgId, spaceId, {
+      let assignedToId = opts.assignedTo;
+      if (assignedToId === 'me') {
+        if (!currentUserId) {
+          printError("INVALID_ARGS", "Cannot resolve 'me': current user ID unavailable", jsonMode);
+          process.exit(1);
+        }
+        assignedToId = currentUserId;
+      }
+      const { items, total } = await searchWorkitems(client, orgId, spaceId, {
         category: opts.category,
         status: opts.status,
-        assignedTo: opts.assignedTo,
+        assignedTo: assignedToId,
         subject: opts.query,
         sprint: opts.sprint,
         priority: opts.priority,
@@ -59,7 +67,7 @@ export function registerWorkitemCommands(program, client, orgId, defaultProjectI
         perPage: parseInt(opts.limit),
       });
       if (jsonMode) {
-        printJson({ items: items || [], total: (items || []).length });
+        printJson({ items: items || [], total });
         return;
       }
       if (!items || items.length === 0) {
