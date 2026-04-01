@@ -10,10 +10,10 @@ function formatDate(ts) {
 
 function statusColor(status) {
   if (!status) return chalk.gray("-");
-  const s = (status || "").toLowerCase();
-  if (s === "active") return chalk.green(status);
-  if (s === "future") return chalk.cyan(status);
-  if (s === "closed") return chalk.gray(status);
+  const s = (status || "").toUpperCase();
+  if (s === "DOING") return chalk.green(status);
+  if (s === "TODO") return chalk.cyan(status);
+  if (s === "ARCHIVED") return chalk.gray(status);
   return chalk.white(status);
 }
 
@@ -24,7 +24,7 @@ export function registerSprintCommands(program, client, orgId, defaultProjectId,
     .command("list")
     .description("List sprints")
     .option("-p, --project <id>", "Project ID (default: YUNXIAO_PROJECT_ID)")
-    .option("-s, --status <status>", "Filter by status: active, future, closed")
+    .option("-s, --status <status>", "Filter by status: TODO, DOING, ARCHIVED")
     .option("--page <n>", "Page number", "1")
     .option("--limit <n>", "Per page", "20")
     .action(withErrorHandling(async (opts) => {
