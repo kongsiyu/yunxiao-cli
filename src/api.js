@@ -1,5 +1,6 @@
 ﻿// src/api.js - Yunxiao API client
 import axios from "axios";
+import { AppError, ERROR_CODE } from "./errors.js";
 
 const API_BASE = "https://openapi-rdc.aliyuncs.com";
 
@@ -64,7 +65,7 @@ export async function searchWorkitems(client, orgId, spaceId, opts = {}) {
   }
   const body = {
     spaceId,
-    category: opts.category || "Req",
+    category: opts.category || "Req,Task,Bug",
     page: opts.page || 1,
     perPage: opts.perPage || 20,
     orderBy: opts.orderBy || "gmtCreate",
@@ -141,35 +142,27 @@ export async function getOrganizations(client) {
 }
 
 // ID Resolution
-// Supports: GJBL-1 (projectKey-number), UUID, or plain number
+// Supports: GJBL-1 (serialNumber format) or UUID
 export async function resolveWorkitemId(client, orgId, spaceId, identifier) {
   if (!identifier) return null;
-  
-  // Check if it's a short format like "GJBL-1"
-  const shortMatch = identifier.match(/^([A-Z]+)-(\d+)$/);
-  if (shortMatch) {
-    const [, projectKey, number] = shortMatch;
-    // Search for workitem with this number
-    const result = await searchWorkitems(client, orgId, spaceId, {
-      subject: number,
+
+  // Serial number format: e.g. GJBL-1 (letters-digits)
+  if (/^[A-Z]+-\d+$/i.test(identifier)) {
+    const serialNumber = identifier.toUpperCase();
+    const results = await searchWorkitems(client, orgId, spaceId, {
+      category: "Req,Task,Bug",
       page: 1,
-      perPage: 1
+      perPage: 50,
     });
-    if (result.data && result.data.length > 0) {
-      const wi = result.data[0];
-      // Verify it matches the project key
-      if (wi.projectKey === projectKey || wi.id) {
-        return wi.id;
-      }
+    const match = (results || []).find(
+      (i) => i.serialNumber?.toUpperCase() === serialNumber
+    );
+    if (!match) {
+      throw new AppError(ERROR_CODE.NOT_FOUND, `Workitem ${identifier} not found`);
     }
-    throw new Error(`Workitem ${identifier} not found`);
+    return match.id;
   }
-  
-  // If it's a plain number, treat as internal ID
-  if (/^\d+$/.test(identifier)) {
-    return identifier;
-  }
-  
+
   // Otherwise assume it's already a UUID
   return identifier;
 }
