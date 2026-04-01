@@ -128,6 +128,20 @@ export async function listSprints(client, orgId, projectId, opts = {}) {
   return res.data;
 }
 
+// Pipelines
+// Note: ListPipelines uses legacy path (/organization/ not /oapi/v1/flow/)
+// Pending verification with actual PAT credentials.
+export async function listPipelines(client, orgId, opts = {}) {
+  const url = `/organization/${orgId}/pipelines`;
+  const res = await client.get(url, {
+    params: {
+      maxResults: opts.maxResults || 20,
+      ...(opts.nextToken ? { nextToken: opts.nextToken } : {}),
+    },
+  });
+  return res.data;
+}
+
 // Platform
 export async function getCurrentUser(client) {
   const url = "/oapi/v1/platform/user";
