@@ -128,6 +128,12 @@ export async function listSprints(client, orgId, projectId, opts = {}) {
   return res.data;
 }
 
+export async function getSprintInfo(client, orgId, projectId, sprintId) {
+  const url = `/oapi/v1/projex/organizations/${orgId}/projects/${projectId}/sprints/${sprintId}`;
+  const res = await client.get(url);
+  return res.data;
+}
+
 // Platform
 export async function getCurrentUser(client) {
   const url = "/oapi/v1/platform/user";
