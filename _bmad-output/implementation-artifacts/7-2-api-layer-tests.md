@@ -1,6 +1,6 @@
 # Story 7.2：API 层测试
 
-Status: review
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
