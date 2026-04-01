@@ -135,6 +135,20 @@ export async function listSprints(client, orgId, projectId, opts = {}) {
   return res.data;
 }
 
+// Pipelines
+// Verified path: GET /oapi/v1/flow/organizations/{orgId}/pipelines
+// Returns array of { pipelineId, pipelineName, createTime, createAccountId }
+export async function listPipelines(client, orgId, opts = {}) {
+  const url = `/oapi/v1/flow/organizations/${orgId}/pipelines`;
+  const res = await client.get(url, {
+    params: {
+      maxResults: opts.maxResults || 20,
+      ...(opts.nextToken ? { nextToken: opts.nextToken } : {}),
+    },
+  });
+  return res.data;
+}
+
 // Platform
 export async function getCurrentUser(client) {
   const url = "/oapi/v1/platform/user";
