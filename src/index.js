@@ -30,7 +30,8 @@ function withErrorHandling(fn) {
       if (err instanceof AppError) {
         printError(err.code, err.message, jsonMode);
       } else if (err.response) {
-        printError(ERROR_CODE.API_ERROR, err.response.data?.errorMessage || err.response.statusText, jsonMode);
+        const code = err.response.status === 404 ? ERROR_CODE.NOT_FOUND : ERROR_CODE.API_ERROR;
+        printError(code, err.response.data?.errorMessage || err.response.statusText, jsonMode);
       } else {
         printError(ERROR_CODE.API_ERROR, err.message, jsonMode);
       }
