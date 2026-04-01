@@ -79,12 +79,13 @@ export function registerSprintCommands(program, client, orgId, defaultProjectId,
 
       const total = items.length;
 
-      // Determine "done" status using available fields (priority order)
+      // Determine "done" status: prefer nameEn, then name
       const done = items.filter(item => {
         const s = item.status;
         if (!s) return false;
         if (typeof s === 'object') {
           if (s.done === true) return true;
+          if (typeof s.nameEn === 'string' && /\bdone\b/i.test(s.nameEn)) return true;
           if (typeof s.stage === 'string' && s.stage.toUpperCase() === 'DONE') return true;
           if (typeof s.name === 'string' && /\bdone\b|完成/i.test(s.name)) return true;
         }
@@ -92,10 +93,10 @@ export function registerSprintCommands(program, client, orgId, defaultProjectId,
         return false;
       }).length;
 
-      // Count by category
+      // Count by workitemType.name (API returns name, not category)
       const byCategory = {};
       for (const item of items) {
-        const cat = item.workitemType?.category || item.category || 'Unknown';
+        const cat = item.workitemType?.name || item.category || 'Unknown';
         byCategory[cat] = (byCategory[cat] || 0) + 1;
       }
 
