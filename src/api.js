@@ -75,7 +75,14 @@ export async function searchWorkitems(client, orgId, spaceId, opts = {}) {
     body.conditions = JSON.stringify({ conditionGroups: [conditionGroups] });
   }
   const res = await client.post(url, body);
-  return res.data;
+  // Real API: res.data is an array, total in x-total header
+  // Some response formats: res.data is { data: [...], total: N }
+  const rawData = res.data;
+  const items = Array.isArray(rawData) ? rawData : (rawData?.data ?? []);
+  const total = parseInt(
+    res.headers?.['x-total'] ?? rawData?.total ?? items.length, 10
+  ) || 0;
+  return { items, total };
 }
 
 export async function getWorkitem(client, orgId, workitemId) {
@@ -121,9 +128,9 @@ export async function getWorkitemTypes(client, orgId, projectId, category = "Req
 
 // Sprints
 export async function listSprints(client, orgId, projectId, opts = {}) {
-  const url = `/oapi/v1/projex/organizations/${orgId}/sprints`;
+  const url = `/oapi/v1/projex/organizations/${orgId}/projects/${projectId}/sprints`;
   const res = await client.get(url, {
-    params: { spaceId: projectId, page: opts.page || 1, perPage: opts.perPage || 20, status: opts.status }
+    params: { page: opts.page || 1, perPage: opts.perPage || 20, status: opts.status }
   });
   return res.data;
 }
@@ -160,7 +167,7 @@ export async function resolveWorkitemId(client, orgId, spaceId, identifier) {
   // Serial number format: e.g. GJBL-1 (letters-digits)
   if (/^[A-Z]+-\d+$/i.test(identifier)) {
     const serialNumber = identifier.toUpperCase();
-    const results = await searchWorkitems(client, orgId, spaceId, {
+    const { items: results } = await searchWorkitems(client, orgId, spaceId, {
       category: "Req,Task,Bug",
       page: 1,
       perPage: 50,
