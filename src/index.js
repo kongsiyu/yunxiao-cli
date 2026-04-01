@@ -10,6 +10,8 @@ import { registerProjectCommands } from "./commands/project.js";
 import { registerWorkitemCommands } from "./commands/workitem.js";
 import { registerAuthCommands } from "./commands/auth.js";
 import { registerSprintCommands } from "./commands/sprint.js";
+import { registerPipelineCommands } from "./commands/pipeline.js";
+import { registerStatusCommands } from "./commands/status.js";
 import { registerQueryCommands } from "./commands/query.js";
 
 const program = new Command();
@@ -31,7 +33,8 @@ function withErrorHandling(fn) {
       if (err instanceof AppError) {
         printError(err.code, err.message, jsonMode);
       } else if (err.response) {
-        printError(ERROR_CODE.API_ERROR, err.response.data?.errorMessage || err.response.statusText, jsonMode);
+        const code = err.response.status === 404 ? ERROR_CODE.NOT_FOUND : ERROR_CODE.API_ERROR;
+        printError(code, err.response.data?.errorMessage || err.response.statusText, jsonMode);
       } else {
         printError(ERROR_CODE.API_ERROR, err.message, jsonMode);
       }
@@ -93,12 +96,15 @@ if (client && orgId) {
   registerProjectCommands(program, client, orgId, withErrorHandling, jsonMode);
   registerWorkitemCommands(program, client, orgId, projectId, withErrorHandling, currentUserId, jsonMode);
   registerSprintCommands(program, client, orgId, projectId, withErrorHandling, jsonMode);
+  registerPipelineCommands(program, client, orgId, withErrorHandling, jsonMode);
+  registerStatusCommands(program, client, orgId, projectId, withErrorHandling, jsonMode);
   registerQueryCommands(program, client, orgId, projectId, withErrorHandling, jsonMode);
 } else {
   const authRequiredAction = withErrorHandling(async () => {
     throw new AppError(ERROR_CODE.AUTH_MISSING, 'Authentication required. Run: yunxiao auth login');
   });
-  for (const name of ['project', 'workitem', 'sprint', 'user']) {
+
+  for (const name of ['project', 'workitem', 'sprint', 'pipeline', 'status', 'user']) {
     program
       .command(`${name} [args...]`)
       .allowUnknownOption(true)
