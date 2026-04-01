@@ -91,7 +91,7 @@ development_status:
   6-1-npm-package-config: done
   6-2-manual-publish-verification: backlog
   6-3-github-actions-ci: backlog
-  6-4-github-actions-cd: backlog
+  6-4-github-actions-cd: review
   epic-6-retrospective: optional
 
   # Epic 7: 测试覆盖
