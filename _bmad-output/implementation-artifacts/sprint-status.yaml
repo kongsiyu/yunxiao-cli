@@ -98,7 +98,7 @@ development_status:
   epic-7: in-progress
   7-1-test-infrastructure: done
   7-2-api-layer-tests: done
-  7-3-serial-number-tests: backlog
+  7-3-serial-number-tests: ready-for-dev
   7-4-command-layer-tests: backlog
   epic-7-retrospective: optional
 
