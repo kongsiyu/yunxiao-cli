@@ -90,7 +90,7 @@ development_status:
   epic-6: in-progress
   6-1-npm-package-config: done
   6-2-manual-publish-verification: backlog
-  6-3-github-actions-ci: backlog
+  6-3-github-actions-ci: done
   6-4-github-actions-cd: backlog
   epic-6-retrospective: optional
 
