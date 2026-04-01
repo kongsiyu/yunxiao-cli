@@ -141,6 +141,17 @@ export async function getOrganizations(client) {
   return res.data;
 }
 
+// Pipelines
+export async function createPipelineRun(client, orgId, pipelineId, opts = {}) {
+  const url = `/oapi/v1/flow/organizations/${orgId}/pipelines/${pipelineId}/runs`;
+  const body = {};
+  if (opts.params) {
+    body.params = typeof opts.params === "string" ? opts.params : JSON.stringify(opts.params);
+  }
+  const res = await client.post(url, body);
+  return res.data;
+}
+
 // ID Resolution
 // Supports: GJBL-1 (serialNumber format) or UUID
 export async function resolveWorkitemId(client, orgId, spaceId, identifier) {
