@@ -168,7 +168,6 @@ export async function getOrganizations(client) {
   return res.data;
 }
 
-// Pipelines
 export async function createPipelineRun(client, orgId, pipelineId, opts = {}) {
   const url = `/oapi/v1/flow/organizations/${orgId}/pipelines/${pipelineId}/runs`;
   const body = {};
@@ -176,6 +175,12 @@ export async function createPipelineRun(client, orgId, pipelineId, opts = {}) {
     body.params = typeof opts.params === "string" ? opts.params : JSON.stringify(opts.params);
   }
   const res = await client.post(url, body);
+  return res.data;
+}
+
+export async function getPipelineRun(client, orgId, pipelineId, runId) {
+  const url = `/oapi/v1/flow/organizations/${orgId}/pipelines/${pipelineId}/runs/${runId}`;
+  const res = await client.get(url);
   return res.data;
 }
 
