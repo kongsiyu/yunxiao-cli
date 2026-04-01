@@ -1,6 +1,6 @@
 # Story 6.3：GitHub Actions CI
 
-Status: in-progress
+Status: review
 
 ## Story
 
