@@ -121,9 +121,9 @@ export async function getWorkitemTypes(client, orgId, projectId, category = "Req
 
 // Sprints
 export async function listSprints(client, orgId, projectId, opts = {}) {
-  const url = `/oapi/v1/projex/organizations/${orgId}/sprints`;
+  const url = `/oapi/v1/projex/organizations/${orgId}/projects/${projectId}/sprints`;
   const res = await client.get(url, {
-    params: { spaceId: projectId, page: opts.page || 1, perPage: opts.perPage || 20, status: opts.status }
+    params: { page: opts.page || 1, perPage: opts.perPage || 20, status: opts.status }
   });
   return res.data;
 }
