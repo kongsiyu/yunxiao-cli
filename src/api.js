@@ -141,6 +141,13 @@ export async function getOrganizations(client) {
   return res.data;
 }
 
+// Pipeline
+export async function getPipelineRun(client, orgId, pipelineId, runId) {
+  const url = `/oapi/v1/flow/organizations/${orgId}/pipelines/${pipelineId}/runs/${runId}`;
+  const res = await client.get(url);
+  return res.data;
+}
+
 // ID Resolution
 // Supports: GJBL-1 (serialNumber format) or UUID
 export async function resolveWorkitemId(client, orgId, spaceId, identifier) {
