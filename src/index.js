@@ -11,6 +11,7 @@ import { registerWorkitemCommands } from "./commands/workitem.js";
 import { registerAuthCommands } from "./commands/auth.js";
 import { registerSprintCommands } from "./commands/sprint.js";
 import { registerPipelineCommands } from "./commands/pipeline.js";
+import { registerStatusCommands } from "./commands/status.js";
 
 const program = new Command();
 
@@ -95,11 +96,13 @@ if (client && orgId) {
   registerWorkitemCommands(program, client, orgId, projectId, withErrorHandling, currentUserId, jsonMode);
   registerSprintCommands(program, client, orgId, projectId, withErrorHandling, jsonMode);
   registerPipelineCommands(program, client, orgId, withErrorHandling, jsonMode);
+  registerStatusCommands(program, client, orgId, projectId, withErrorHandling, jsonMode);
 } else {
   const authRequiredAction = withErrorHandling(async () => {
     throw new AppError(ERROR_CODE.AUTH_MISSING, 'Authentication required. Run: yunxiao auth login');
   });
-  for (const name of ['project', 'workitem', 'sprint', 'pipeline']) {
+
+  for (const name of ['project', 'workitem', 'sprint', 'pipeline', 'status']) {
     program
       .command(`${name} [args...]`)
       .allowUnknownOption(true)

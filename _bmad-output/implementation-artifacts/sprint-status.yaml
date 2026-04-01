@@ -66,9 +66,9 @@ development_status:
   epic-2-retrospective: optional
 
   # Epic 3: 前置查询命令
-  epic-3: backlog
+  epic-3: in-progress
   3-1-wi-types: backlog
-  3-2-status-list: backlog
+  3-2-status-list: done
   3-3-user-list-search: backlog
   3-4-project-list: backlog
   epic-3-retrospective: optional
