@@ -24,7 +24,8 @@ export function registerProjectCommands(program, client, orgId, withErrorHandlin
         perPage: parseInt(opts.limit),
       });
       if (jsonMode) {
-        printJson({ projects: projects || [], total: (projects || []).length });
+        const mapped = (projects || []).map(p => ({ projectId: p.id, name: p.name }));
+        printJson({ projects: mapped, total: mapped.length });
         return;
       }
       if (!projects || projects.length === 0) {

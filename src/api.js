@@ -75,7 +75,14 @@ export async function searchWorkitems(client, orgId, spaceId, opts = {}) {
     body.conditions = JSON.stringify({ conditionGroups: [conditionGroups] });
   }
   const res = await client.post(url, body);
-  return res.data;
+  // Real API: res.data is an array, total in x-total header
+  // Some response formats: res.data is { data: [...], total: N }
+  const rawData = res.data;
+  const items = Array.isArray(rawData) ? rawData : (rawData?.data ?? []);
+  const total = parseInt(
+    res.headers?.['x-total'] ?? rawData?.total ?? items.length, 10
+  ) || 0;
+  return { items, total };
 }
 
 export async function getWorkitem(client, orgId, workitemId) {
@@ -120,12 +127,43 @@ export async function getWorkitemTypes(client, orgId, projectId, category = "Req
   return res.data;
 }
 
+export async function getWorkitemWorkflow(client, orgId, projectId, typeId) {
+  const url = `/oapi/v1/projex/organizations/${orgId}/projects/${projectId}/workitemTypes/${typeId}/workflows`;
+  const res = await client.get(url);
+  return res.data;
+}
+
 // Sprints
 export async function listSprints(client, orgId, projectId, opts = {}) {
-  const url = `/oapi/v1/projex/organizations/${orgId}/sprints`;
+  const url = `/oapi/v1/projex/organizations/${orgId}/projects/${projectId}/sprints`;
   const res = await client.get(url, {
-    params: { spaceId: projectId, page: opts.page || 1, perPage: opts.perPage || 20, status: opts.status }
+    params: { page: opts.page || 1, perPage: opts.perPage || 20, status: opts.status }
   });
+  return res.data;
+}
+
+// Pipelines
+// Verified path: GET /oapi/v1/flow/organizations/{orgId}/pipelines
+// Returns array of { pipelineId, pipelineName, createTime, createAccountId }
+export async function listPipelines(client, orgId, opts = {}) {
+  const url = `/oapi/v1/flow/organizations/${orgId}/pipelines`;
+  const res = await client.get(url, {
+    params: {
+      maxResults: opts.maxResults || 20,
+      ...(opts.nextToken ? { nextToken: opts.nextToken } : {}),
+    },
+  });
+  return res.data;
+}
+
+// Project Members
+export async function listProjectMembers(client, orgId, projectId, opts = {}) {
+  const url = `/oapi/v1/projex/organizations/${orgId}/projects/${projectId}/members`;
+  const params = {};
+  if (opts.name) params.name = opts.name;
+  if (opts.roleId) params.roleId = opts.roleId;
+  if (opts.perPage) params.perPage = opts.perPage;
+  const res = await client.get(url, { params });
   return res.data;
 }
 
@@ -142,6 +180,22 @@ export async function getOrganizations(client) {
   return res.data;
 }
 
+export async function createPipelineRun(client, orgId, pipelineId, opts = {}) {
+  const url = `/oapi/v1/flow/organizations/${orgId}/pipelines/${pipelineId}/runs`;
+  const body = {};
+  if (opts.params) {
+    body.params = typeof opts.params === "string" ? opts.params : JSON.stringify(opts.params);
+  }
+  const res = await client.post(url, body);
+  return res.data;
+}
+
+export async function getPipelineRun(client, orgId, pipelineId, runId) {
+  const url = `/oapi/v1/flow/organizations/${orgId}/pipelines/${pipelineId}/runs/${runId}`;
+  const res = await client.get(url);
+  return res.data;
+}
+
 // ID Resolution
 // Supports: GJBL-1 (serialNumber format) or UUID
 export async function resolveWorkitemId(client, orgId, spaceId, identifier) {
@@ -152,7 +206,7 @@ export async function resolveWorkitemId(client, orgId, spaceId, identifier) {
   // Serial number format: e.g. GJBL-1 (letters-digits)
   if (/^[A-Z]+-\d+$/i.test(identifier)) {
     const serialNumber = identifier.toUpperCase();
-    const results = await searchWorkitems(client, orgId, spaceId, {
+    const { items: results } = await searchWorkitems(client, orgId, spaceId, {
       category: "Req,Task,Bug",
       page: 1,
       perPage: 50,

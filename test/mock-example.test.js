@@ -46,8 +46,8 @@ describe('Strategy A: mock at client HTTP layer', () => {
     const result = await api.searchWorkitems(client, 'org1', 'space1', {});
 
     assert.equal(result.total, 1);
-    assert.equal(result.data[0].id, 'wi-1');
-    assert.equal(result.data[0].subject, 'Mocked item');
+    assert.equal(result.items[0].id, 'wi-1');
+    assert.equal(result.items[0].subject, 'Mocked item');
     // Verify mock was called
     assert.equal(client.post.mock.calls.length, 1);
   });
@@ -75,7 +75,7 @@ describe('Strategy A: mock at client HTTP layer', () => {
     const result = await api.listSprints(client, 'org1', 'proj1', {});
 
     assert.equal(result.total, 1);
-    assert.equal(result.data[0].name, 'Sprint 42');
+    assert.equal(result.data[0].name, 'Sprint 42');  // listSprints still returns res.data directly
   });
 
   test('client.post receives correct URL and body', async () => {
