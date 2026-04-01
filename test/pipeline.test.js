@@ -1,4 +1,5 @@
-// test/pipeline.test.js — pipeline status command tests
+// test/pipeline.test.js
+// Tests for pipeline API functions: listPipelines (5-1) and getPipelineRun (5-3)
 // Uses Strategy A: mock client.get at HTTP layer
 
 import { test, describe, afterEach, mock } from 'node:test';
@@ -6,9 +7,16 @@ import assert from 'node:assert/strict';
 import * as api from '../src/api.js';
 import { createMockClient } from './setup.js';
 
-// ---------------------------------------------------------------------------
-// Fixture helpers
-// ---------------------------------------------------------------------------
+// Actual API fields: pipelineId (number), pipelineName (string), createTime, createAccountId
+function makePipeline(overrides = {}) {
+  return {
+    pipelineId: 4001,
+    pipelineName: 'Test Pipeline',
+    createTime: 1700000000000,
+    createAccountId: 'user-001',
+    ...overrides,
+  };
+}
 
 function makePipelineRun(overrides = {}) {
   return {
@@ -23,7 +31,95 @@ function makePipelineRun(overrides = {}) {
 }
 
 // ---------------------------------------------------------------------------
-// API layer: getPipelineRun
+// listPipelines API
+// ---------------------------------------------------------------------------
+
+describe('listPipelines API', () => {
+  afterEach(() => {
+    mock.restoreAll();
+  });
+
+  test('calls URL containing orgId and pipelines', async () => {
+    const client = createMockClient();
+    mock.method(client, 'get', async () => ({ data: [] }));
+
+    await api.listPipelines(client, 'myOrg', {});
+
+    const call = client.get.mock.calls[0];
+    const url = call.arguments[0];
+    assert.ok(url.includes('myOrg'), 'URL should contain orgId');
+    assert.ok(url.includes('pipelines'), 'URL should contain pipelines');
+    assert.ok(url.includes('flow'), 'URL should use flow API path');
+  });
+
+  test('passes maxResults param (default 20)', async () => {
+    const client = createMockClient();
+    mock.method(client, 'get', async () => ({ data: [] }));
+
+    await api.listPipelines(client, 'org1', {});
+
+    const call = client.get.mock.calls[0];
+    const params = call.arguments[1]?.params;
+    assert.equal(params.maxResults, 20);
+  });
+
+  test('passes custom maxResults', async () => {
+    const client = createMockClient();
+    mock.method(client, 'get', async () => ({ data: [] }));
+
+    await api.listPipelines(client, 'org1', { maxResults: 5 });
+
+    const call = client.get.mock.calls[0];
+    const params = call.arguments[1]?.params;
+    assert.equal(params.maxResults, 5);
+  });
+
+  test('returns data from response with correct fields', async () => {
+    const fakePipeline = makePipeline({ pipelineId: 4001, pipelineName: 'Deploy Pipeline' });
+    const client = createMockClient();
+    mock.method(client, 'get', async () => ({ data: [fakePipeline] }));
+
+    const result = await api.listPipelines(client, 'org1', {});
+
+    assert.equal(result.length, 1);
+    assert.equal(result[0].pipelineId, 4001);
+    assert.equal(result[0].pipelineName, 'Deploy Pipeline');
+  });
+
+  test('returns empty array when no pipelines', async () => {
+    const client = createMockClient();
+    mock.method(client, 'get', async () => ({ data: [] }));
+
+    const result = await api.listPipelines(client, 'org1', {});
+
+    assert.deepEqual(result, []);
+  });
+
+  test('passes nextToken when provided', async () => {
+    const client = createMockClient();
+    mock.method(client, 'get', async () => ({ data: [] }));
+
+    await api.listPipelines(client, 'org1', { nextToken: 'token-xyz' });
+
+    const call = client.get.mock.calls[0];
+    const params = call.arguments[1]?.params;
+    assert.equal(params.nextToken, 'token-xyz');
+  });
+
+  test('does not include nextToken param when not provided', async () => {
+    const client = createMockClient();
+    mock.method(client, 'get', async () => ({ data: [] }));
+
+    await api.listPipelines(client, 'org1', {});
+
+    const call = client.get.mock.calls[0];
+    const params = call.arguments[1]?.params;
+    assert.ok(!('nextToken' in params), 'nextToken should not be in params');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// getPipelineRun API
 // ---------------------------------------------------------------------------
 
 describe('getPipelineRun API', () => {
@@ -95,11 +191,18 @@ describe('getPipelineRun API', () => {
 });
 
 // ---------------------------------------------------------------------------
-// makePipelineRun fixture helper tests
+// fixture helper tests
 // ---------------------------------------------------------------------------
 
-describe('makePipelineRun fixture', () => {
-  test('returns fixture with expected keys', () => {
+describe('pipeline fixtures', () => {
+  test('makePipeline returns fixture with expected keys', () => {
+    const p = makePipeline();
+    assert.ok('pipelineId' in p);
+    assert.ok('pipelineName' in p);
+    assert.ok('createTime' in p);
+  });
+
+  test('makePipelineRun returns fixture with expected keys', () => {
     const run = makePipelineRun();
     assert.ok('pipelineRunId' in run);
     assert.ok('pipelineId' in run);
@@ -109,7 +212,7 @@ describe('makePipelineRun fixture', () => {
     assert.ok('endTime' in run);
   });
 
-  test('respects overrides', () => {
+  test('makePipelineRun respects overrides', () => {
     const run = makePipelineRun({ status: 'RUNNING', pipelineRunId: 999 });
     assert.equal(run.status, 'RUNNING');
     assert.equal(run.pipelineRunId, 999);
