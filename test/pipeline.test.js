@@ -7,10 +7,13 @@ import assert from 'node:assert/strict';
 import * as api from '../src/api.js';
 import { createMockClient } from './setup.js';
 
+// Actual API fields: pipelineId (number), pipelineName (string), createTime, createAccountId
 function makePipeline(overrides = {}) {
   return {
-    pipelineId: 'pipe-001',
-    name: 'Test Pipeline',
+    pipelineId: 4001,
+    pipelineName: 'Test Pipeline',
+    createTime: 1700000000000,
+    createAccountId: 'user-001',
     ...overrides,
   };
 }
@@ -30,6 +33,7 @@ describe('listPipelines API', () => {
     const url = call.arguments[0];
     assert.ok(url.includes('myOrg'), 'URL should contain orgId');
     assert.ok(url.includes('pipelines'), 'URL should contain pipelines');
+    assert.ok(url.includes('flow'), 'URL should use flow API path');
   });
 
   test('passes maxResults param (default 20)', async () => {
@@ -54,16 +58,16 @@ describe('listPipelines API', () => {
     assert.equal(params.maxResults, 5);
   });
 
-  test('returns data from response', async () => {
-    const fakePipeline = makePipeline({ pipelineId: 'p-1', name: 'Deploy Pipeline' });
+  test('returns data from response with correct fields', async () => {
+    const fakePipeline = makePipeline({ pipelineId: 4001, pipelineName: 'Deploy Pipeline' });
     const client = createMockClient();
     mock.method(client, 'get', async () => ({ data: [fakePipeline] }));
 
     const result = await api.listPipelines(client, 'org1', {});
 
     assert.equal(result.length, 1);
-    assert.equal(result[0].pipelineId, 'p-1');
-    assert.equal(result[0].name, 'Deploy Pipeline');
+    assert.equal(result[0].pipelineId, 4001);
+    assert.equal(result[0].pipelineName, 'Deploy Pipeline');
   });
 
   test('returns empty array when no pipelines', async () => {

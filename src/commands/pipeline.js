@@ -16,19 +16,19 @@ export function registerPipelineCommands(program, client, orgId, withErrorHandli
         process.exit(1);
       }
       const result = await listPipelines(client, orgId, { maxResults: parseInt(opts.limit) });
-      const pipelines = Array.isArray(result) ? result : (result?.pipelines || []);
+      const pipelines = Array.isArray(result) ? result : [];
       if (jsonMode) {
         printJson({ pipelines, total: pipelines.length });
         return;
       }
-      if (!pipelines || pipelines.length === 0) {
+      if (pipelines.length === 0) {
         console.log(chalk.yellow("No pipelines found"));
         return;
       }
       console.log(chalk.bold(`\nFound ${pipelines.length} pipeline(s):\n`));
       for (const p of pipelines) {
-        const id = chalk.cyan(String(p.pipelineId || p.id || "-").padEnd(12));
-        const name = chalk.white(String(p.name || "-"));
+        const id = chalk.cyan(String(p.pipelineId || "-").padEnd(12));
+        const name = chalk.white(String(p.pipelineName || "-"));
         console.log(`${id} ${name}`);
       }
       console.log();

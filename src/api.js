@@ -136,10 +136,10 @@ export async function listSprints(client, orgId, projectId, opts = {}) {
 }
 
 // Pipelines
-// Note: ListPipelines uses legacy path (/organization/ not /oapi/v1/flow/)
-// Pending verification with actual PAT credentials.
+// Verified path: GET /oapi/v1/flow/organizations/{orgId}/pipelines
+// Returns array of { pipelineId, pipelineName, createTime, createAccountId }
 export async function listPipelines(client, orgId, opts = {}) {
-  const url = `/organization/${orgId}/pipelines`;
+  const url = `/oapi/v1/flow/organizations/${orgId}/pipelines`;
   const res = await client.get(url, {
     params: {
       maxResults: opts.maxResults || 20,
