@@ -50,7 +50,7 @@ export async function searchWorkitems(client, orgId, spaceId, opts = {}) {
     conditionGroups.push({ className: "string", fieldIdentifier: "subject", format: "input", operator: "CONTAINS", toValue: null, value: [opts.subject] });
   }
   if (opts.sprint) {
-    conditionGroups.push({ className: "sprint", fieldIdentifier: "iteration", format: "list", operator: "CONTAINS", toValue: null, value: [opts.sprint] });
+    conditionGroups.push({ className: "sprint", fieldIdentifier: "sprint", format: "list", operator: "CONTAINS", toValue: null, value: [opts.sprint] });
   }
   if (opts.priority) {
     conditionGroups.push({ className: "priority", fieldIdentifier: "priority", format: "list", operator: "CONTAINS", toValue: null, value: [opts.priority] });
