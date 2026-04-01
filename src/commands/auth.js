@@ -38,20 +38,38 @@ export function registerAuthCommands(program) {
   auth
     .command("login")
     .description("Authenticate with Yunxiao using a Personal Access Token")
-    .action(async () => {
+    .option("--token <token>", "Personal Access Token (non-interactive mode)")
+    .option("--org-id <orgId>", "Organization ID (non-interactive mode)")
+    .action(async (options) => {
       try {
+        // Non-interactive mode: both --token and --org-id provided
+        if (options.token && options.orgId) {
+          saveConfig({
+            token: options.token.trim(),
+            orgId: options.orgId.trim(),
+          });
+          console.log(chalk.green("✓ Login successful!"));
+          console.log(chalk.gray("  Config saved to ~/.yunxiao/config.json"));
+          console.log();
+          return;
+        }
+
+        // Interactive mode
         console.log(chalk.bold("\nYunxiao Authentication\n"));
         console.log(chalk.gray("Generate a PAT at: https://devops.aliyun.com/account/setting/tokens\n"));
 
-        const pat = await promptSecret("Enter your PAT: ");
-        if (!pat.trim()) {
-          console.error(chalk.red("PAT cannot be empty"));
-          process.exit(1);
+        let pat = options.token ? options.token.trim() : "";
+        if (!pat) {
+          pat = (await promptSecret("Enter your PAT: ")).trim();
+          if (!pat) {
+            console.error(chalk.red("PAT cannot be empty"));
+            process.exit(1);
+          }
         }
 
         // Verify PAT by fetching current user
         process.stdout.write(chalk.gray("\nVerifying PAT... "));
-        const client = createClientWithPat(pat.trim());
+        const client = createClientWithPat(pat);
         let user;
         try {
           const res = await client.get("/oapi/v1/platform/user");
@@ -69,51 +87,57 @@ export function registerAuthCommands(program) {
 
         console.log(chalk.green("✓") + " Authenticated as " + chalk.bold(user.name || user.id));
 
-        // Fetch organizations
-        process.stdout.write(chalk.gray("Fetching organizations... "));
-        let orgs;
-        try {
-          const res = await client.get("/oapi/v1/platform/organizations");
-          orgs = res.data;
-          console.log(chalk.green("✓"));
-        } catch (err) {
-          console.log(chalk.red("✗"));
-          console.error(chalk.red("Failed to fetch organizations:"), err.response?.data?.errorMessage || err.message);
-          process.exit(1);
-        }
-
-        if (!orgs || orgs.length === 0) {
-          console.error(chalk.red("No organizations found for this account."));
-          process.exit(1);
-        }
-
+        let orgId = options.orgId ? options.orgId.trim() : "";
         let selectedOrg;
-        if (orgs.length === 1) {
-          selectedOrg = orgs[0];
-          console.log(chalk.green("✓") + " Organization: " + chalk.bold(selectedOrg.name));
+
+        if (orgId) {
+          // org-id provided via flag; skip interactive org selection
+          selectedOrg = { id: orgId, name: null };
         } else {
-          console.log(chalk.bold("\nSelect an organization:\n"));
-          orgs.forEach((org, i) => {
-            console.log(`  ${chalk.cyan((i + 1) + ".")} ${org.name} ${chalk.gray("(" + org.id + ")")}`);
-          });
-          console.log();
-          const choice = await prompt("Enter number [1]: ");
-          const idx = choice.trim() === "" ? 0 : parseInt(choice.trim(), 10) - 1;
-          if (isNaN(idx) || idx < 0 || idx >= orgs.length) {
-            console.error(chalk.red("Invalid selection."));
+          // Fetch organizations interactively
+          process.stdout.write(chalk.gray("Fetching organizations... "));
+          let orgs;
+          try {
+            const res = await client.get("/oapi/v1/platform/organizations");
+            orgs = res.data;
+            console.log(chalk.green("✓"));
+          } catch (err) {
+            console.log(chalk.red("✗"));
+            console.error(chalk.red("Failed to fetch organizations:"), err.response?.data?.errorMessage || err.message);
             process.exit(1);
           }
-          selectedOrg = orgs[idx];
+
+          if (!orgs || orgs.length === 0) {
+            console.error(chalk.red("No organizations found for this account."));
+            process.exit(1);
+          }
+
+          if (orgs.length === 1) {
+            selectedOrg = orgs[0];
+            console.log(chalk.green("✓") + " Organization: " + chalk.bold(selectedOrg.name));
+          } else {
+            console.log(chalk.bold("\nSelect an organization:\n"));
+            orgs.forEach((org, i) => {
+              console.log(`  ${chalk.cyan((i + 1) + ".")} ${org.name} ${chalk.gray("(" + org.id + ")")}`);
+            });
+            console.log();
+            const choice = await prompt("Enter number [1]: ");
+            const idx = choice.trim() === "" ? 0 : parseInt(choice.trim(), 10) - 1;
+            if (isNaN(idx) || idx < 0 || idx >= orgs.length) {
+              console.error(chalk.red("Invalid selection."));
+              process.exit(1);
+            }
+            selectedOrg = orgs[idx];
+          }
         }
 
-        const config = {
-          token: pat.trim(),
+        saveConfig({
+          token: pat,
           userId: user.id,
           userName: user.name || null,
           orgId: selectedOrg.id,
           orgName: selectedOrg.name || null,
-        };
-        saveConfig(config);
+        });
 
         console.log();
         console.log(chalk.green("✓ Login successful!"));
@@ -137,9 +161,7 @@ export function registerAuthCommands(program) {
         console.log("  " + chalk.yellow("Not authenticated"));
         console.log("  " + chalk.gray("Run: yunxiao auth login"));
       } else {
-        const maskedPat = token.length > 12
-          ? token.substring(0, 8) + "..." + token.slice(-4)
-          : "****" + token.slice(-4);
+        const maskedPat = "*****" + token.slice(-4);
         console.log("  " + chalk.gray("Status:  ") + chalk.green("Authenticated"));
         console.log("  " + chalk.gray("User:    ") + (config.userName || "-"));
         console.log("  " + chalk.gray("User ID: ") + (config.userId || "-"));
