@@ -71,13 +71,12 @@ export function registerSprintCommands(program, client, orgId, defaultProjectId,
 
       // Both API calls must succeed; any failure propagates to withErrorHandling
       const sprint = await getSprintInfo(client, orgId, spaceId, id);
-      const workitems = await searchWorkitems(client, orgId, spaceId, {
+      const { items = [] } = await searchWorkitems(client, orgId, spaceId, {
         sprint: id,
         category: "Req,Task,Bug",
         perPage: 100,
       });
 
-      const items = workitems || [];
       const total = items.length;
 
       // Determine "done" status using available fields (priority order)
