@@ -128,8 +128,9 @@ export function registerWorkitemCommands(program, client, orgId, defaultProjectI
     .option("-p, --project <id>", "Project ID")
     .option("-c, --category <type>", "Category: Req, Task, Bug", "Req")
     .option("-d, --description <desc>", "Description")
-    .option("--type-id <id>", "Work item type ID (auto-detected if not set)")
-    .option("--assigned-to <userId>", "Assignee user ID (or set YUNXIAO_USER_ID)")
+    .option("--type <id>", "Work item type ID (auto-detected if not set)")
+    .option("--type-id <id>", "Work item type ID (alias for --type)")
+    .option("--assigned-to <userId>", "Assignee user ID (optional; defaults to current user if available)")
     .option("--sprint <sprintId>", "Sprint ID to assign this work item to")
     .option("--extra-json <json>", "JSON string with additional fields (merged into request body)")
     .action(withErrorHandling(async (opts) => {
@@ -139,11 +140,7 @@ export function registerWorkitemCommands(program, client, orgId, defaultProjectI
         process.exit(1);
       }
       const assignedTo = opts.assignedTo || process.env.YUNXIAO_USER_ID || currentUserId;
-      if (!assignedTo) {
-        printError("INVALID_ARGS", "--assigned-to or YUNXIAO_USER_ID env var is required", jsonMode);
-        process.exit(1);
-      }
-      let typeId = opts.typeId;
+      let typeId = opts.type || opts.typeId;
       if (!typeId) {
         const types = await getWorkitemTypes(client, orgId, spaceId, opts.category);
         const defaultType = types.find(t => t.defaultType) || types[0];
@@ -169,11 +166,11 @@ export function registerWorkitemCommands(program, client, orgId, defaultProjectI
         spaceId,
         subject: opts.title,
         workitemTypeId: typeId,
-        assignedTo,
         ...jsonFields,
       };
+      if (assignedTo) data.assignedTo = assignedTo;
       if (opts.description) data.description = opts.description;
-      if (opts.sprint) data.sprintId = opts.sprint;
+      if (opts.sprint) data.sprint = opts.sprint;
       const created = await createWorkitem(client, orgId, data);
       if (jsonMode) {
         printJson(created);
