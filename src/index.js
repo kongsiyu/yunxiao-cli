@@ -10,6 +10,7 @@ import { registerProjectCommands } from "./commands/project.js";
 import { registerWorkitemCommands } from "./commands/workitem.js";
 import { registerAuthCommands } from "./commands/auth.js";
 import { registerSprintCommands } from "./commands/sprint.js";
+import { registerStatusCommands } from "./commands/status.js";
 
 const program = new Command();
 
@@ -92,15 +93,22 @@ if (client && orgId) {
   registerProjectCommands(program, client, orgId, withErrorHandling, jsonMode);
   registerWorkitemCommands(program, client, orgId, projectId, withErrorHandling, currentUserId, jsonMode);
   registerSprintCommands(program, client, orgId, projectId, withErrorHandling, jsonMode);
+  registerStatusCommands(program, client, orgId, projectId, withErrorHandling, jsonMode);
 } else {
   const authRequiredAction = withErrorHandling(async () => {
     throw new AppError(ERROR_CODE.AUTH_MISSING, 'Authentication required. Run: yunxiao auth login');
   });
-  for (const name of ['project', 'workitem', 'sprint']) {
+  const authRequiredCommands = [
+    { name: 'project', desc: 'Manage projects (requires auth)' },
+    { name: 'workitem', desc: 'Manage workitems (requires auth)' },
+    { name: 'sprint', desc: 'Manage sprints (requires auth)' },
+    { name: 'status', desc: 'Query workflow statuses (requires auth)' },
+  ];
+  for (const { name, desc } of authRequiredCommands) {
     program
       .command(`${name} [args...]`)
       .allowUnknownOption(true)
-      .description(`Manage ${name}s (requires auth)`)
+      .description(desc)
       .action(authRequiredAction);
   }
 }

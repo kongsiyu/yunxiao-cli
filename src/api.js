@@ -119,6 +119,12 @@ export async function getWorkitemTypes(client, orgId, projectId, category = "Req
   return res.data;
 }
 
+export async function getWorkitemWorkflow(client, orgId, projectId, typeId) {
+  const url = `/oapi/v1/projex/organizations/${orgId}/projects/${projectId}/workitemTypes/${typeId}/workflows`;
+  const res = await client.get(url);
+  return res.data;
+}
+
 // Sprints
 export async function listSprints(client, orgId, projectId, opts = {}) {
   const url = `/oapi/v1/projex/organizations/${orgId}/sprints`;
