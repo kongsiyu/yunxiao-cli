@@ -155,6 +155,17 @@ export async function listPipelines(client, orgId, opts = {}) {
   return res.data;
 }
 
+// Project Members
+export async function listProjectMembers(client, orgId, projectId, opts = {}) {
+  const url = `/oapi/v1/projex/organizations/${orgId}/projects/${projectId}/members`;
+  const params = {};
+  if (opts.name) params.name = opts.name;
+  if (opts.roleId) params.roleId = opts.roleId;
+  if (opts.perPage) params.perPage = opts.perPage;
+  const res = await client.get(url, { params });
+  return res.data;
+}
+
 // Platform
 export async function getCurrentUser(client) {
   const url = "/oapi/v1/platform/user";
