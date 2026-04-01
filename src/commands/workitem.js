@@ -237,13 +237,18 @@ export function registerWorkitemCommands(program, client, orgId, defaultProjectI
     .option("-p, --project <id>", "Project ID (needed for serial number)")
     .action(withErrorHandling(async (id, content, opts) => {
       const spaceId = opts.project || defaultProjectId;
+      if (/^[A-Z]+-\d+$/i.test(id) && !spaceId) {
+        printError("INVALID_ARGS", "project ID required for serial number lookup", jsonMode);
+        process.exit(1);
+      }
       const resolvedId = await resolveWorkitemId(client, orgId, spaceId, id);
       const result = await addComment(client, orgId, resolvedId, content);
+      const commentId = result?.id ?? resolvedId;
       if (jsonMode) {
-        printJson({ success: true, id: result.id || result, workitemId: resolvedId });
+        printJson({ success: true, id: commentId, workitemId: resolvedId });
         return;
       }
-      console.log(chalk.green("\n✓ Comment added! (id: " + (result.id || result) + ")\n"));
+      console.log(chalk.green("\n✓ Comment added! (id: " + commentId + ")\n"));
     }));
 
   wi
