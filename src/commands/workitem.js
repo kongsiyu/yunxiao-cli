@@ -305,10 +305,17 @@ export function registerWorkitemCommands(program, client, orgId, defaultProjectI
     .option("-f, --force", "Skip confirmation prompt")
     .action(withErrorHandling(async (id, opts) => {
       const spaceId = opts.project || defaultProjectId;
+      if (/^[A-Z]+-\d+$/i.test(id) && !spaceId) {
+        printError("INVALID_ARGS", "project ID required for serial number lookup (--project or YUNXIAO_PROJECT_ID)", jsonMode);
+        process.exit(1);
+      }
       const resolvedId = await resolveWorkitemId(client, orgId, spaceId, id);
 
-      // In --json mode, skip interactive prompt (machine callers must use --force)
-      if (!opts.force && !jsonMode) {
+      if (!opts.force) {
+        if (jsonMode) {
+          printError("INVALID_ARGS", "use --force to delete without confirmation prompt in --json mode", jsonMode);
+          process.exit(1);
+        }
         const readline = await import("readline");
         const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
         const answer = await new Promise(resolve => rl.question(chalk.yellow("Are you sure you want to delete work item " + id + "? [y/N] "), resolve));
