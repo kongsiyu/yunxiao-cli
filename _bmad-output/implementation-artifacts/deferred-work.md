@@ -48,3 +48,9 @@
 - **测试复制了生产层解包逻辑**：`listComments 响应解包` describe 直接复现生产代码表达式而非端到端测试命令路径，属测试设计取舍。
 - **`process.exit(1)` 无 stdout flush**：同步退出可能截断缓冲输出；codebase 全局相同写法。
 - **AC2 exit-code-0 未显式测试**：空评论时的退出码未断言；`withErrorHandling` 保证正常路径 exit 0，pre-existing 测试惯例。
+
+## Deferred from: code review of 8-1-readme-install-config (2026-04-02)
+
+- `auth status` 和 `whoami` 命令区别未在 README 中说明（Story 8-2 命令参考章节可补充）
+- 非交互式 `auth login` 跳过 PAT 有效性验证（代码行为缺陷，需单独 Story 修复）
+- 传入部分 auth 标志（仅 `--token` 不带 `--org-id`）触发混合交互流程，行为未记录（代码行为，需 Story 处理）
