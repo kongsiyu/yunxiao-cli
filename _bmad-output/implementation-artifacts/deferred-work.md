@@ -38,3 +38,13 @@
 - **console.log 使用原始 id 而非 resolvedId**：非 JSON 路径 `"Work item " + id + " updated!"` 用序列号显示，多命令均有此问题，建议统一修复。
 - **TOCTOU race in getWorkitem**：更新后 GET 获取的数据可能非当前用户所为，在 CLI 低并发场景可接受，高并发场景需重新评估。
 - **defaultProjectId undefined 时序列号解析失败**：所有使用 resolveWorkitemId 的命令均有此问题，建议在 resolveWorkitemId 或上层统一校验。
+
+## Deferred from: code review of 2-8-wi-comments (2026-04-02)
+
+- **text 模式显示页内条数而非服务端 total**：非 JSON 模式打印 `comments.length + " comment(s)"` 为当前页条数，服务端 total 仅在 JSON 模式输出。与 wi list 等命令一致，pre-existing 设计。
+- **`parseInt` 无 radix**：`parseInt(opts.page)` / `parseInt(opts.limit)` 未传第二参数，codebase 全局相同写法。
+- **`parseInt` 接受非数字传 NaN**：非数字参数时 API 层 falsy fallback（`opts.page || 1`）会静默回退至第 1 页，无用户错误提示；pre-existing 全局模式。
+- **serial-number 守卫仅检查 falsy spaceId**：空字符串 env var 会被认为无 spaceId；与 wi view/wi delete 行为一致，属配置错误场景。
+- **测试复制了生产层解包逻辑**：`listComments 响应解包` describe 直接复现生产代码表达式而非端到端测试命令路径，属测试设计取舍。
+- **`process.exit(1)` 无 stdout flush**：同步退出可能截断缓冲输出；codebase 全局相同写法。
+- **AC2 exit-code-0 未显式测试**：空评论时的退出码未断言；`withErrorHandling` 保证正常路径 exit 0，pre-existing 测试惯例。
