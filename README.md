@@ -5,13 +5,21 @@
 ## 安装
 
 ```bash
-# 全局安装（npm link）
+npm install -g @kongsiyu/yunxiao-cli
+```
+
+或者使用 npx 无需安装：
+
+```bash
+npx @kongsiyu/yunxiao-cli --help
+```
+
+### 本地开发安装
+
+```bash
 cd yunxiao-cli
 npm install
 npm link
-
-# 或者直接运行
-node src/index.js [command]
 ```
 
 ## 环境变量配置
