@@ -1,6 +1,6 @@
 // src/commands/sprint.js
 import chalk from "chalk";
-import { listSprints } from "../api.js";
+import { listSprints, getSprintInfo, searchWorkitems } from "../api.js";
 import { printJson, printError } from "../output.js";
 
 function formatDate(ts) {
@@ -60,7 +60,7 @@ export function registerSprintCommands(program, client, orgId, defaultProjectId,
 
   sp
     .command("view <id>")
-    .description("View sprint by ID (lists all sprints and filters by id)")
+    .description("View sprint details including workitem completion statistics")
     .option("-p, --project <id>", "Project ID (default: YUNXIAO_PROJECT_ID)")
     .action(withErrorHandling(async (id, opts) => {
       const spaceId = opts.project || defaultProjectId;
@@ -68,16 +68,44 @@ export function registerSprintCommands(program, client, orgId, defaultProjectId,
         printError("INVALID_ARGS", "project ID required (--project or YUNXIAO_PROJECT_ID)", jsonMode);
         process.exit(1);
       }
-      // Fetch all sprints and find by id since getSprint API is not yet available
-      const sprints = await listSprints(client, orgId, spaceId, { perPage: 100 });
-      const sprint = (sprints || []).find(s => s.id === id || s.id === parseInt(id, 10));
-      if (!sprint) {
-        printError("NOT_FOUND", `Sprint ${id} not found`, jsonMode);
-        process.exit(1);
+
+      // Both API calls must succeed; any failure propagates to withErrorHandling
+      const sprint = await getSprintInfo(client, orgId, spaceId, id);
+      const { items = [] } = await searchWorkitems(client, orgId, spaceId, {
+        sprint: id,
+        category: "Req,Task,Bug",
+        perPage: 100,
+      });
+
+      const total = items.length;
+
+      // Determine "done" status: prefer nameEn, then name
+      const done = items.filter(item => {
+        const s = item.status;
+        if (!s) return false;
+        if (typeof s === 'object') {
+          if (s.done === true) return true;
+          if (typeof s.nameEn === 'string' && /\bdone\b/i.test(s.nameEn)) return true;
+          if (typeof s.stage === 'string' && s.stage.toUpperCase() === 'DONE') return true;
+          if (typeof s.name === 'string' && /\bdone\b|完成/i.test(s.name)) return true;
+        }
+        if (typeof s === 'string' && /\bdone\b|完成/i.test(s)) return true;
+        return false;
+      }).length;
+
+      // Count by workitemType.name (API returns name, not category)
+      const byCategory = {};
+      for (const item of items) {
+        const cat = item.workitemType?.name || item.category || 'Unknown';
+        byCategory[cat] = (byCategory[cat] || 0) + 1;
       }
 
+      // Note: perPage is capped at 100; flag if result may be truncated
+      const truncated = items.length === 100;
+      const stats = { total, done, byCategory, ...(truncated ? { note: 'showing first 100 items' } : {}) };
+
       if (jsonMode) {
-        printJson(sprint);
+        printJson({ sprint, stats });
         return;
       }
 
@@ -90,6 +118,19 @@ export function registerSprintCommands(program, client, orgId, defaultProjectId,
       console.log(`  ${chalk.gray("Period:")}  ${start} ~ ${end}`);
       if (sprint.goal) {
         console.log(`  ${chalk.gray("Goal:")}    ${sprint.goal}`);
+      }
+
+      console.log(chalk.bold("\nWorkitem Statistics:\n"));
+      if (truncated) {
+        console.log(chalk.yellow("  (showing first 100 items; sprint may have more)"));
+      }
+      console.log(`  ${chalk.gray("Total:")}     ${total}`);
+      console.log(`  ${chalk.gray("Done:")}      ${chalk.green(done)} / ${total}`);
+      if (Object.keys(byCategory).length > 0) {
+        console.log(`  ${chalk.gray("By Type:")}`);
+        for (const [cat, count] of Object.entries(byCategory)) {
+          console.log(`    ${chalk.cyan(cat.padEnd(10))} ${count}`);
+        }
       }
     }));
 }

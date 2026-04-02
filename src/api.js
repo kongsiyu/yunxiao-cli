@@ -50,7 +50,7 @@ export async function searchWorkitems(client, orgId, spaceId, opts = {}) {
     conditionGroups.push({ className: "string", fieldIdentifier: "subject", format: "input", operator: "CONTAINS", toValue: null, value: [opts.subject] });
   }
   if (opts.sprint) {
-    conditionGroups.push({ className: "sprint", fieldIdentifier: "iteration", format: "list", operator: "CONTAINS", toValue: null, value: [opts.sprint] });
+    conditionGroups.push({ className: "sprint", fieldIdentifier: "sprint", format: "list", operator: "CONTAINS", toValue: null, value: [opts.sprint] });
   }
   if (opts.priority) {
     conditionGroups.push({ className: "priority", fieldIdentifier: "priority", format: "list", operator: "CONTAINS", toValue: null, value: [opts.priority] });
@@ -139,6 +139,12 @@ export async function listSprints(client, orgId, projectId, opts = {}) {
   const res = await client.get(url, {
     params: { page: opts.page || 1, perPage: opts.perPage || 20, status: opts.status }
   });
+  return res.data;
+}
+
+export async function getSprintInfo(client, orgId, projectId, sprintId) {
+  const url = `/oapi/v1/projex/organizations/${orgId}/projects/${projectId}/sprints/${sprintId}`;
+  const res = await client.get(url);
   return res.data;
 }
 
