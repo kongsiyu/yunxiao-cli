@@ -2,6 +2,7 @@
 import chalk from "chalk";
 import { listPipelines, createPipelineRun, getPipelineRun } from "../api.js";
 import { printJson, printError } from "../output.js";
+import { AppError, ERROR_CODE } from "../errors.js";
 
 function formatTime(ts) {
   if (!ts) return "-";
@@ -25,10 +26,7 @@ export function registerPipelineCommands(program, client, orgId, withErrorHandli
     .description("List pipelines")
     .option("--limit <n>", "Max results", "20")
     .action(withErrorHandling(async (opts) => {
-      if (!orgId) {
-        printError("INVALID_ARGS", "org ID required (YUNXIAO_ORG_ID)", jsonMode);
-        process.exit(1);
-      }
+      if (!client || !orgId) throw new AppError(ERROR_CODE.AUTH_MISSING, 'Authentication required. Run: yunxiao auth login');
       const result = await listPipelines(client, orgId, { maxResults: parseInt(opts.limit) });
       const pipelines = Array.isArray(result) ? result : [];
       if (jsonMode) {
@@ -53,6 +51,7 @@ export function registerPipelineCommands(program, client, orgId, withErrorHandli
     .description("Trigger a pipeline run")
     .option("--params <json>", "Optional params JSON string (e.g. '{\"branch\":\"main\"}')")
     .action(withErrorHandling(async (pipelineId, opts) => {
+      if (!client || !orgId) throw new AppError(ERROR_CODE.AUTH_MISSING, 'Authentication required. Run: yunxiao auth login');
       const result = await createPipelineRun(client, orgId, pipelineId, {
         params: opts.params,
       });
@@ -71,6 +70,7 @@ export function registerPipelineCommands(program, client, orgId, withErrorHandli
     .description("Get the status of a pipeline run")
     .option("-p, --pipeline <id>", "Pipeline ID (default: YUNXIAO_PIPELINE_ID)")
     .action(withErrorHandling(async (runId, opts) => {
+      if (!client || !orgId) throw new AppError(ERROR_CODE.AUTH_MISSING, 'Authentication required. Run: yunxiao auth login');
       const pipelineId = opts.pipeline || process.env.YUNXIAO_PIPELINE_ID;
       if (!pipelineId) {
         printError("INVALID_ARGS", "pipeline ID required (--pipeline or YUNXIAO_PIPELINE_ID)", jsonMode);

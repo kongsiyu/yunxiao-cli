@@ -2,6 +2,7 @@
 import chalk from "chalk";
 import { getWorkitemTypes, getWorkitemWorkflow } from "../api.js";
 import { printJson, printError } from "../output.js";
+import { AppError, ERROR_CODE } from "../errors.js";
 
 export function registerStatusCommands(program, client, orgId, defaultProjectId, withErrorHandling, jsonMode) {
   const statusCmd = program.command("status").description("Query workflow statuses");
@@ -13,6 +14,7 @@ export function registerStatusCommands(program, client, orgId, defaultProjectId,
     .option("--type-id <id>", "Workitem type ID (direct mode)")
     .option("-c, --category <type>", "Category shortcut: Req, Task, Bug (auto-queries typeId)")
     .action(withErrorHandling(async (opts) => {
+      if (!client || !orgId) throw new AppError(ERROR_CODE.AUTH_MISSING, 'Authentication required. Run: yunxiao auth login');
       const spaceId = opts.project || defaultProjectId;
       if (!spaceId) {
         printError("INVALID_ARGS", "project ID required (--project or YUNXIAO_PROJECT_ID)", jsonMode);

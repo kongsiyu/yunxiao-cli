@@ -2,6 +2,7 @@
 import chalk from "chalk";
 import { listSprints, getSprintInfo, searchWorkitems } from "../api.js";
 import { printJson, printError } from "../output.js";
+import { AppError, ERROR_CODE } from "../errors.js";
 
 function formatDate(ts) {
   if (!ts) return "-";
@@ -28,6 +29,7 @@ export function registerSprintCommands(program, client, orgId, defaultProjectId,
     .option("--page <n>", "Page number", "1")
     .option("--limit <n>", "Per page", "20")
     .action(withErrorHandling(async (opts) => {
+      if (!client || !orgId) throw new AppError(ERROR_CODE.AUTH_MISSING, 'Authentication required. Run: yunxiao auth login');
       const spaceId = opts.project || defaultProjectId;
       if (!spaceId) {
         printError("INVALID_ARGS", "project ID required (--project or YUNXIAO_PROJECT_ID)", jsonMode);
@@ -63,6 +65,7 @@ export function registerSprintCommands(program, client, orgId, defaultProjectId,
     .description("View sprint details including workitem completion statistics")
     .option("-p, --project <id>", "Project ID (default: YUNXIAO_PROJECT_ID)")
     .action(withErrorHandling(async (id, opts) => {
+      if (!client || !orgId) throw new AppError(ERROR_CODE.AUTH_MISSING, 'Authentication required. Run: yunxiao auth login');
       const spaceId = opts.project || defaultProjectId;
       if (!spaceId) {
         printError("INVALID_ARGS", "project ID required (--project or YUNXIAO_PROJECT_ID)", jsonMode);
