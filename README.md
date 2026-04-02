@@ -1,6 +1,10 @@
-﻿# yunxiao CLI
+# yunxiao CLI
 
 阿里云云效（Yunxiao）DevOps 平台命令行工具，风格参考 `gh`。
+
+## 前提要求
+
+- Node.js >= 18
 
 ## 安装
 
@@ -22,16 +26,87 @@ npm install
 npm link
 ```
 
-## 环境变量配置
+安装后验证：
+
+```bash
+yunxiao --version
+yunxiao --help
+```
+
+## 配置
+
+### 方式一：环境变量（推荐用于 CI/生产环境）
+
+在 shell 配置文件（如 `~/.bashrc`、`~/.zshrc`）中设置：
+
+```bash
+export YUNXIAO_PAT=your_personal_access_token
+export YUNXIAO_ORG_ID=your_organization_id
+export YUNXIAO_PROJECT_ID=your_default_project_id  # 可选，workitem/sprint 命令默认使用
+```
+
+Windows（PowerShell）：
+
+```powershell
+$env:YUNXIAO_PAT = "your_personal_access_token"
+$env:YUNXIAO_ORG_ID = "your_organization_id"
+$env:YUNXIAO_PROJECT_ID = "your_default_project_id"
+```
 
 | 变量名 | 必填 | 说明 |
 |-------|------|------|
 | `YUNXIAO_PAT` | ✅ | 云效个人访问令牌（Personal Access Token）|
 | `YUNXIAO_ORG_ID` | ✅ | 组织 ID |
-| `YUNXIAO_PROJECT_ID` | 可选 | 默认项目 ID（workitem 命令默认使用）|
-| `YUNXIAO_USER_ID` | 可选 | 当前用户 ID（create 时作为默认 assignedTo）|
+| `YUNXIAO_PROJECT_ID` | 可选 | 默认项目 ID（workitem/sprint 命令默认使用）|
 
-> 如何获取 PAT：https://help.aliyun.com/zh/yunxiao/developer-reference/obtain-personal-access-token
+> 如何获取 PAT：https://devops.aliyun.com/account/setting/tokens
+
+> **注意**：如果本地存在 `~/.yunxiao/config.json`（通过 `yunxiao auth login` 创建），config 文件的优先级高于环境变量。在 CI 环境中若希望完全依赖环境变量，请先运行 `yunxiao auth logout` 删除本地 config 文件。
+
+### 方式二：交互式登录（推荐用于本地开发）
+
+```bash
+yunxiao auth login
+```
+
+工具会引导完成：
+1. 输入 PAT（隐藏输入）
+2. 自动验证 PAT 有效性
+3. 选择组织
+4. 将配置保存到 `~/.yunxiao/config.json`（Windows：`%USERPROFILE%\.yunxiao\config.json`）
+
+验证登录状态：
+
+```bash
+yunxiao auth status
+yunxiao whoami
+```
+
+退出登录：
+
+```bash
+yunxiao auth logout
+```
+
+> **安全警告**：`~/.yunxiao/config.json` 以**明文**存储 PAT，文件权限限制为仅当前用户可读（`0600`）。在共享主机或 CI 环境中，建议使用环境变量方式，避免 token 意外泄露。
+
+### 方式三：非交互式登录（适用于 CI 初始化）
+
+```bash
+yunxiao auth login --token <PAT> --org-id <orgId>
+```
+
+### 配置优先级
+
+当多种配置方式同时存在时，优先级从高到低：
+
+```
+Config 文件（~/.yunxiao/config.json，通过 auth login 写入）
+    ↓
+环境变量（YUNXIAO_PAT、YUNXIAO_ORG_ID）
+```
+
+> `auth login` 命令支持 `--token`、`--org-id` 标志用于非交互式写入 config 文件。这些标志是 `auth login` 专属，不适用于其他命令。
 
 ## 命令参考
 
@@ -667,29 +742,49 @@ yunxiao wi update GJBL-43 --status status-uuid-005 --project proj123
 # ✓ Work item GJBL-43 updated!
 ```
 
-## API 说明（已验证）
+### Sprint 管理
 
-基础 URL：`https://openapi-rdc.aliyuncs.com`
+```bash
+# 列出迭代
+yunxiao sprint list
+yunxiao sprint list --status Active
 
-| 接口 | Method | Path |
-|------|--------|------|
-| 搜索项目 | POST | `/oapi/v1/projex/organizations/{orgId}/projects:search` |
-| 获取项目 | GET | `/oapi/v1/projex/organizations/{orgId}/projects/{id}` |
-| 搜索工作项 | POST | `/oapi/v1/projex/organizations/{orgId}/workitems:search` |
-| 获取工作项 | GET | `/oapi/v1/projex/organizations/{orgId}/workitems/{id}` |
-| 创建工作项 | POST | `/oapi/v1/projex/organizations/{orgId}/workitems` |
-| 更新工作项 | PUT | `/oapi/v1/projex/organizations/{orgId}/workitems/{id}` |
-| 添加评论 | POST | `/oapi/v1/projex/organizations/{orgId}/workitems/{id}/comments` |
-| 列出评论 | GET | `/oapi/v1/projex/organizations/{orgId}/workitems/{id}/comments` |
-| 工作项类型 | GET | `/oapi/v1/projex/organizations/{orgId}/projects/{id}/workitemTypes?category=Req` |
-| 获取当前用户 | GET | `/oapi/v1/platform/user` （需要 platform scope 权限）|
+# 查看迭代详情
+yunxiao sprint view <sprintId>
+```
 
-### 注意事项
+### 流水线
 
-- 评论内容不支持 emoji 表情符号
-- 创建工作项必须提供 `assignedTo`（用户 ID）
-- 搜索工作项时 `category` 必填（Req/Task/Bug）
-- workitem types 的 `category` 参数必填
+```bash
+# 列出流水线
+yunxiao pipeline list
+
+# 触发流水线
+yunxiao pipeline run <pipelineId>
+
+# 查看流水线状态
+yunxiao pipeline status <pipelineId>
+```
+
+### 前置查询
+
+```bash
+# 查询工作项状态列表
+yunxiao status list
+
+# 搜索用户
+yunxiao user search --name "张三"
+yunxiao user list
+```
+
+### JSON 输出
+
+所有 `list`/`view` 命令支持 `--json` 标志，输出纯 JSON，便于脚本处理：
+
+```bash
+yunxiao wi list --json
+yunxiao sprint view <id> --json
+```
 
 ## 版本历史
 
@@ -698,36 +793,4 @@ yunxiao wi update GJBL-43 --status status-uuid-005 --project proj123
 
 ---
 
-## 开发计划
-
-### T0: 基础设施
-
-| Issue | 任务 | 状态 |
-|-------|------|------|
-| [#3](https://github.com/kongsiyu/yunxiao-cli/issues/3) | 配置 GitHub Actions CI | ✅ 完成 |
-
-### T1: 核心功能（第 1-2 周）
-
-| Issue | 任务 | 状态 |
-|-------|------|------|
-| [#1](https://github.com/kongsiyu/yunxiao-cli/issues/1) | 交互式认证和组织选择 | ✅ 完成 |
-| [#3](https://github.com/kongsiyu/yunxiao-cli/issues/3) | 配置 GitHub Actions CI | ✅ 完成 |
-| [#4](https://github.com/kongsiyu/yunxiao-cli/issues/4) | 完善工作项详情显示 | ✅ 完成 |
-| [#5](https://github.com/kongsiyu/yunxiao-cli/issues/5) | 支持灵活的工作项 ID 解析 | ✅ 完成 |
-| [#6](https://github.com/kongsiyu/yunxiao-cli/issues/6) | 添加 JSON 格式输入支持 | ✅ 完成 |
-| [#7](https://github.com/kongsiyu/yunxiao-cli/issues/7) | 迭代/ Sprint 管理命令 | ✅ 完成 |
-| [#8](https://github.com/kongsiyu/yunxiao-cli/issues/8) | 用户搜索和列表命令 | ✅ 完成 |
-| [#9](https://github.com/kongsiyu/yunxiao-cli/issues/9) | 状态列表命令 | ✅ 完成 |
-
-### T2: 扩展功能（第 3-4 周）
-
-| Issue | 任务 | 状态 |
-|-------|------|------|
-| [#10](https://github.com/kongsiyu/yunxiao-cli/issues/10) | 工作项删除和关联命令 | ✅ 完成 |
-| [#11](https://github.com/kongsiyu/yunxiao-cli/issues/11) | 评论编辑/删除命令 | ✅ 完成 |
-| [#12](https://github.com/kongsiyu/yunxiao-cli/issues/12) | 附件管理命令 | ✅ 完成 |
-| [#13](https://github.com/kongsiyu/yunxiao-cli/issues/13) | 高级搜索和保存查询 | ✅ 完成 |
-
----
-
-> 💡 查看所有 Issue：https://github.com/kongsiyu/yunxiao-cli/issues
+> 查看所有 Issue：https://github.com/kongsiyu/yunxiao-cli/issues

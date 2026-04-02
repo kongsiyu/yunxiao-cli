@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-03-31
-last_updated: 2026-04-02  # story 6-2 done
+last_updated: 2026-04-02  # story 8-1 done
 project: yunxiao-cli
 project_key: NOKEY
 tracking_system: file-system
@@ -104,7 +104,7 @@ development_status:
 
   # Epic 8: 文档
   epic-8: in-progress
-  8-1-readme-install-config: backlog
+  8-1-readme-install-config: done
   8-2-readme-command-reference: done
   8-3-readme-workflow-examples: backlog
   8-4-skill-file-optimization: done
