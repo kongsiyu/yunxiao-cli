@@ -223,14 +223,15 @@ export function registerWorkitemCommands(program, client, orgId, defaultProjectI
       if (opts.description) fields.description = opts.description;
       if (opts.status) fields.status = opts.status;
       if (opts.assignedTo) fields.assignedTo = opts.assignedTo;
-      if (opts.sprint) fields.sprintId = opts.sprint;
+      if (opts.sprint) fields.sprint = opts.sprint;
       if (Object.keys(fields).length === 0) {
         printError("INVALID_ARGS", "No fields to update. Use --title, --description, --status, --assigned-to, --sprint, or --extra-json", jsonMode);
         process.exit(1);
       }
       await updateWorkitem(client, orgId, resolvedId, fields);
       if (jsonMode) {
-        printJson({ success: true, id: resolvedId });
+        const updated = await getWorkitem(client, orgId, resolvedId);
+        printJson(updated);
         return;
       }
       console.log(chalk.green("\n✓ Work item " + id + " updated!\n"));
