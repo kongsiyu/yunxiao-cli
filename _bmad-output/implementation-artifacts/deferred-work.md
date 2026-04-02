@@ -1,5 +1,13 @@
 # Deferred Work
 
+## Deferred from: code review of 8-3-readme-workflow-examples (2026-04-02)
+
+- **F4**: 无 DOING Sprint 时工作流静默失败（`sprints[0].id` 为 undefined）— 示例性质文档可接受；未来可在 SKILL 文件中补充错误处理说明
+- **F5**: `user search` 多结果歧义，未说明如何从多条结果中选择 userId — 超出本 story 范围，可在 8-4 SKILL 优化时处理
+- **F6**: `sprint view` 超 100 条截断，统计数据可能不完整，README 未注明 — 现有行为，可在 8-1/8-2 命令参考完善时补充
+- **F7**: `wi list` 默认 limit 20，大型 Sprint 不完整 — 现有行为，可在命令参考中说明 `--limit` 用法
+- **F8**: `--json` 全局 flag 位置（global 前置 vs subcommand 后）未说明 — Low 优先级，可在 SKILL 文件中说明
+
 ## Deferred from: code review of 3-1-wi-types (2026-04-02)
 
 - `t.id` 缺失时 typeId 为 undefined [src/commands/workitem.js] — pre-existing API 合约问题，无 id 字段的类型对象在 JSON 输出中 typeId 会为 undefined

@@ -742,6 +742,48 @@ yunxiao wi update GJBL-43 --status status-uuid-005 --project proj123
 # ✓ Work item GJBL-43 updated!
 ```
 
+## 工作流示例
+
+### AI Agent 场景
+
+AI 通过 JSON 输出提取字段，串联多步操作完成完整 Sprint 工作流。每步从上一步 JSON 输出中提取所需 ID。
+
+```bash
+# 步骤 1：找到当前进行中的 Sprint
+yunxiao sprint list --status DOING --json
+
+# 步骤 2：查看 Sprint 详情和工作项完成度（sprintId 取自步骤 1 的 sprints[0].id）
+yunxiao sprint view <sprintId> --json
+
+# 步骤 3：列出该 Sprint 下的所有工作项
+yunxiao wi list --sprint <sprintId> --json
+
+# 步骤 4：搜索负责人 userId（需配置 YUNXIAO_PROJECT_ID 或使用 --project）
+yunxiao user search "张三" --json
+
+# 步骤 5：更新工作项状态和负责人
+# --status 接受状态 ID（字符串），需先通过 `yunxiao status list` 获取
+yunxiao wi update <workitemId> --status <statusId> --assigned-to <userId> --json
+```
+
+> 提示：`--status` 参数接受状态 ID（非状态名称）。可先运行 `yunxiao status list --category Req --json` 获取各状态对应的 ID。
+
+### 人类场景（站会前快速查看）
+
+无需打开云效页面，30 秒内了解当前 Sprint 进度：
+
+```bash
+# 查看当前进行中的 Sprint 列表
+yunxiao sprint list --status DOING
+
+# 查看指定 Sprint 的工作项完成情况（total / done / by type）
+yunxiao sprint view <sprintId>
+
+# 列出该 Sprint 下的工作项（快速扫描）
+yunxiao wi list --sprint <sprintId>
+```
+
+
 ## 版本历史
 
 - **v0.1.1** - 认证命令：auth login/status/logout
