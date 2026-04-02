@@ -1,4 +1,4 @@
-﻿// src/api.js - Yunxiao API client
+// src/api.js - Yunxiao API client
 import axios from "axios";
 import { AppError, ERROR_CODE } from "./errors.js";
 
@@ -14,6 +14,18 @@ export function createClientWithPat(pat) {
   });
 }
 
+// Internal helper: wraps an API call and converts 401 to AUTH_FAILED
+async function apiCall(fn) {
+  try {
+    return await fn();
+  } catch (err) {
+    if (err?.response?.status === 401) {
+      throw new AppError(ERROR_CODE.AUTH_FAILED, 'Authentication failed: invalid or missing PAT');
+    }
+    throw err;
+  }
+}
+
 // Projects
 export async function searchProjects(client, orgId, opts = {}) {
   const url = `/oapi/v1/projex/organizations/${orgId}/projects:search`;
@@ -26,14 +38,12 @@ export async function searchProjects(client, orgId, opts = {}) {
       }]]
     });
   }
-  const res = await client.post(url, body);
-  return res.data;
+  return apiCall(() => client.post(url, body).then(r => r.data));
 }
 
 export async function getProject(client, orgId, projectId) {
   const url = `/oapi/v1/projex/organizations/${orgId}/projects/${projectId}`;
-  const res = await client.get(url);
-  return res.data;
+  return apiCall(() => client.get(url).then(r => r.data));
 }
 
 // Work Items
@@ -74,57 +84,52 @@ export async function searchWorkitems(client, orgId, spaceId, opts = {}) {
   if (conditionGroups.length > 0) {
     body.conditions = JSON.stringify({ conditionGroups: [conditionGroups] });
   }
-  const res = await client.post(url, body);
-  // Real API: res.data is an array, total in x-total header
-  // Some response formats: res.data is { data: [...], total: N }
-  const rawData = res.data;
-  const items = Array.isArray(rawData) ? rawData : (rawData?.data ?? []);
-  const total = parseInt(
-    res.headers?.['x-total'] ?? rawData?.total ?? items.length, 10
-  ) || 0;
-  return { items, total };
+  return apiCall(async () => {
+    const res = await client.post(url, body);
+    // Real API: res.data is an array, total in x-total header
+    // Some response formats: res.data is { data: [...], total: N }
+    const rawData = res.data;
+    const items = Array.isArray(rawData) ? rawData : (rawData?.data ?? []);
+    const total = parseInt(
+      res.headers?.['x-total'] ?? rawData?.total ?? items.length, 10
+    ) || 0;
+    return { items, total };
+  });
 }
 
 export async function getWorkitem(client, orgId, workitemId) {
   const url = `/oapi/v1/projex/organizations/${orgId}/workitems/${workitemId}`;
-  const res = await client.get(url);
-  return res.data;
+  return apiCall(() => client.get(url).then(r => r.data));
 }
 
 export async function createWorkitem(client, orgId, data) {
   const url = `/oapi/v1/projex/organizations/${orgId}/workitems`;
-  const res = await client.post(url, data);
-  return res.data;
+  return apiCall(() => client.post(url, data).then(r => r.data));
 }
 
 export async function updateWorkitem(client, orgId, workitemId, fields) {
   const url = `/oapi/v1/projex/organizations/${orgId}/workitems/${workitemId}`;
-  const res = await client.put(url, fields);
-  return res.data;
+  return apiCall(() => client.put(url, fields).then(r => r.data));
 }
 
 export async function addComment(client, orgId, workitemId, content) {
   const url = `/oapi/v1/projex/organizations/${orgId}/workitems/${workitemId}/comments`;
-  const res = await client.post(url, { content });
-  return res.data;
+  return apiCall(() => client.post(url, { content }).then(r => r.data));
 }
 
 export async function listComments(client, orgId, workitemId, opts = {}) {
   const url = `/oapi/v1/projex/organizations/${orgId}/workitems/${workitemId}/comments`;
-  const res = await client.get(url, { params: { page: opts.page || 1, perPage: opts.perPage || 20 } });
-  return res.data;
+  return apiCall(() => client.get(url, { params: { page: opts.page || 1, perPage: opts.perPage || 20 } }).then(r => r.data));
 }
 
 export async function deleteWorkitem(client, orgId, workitemId) {
   const url = `/oapi/v1/projex/organizations/${orgId}/workitems/${workitemId}`;
-  const res = await client.delete(url);
-  return res.data;
+  return apiCall(() => client.delete(url).then(r => r.data));
 }
 
 export async function getWorkitemTypes(client, orgId, projectId, category = "Req") {
   const url = `/oapi/v1/projex/organizations/${orgId}/projects/${projectId}/workitemTypes`;
-  const res = await client.get(url, { params: { category } });
-  return res.data;
+  return apiCall(() => client.get(url, { params: { category } }).then(r => r.data));
 }
 
 export async function getWorkitemWorkflow(client, orgId, projectId, typeId) {
@@ -136,10 +141,9 @@ export async function getWorkitemWorkflow(client, orgId, projectId, typeId) {
 // Sprints
 export async function listSprints(client, orgId, projectId, opts = {}) {
   const url = `/oapi/v1/projex/organizations/${orgId}/projects/${projectId}/sprints`;
-  const res = await client.get(url, {
+  return apiCall(() => client.get(url, {
     params: { page: opts.page || 1, perPage: opts.perPage || 20, status: opts.status }
-  });
-  return res.data;
+  }).then(r => r.data));
 }
 
 export async function getSprintInfo(client, orgId, projectId, sprintId) {
@@ -176,14 +180,12 @@ export async function listProjectMembers(client, orgId, projectId, opts = {}) {
 // Platform
 export async function getCurrentUser(client) {
   const url = "/oapi/v1/platform/user";
-  const res = await client.get(url);
-  return res.data;
+  return apiCall(() => client.get(url).then(r => r.data));
 }
 
 export async function getOrganizations(client) {
   const url = "/oapi/v1/platform/organizations";
-  const res = await client.get(url);
-  return res.data;
+  return apiCall(() => client.get(url).then(r => r.data));
 }
 
 export async function createPipelineRun(client, orgId, pipelineId, opts = {}) {
@@ -217,7 +219,7 @@ export async function resolveWorkitemId(client, orgId, spaceId, identifier) {
       page: 1,
       perPage: 50,
     });
-    const match = (results || []).find(
+    const match = results.find(
       (i) => i.serialNumber?.toUpperCase() === serialNumber
     );
     if (!match) {
