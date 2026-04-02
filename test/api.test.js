@@ -118,7 +118,7 @@ describe('searchWorkitems', () => {
     const result = await api.searchWorkitems(client, 'org1', 'sp1', {});
 
     assert.equal(result.total, 1);
-    assert.equal(result.data[0].id, 'wi-1');
+    assert.equal(result.items[0].id, 'wi-1');
   });
 
   test('body 包含 spaceId 和默认字段', async () => {
@@ -447,14 +447,14 @@ describe('listSprints', () => {
     assert.equal(result.data[0].name, 'Sprint 2026-Q1');
   });
 
-  test('params 包含 spaceId', async () => {
+  test('URL 包含 projectId', async () => {
     const client = createMockClient();
     mock.method(client, 'get', async () => ({ data: makePage([]) }));
 
     await api.listSprints(client, 'org1', 'myProj', {});
 
-    const params = client.get.mock.calls[0].arguments[1]?.params;
-    assert.equal(params?.spaceId, 'myProj');
+    const url = client.get.mock.calls[0].arguments[0];
+    assert.ok(url.includes('myProj'), 'URL 应包含 projectId');
   });
 
   test('401 抛出 AUTH_FAILED', async () => {
@@ -561,11 +561,17 @@ describe('resolveWorkitemId', () => {
     assert.equal(client.post.mock?.calls?.length ?? 0, 0);
   });
 
-  test('null/undefined 输入返回 null', async () => {
+  test('null/undefined 输入抛出 INVALID_ARGS', async () => {
     const client = createMockClient();
 
-    assert.equal(await api.resolveWorkitemId(client, 'org1', 'sp1', null), null);
-    assert.equal(await api.resolveWorkitemId(client, 'org1', 'sp1', undefined), null);
+    await assert.rejects(
+      () => api.resolveWorkitemId(client, 'org1', 'sp1', null),
+      (err) => { assert.equal(err.code, 'INVALID_ARGS'); return true; }
+    );
+    await assert.rejects(
+      () => api.resolveWorkitemId(client, 'org1', 'sp1', undefined),
+      (err) => { assert.equal(err.code, 'INVALID_ARGS'); return true; }
+    );
   });
 
   test('序列号未找到：抛出 NOT_FOUND', async () => {

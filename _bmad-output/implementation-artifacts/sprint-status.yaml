@@ -57,41 +57,41 @@ development_status:
   epic-2: in-progress
   2-1-serial-number-resolve: done
   2-2-wi-list: backlog
-  2-3-wi-view: backlog
-  2-4-wi-create: backlog
+  2-4-wi-create: done
+  2-3-wi-view: done
   2-5-wi-update: backlog
-  2-6-wi-delete: backlog
+  2-6-wi-delete: done
   2-7-wi-comment: backlog
   2-8-wi-comments: backlog
   epic-2-retrospective: optional
 
   # Epic 3: 前置查询命令
-  epic-3: backlog
+  epic-3: in-progress
   3-1-wi-types: backlog
-  3-2-status-list: backlog
-  3-3-user-list-search: backlog
-  3-4-project-list: backlog
+  3-2-status-list: done
+  3-3-user-list-search: done
+  3-4-project-list: done
   epic-3-retrospective: optional
 
   # Epic 4: Sprint 管理
-  epic-4: backlog
-  4-1-sprint-list: backlog
-  4-2-sprint-view: backlog
+  epic-4: in-progress
+  4-1-sprint-list: done
+  4-2-sprint-view: done
   epic-4-retrospective: optional
 
   # Epic 5: 流水线触发
-  epic-5: backlog
-  5-1-pipeline-list: backlog
-  5-2-pipeline-run: backlog
-  5-3-pipeline-status: backlog
+  epic-5: in-progress
+  5-1-pipeline-list: done
+  5-2-pipeline-run: done
+  5-3-pipeline-status: done
   epic-5-retrospective: optional
 
   # Epic 6: 发布与分发
   epic-6: in-progress
   6-1-npm-package-config: done
   6-2-manual-publish-verification: backlog
-  6-3-github-actions-ci: backlog
-  6-4-github-actions-cd: backlog
+  6-4-github-actions-cd: done
+  6-3-github-actions-ci: done
   epic-6-retrospective: optional
 
   # Epic 7: 测试覆盖
