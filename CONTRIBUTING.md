@@ -135,4 +135,27 @@
 
 ---
 
+## 发布流程
+
+### 手动发布
+
+1. 确认 `master` 分支所有测试通过：`npm test`
+2. 更新 `package.json` 中的 `version` 字段（遵循 SemVer）
+3. 运行 `npm pack --dry-run` 验证包内容（确认无多余文件）
+4. 运行 `npm publish --access public`（需要 npm 账号拥有 `@kongsiyu` scope 发布权限）
+5. 打 tag 并推送：`git tag v<version> && git push origin v<version>`（**注意**：若仓库配置了 GitHub Actions 自动发布，推送 tag 会再次触发 `publish.yml`。已手动发布时请跳过此步，或使用下方"自动发布"流程替代手动发布）
+
+### 自动发布（推荐）
+
+推送 `v*` 格式 tag 后，GitHub Actions (`.github/workflows/publish.yml`) 自动触发 npm publish：
+
+```bash
+git tag v0.2.0
+git push origin v0.2.0
+```
+
+需要在 GitHub 仓库 **Settings → Secrets and variables → Actions** 中配置 `NPM_TOKEN`（从 [npmjs.com](https://www.npmjs.com/settings/~/tokens) 生成 Automation token）。
+
+---
+
 > 📌 本规范适用于所有贡献者。首次贡献请先阅读本文档。
