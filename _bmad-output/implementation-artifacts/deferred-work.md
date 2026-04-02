@@ -31,3 +31,10 @@
 - **orgId 为 null 时报 AUTH_MISSING 但实为配置缺失**：错误信息 "Authentication required. Run: yunxiao auth login" 对 orgId 缺失场景有误导，应区分 AUTH_MISSING（无 token）和 CONFIG_MISSING（有 token 无 orgId）。Pre-existing 问题，不在本 Story 范围。
 - **update/comment/comments/delete 在 resolveWorkitemId 前无 spaceId 检查**：序列号格式 ID 在无 projectId 时会产生不友好的 API 错误而非 INVALID_ARGS。Pre-existing，应在对应 Story 中修复。
 - **client/orgId 注册时按值传入，同进程 re-auth 后不会刷新**：架构约束，Commander.js 命令注册后 handler 闭包捕获的是注册时的参数快照。若未来支持同进程 auth 切换需重构。Pre-existing 设计决策。
+
+## Deferred from: code review of 2-5-wi-update (2026-04-02)
+
+- **getWorkitem 失败后误报错误**：`updateWorkitem` 成功但后续 `getWorkitem` 瞬态失败时，用户收到 API_ERROR 尽管更新已完成。可考虑在 JSON 模式 getWorkitem 调用外加 try/catch 并降级输出 `{ id, success: true }`。
+- **console.log 使用原始 id 而非 resolvedId**：非 JSON 路径 `"Work item " + id + " updated!"` 用序列号显示，多命令均有此问题，建议统一修复。
+- **TOCTOU race in getWorkitem**：更新后 GET 获取的数据可能非当前用户所为，在 CLI 低并发场景可接受，高并发场景需重新评估。
+- **defaultProjectId undefined 时序列号解析失败**：所有使用 resolveWorkitemId 的命令均有此问题，建议在 resolveWorkitemId 或上层统一校验。
