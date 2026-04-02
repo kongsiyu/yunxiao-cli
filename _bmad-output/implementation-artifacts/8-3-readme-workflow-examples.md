@@ -31,6 +31,14 @@ so that I understand how to compose commands for real tasks.
 - [x] [Review][Defer] F7: wi list 默认 limit 20，非完整列表 — deferred, 现有行为
 - [x] [Review][Defer] F8: --json 全局 flag 位置未说明 — deferred, Low 优先级
 
+#### Second Review (2026-04-02, rebased on origin/master b560380)
+
+- [x] [Review][Patch] N1: `status list` 提示硬编码 `Req`，应展示完整合法值 `<Req|Task|Bug>` [README.md] — 已修复
+- [x] [Review][Patch] N2: 人类场景代码块后多余空行 [README.md] — 已修复
+- [x] [Review][Defer] D5: `status list` 对非默认工作项类型返回错误 statusId — deferred, pre-existing CLI 行为
+- [x] [Review][Defer] D6: `wi update` 序列号模式无 YUNXIAO_PROJECT_ID 时报 API 错误而非 INVALID_ARGS — deferred, pre-existing（已在 1-6 review 记录）
+- [x] [Review][Defer] D7: `--status` 在 `sprint list`（枚举）和 `wi update`（statusId）中语义不同，文档未区分 — deferred, CLI 设计问题，非本 story 范围
+
 ## Dev Notes
 
 ### 任务范围

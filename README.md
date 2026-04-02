@@ -766,7 +766,7 @@ yunxiao user search "张三" --json
 yunxiao wi update <workitemId> --status <statusId> --assigned-to <userId> --json
 ```
 
-> 提示：`--status` 参数接受状态 ID（非状态名称）。可先运行 `yunxiao status list --category Req --json` 获取各状态对应的 ID。
+> 提示：`--status` 参数接受状态 ID（非状态名称）。可先运行 `yunxiao status list --category <Req|Task|Bug> --json` 获取各状态对应的 ID。
 
 ### 人类场景（站会前快速查看）
 
@@ -782,7 +782,6 @@ yunxiao sprint view <sprintId>
 # 列出该 Sprint 下的工作项（快速扫描）
 yunxiao wi list --sprint <sprintId>
 ```
-
 
 ## 版本历史
 

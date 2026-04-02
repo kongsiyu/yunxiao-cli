@@ -1,5 +1,11 @@
 # Deferred Work
 
+## Deferred from: code review of 8-3-readme-workflow-examples (second review, 2026-04-02)
+
+- **D5**: `status list --category` 仅返回默认工作项类型的 statusId，多类型项目中非默认类型更新会失败 — pre-existing CLI 行为
+- **D6**: `wi update` 使用序列号时若无 YUNXIAO_PROJECT_ID 报 API 错误而非 INVALID_ARGS — pre-existing（已在 1-6 review defer 中记录）
+- **D7**: `--status` flag 在 `sprint list`（枚举字符串 TODO/DOING/ARCHIVED）和 `wi update`（statusId）中语义不同，README 未加区分说明 — CLI 设计问题，非本 story 范围
+
 ## Deferred from: code review of 8-3-readme-workflow-examples (2026-04-02)
 
 - **F4**: 无 DOING Sprint 时工作流静默失败（`sprints[0].id` 为 undefined）— 示例性质文档可接受；未来可在 SKILL 文件中补充错误处理说明
