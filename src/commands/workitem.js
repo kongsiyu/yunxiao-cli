@@ -2,6 +2,7 @@
 import chalk from "chalk";
 import { getWorkitem, createWorkitem, updateWorkitem, deleteWorkitem, addComment, listComments, getWorkitemTypes, resolveWorkitemId, searchWorkitems } from "../api.js";
 import { printJson, printError } from "../output.js";
+import { AppError, ERROR_CODE } from "../errors.js";
 
 function formatDate(ts) {
   if (!ts) return "-";
@@ -38,6 +39,7 @@ export function registerWorkitemCommands(program, client, orgId, defaultProjectI
     .option("--page <n>", "Page number", "1")
     .option("--limit <n>", "Per page", "20")
     .action(withErrorHandling(async (opts) => {
+      if (!client || !orgId) throw new AppError(ERROR_CODE.AUTH_MISSING, 'Authentication required. Run: yunxiao auth login');
       const spaceId = opts.project || defaultProjectId;
       if (!spaceId) {
         printError("INVALID_ARGS", "project ID required (--project or YUNXIAO_PROJECT_ID)", jsonMode);
@@ -88,6 +90,7 @@ export function registerWorkitemCommands(program, client, orgId, defaultProjectI
     .description("View work item details by ID or serial number (e.g. GJBL-1)")
     .option("-p, --project <id>", "Project ID (needed for serial number lookup)")
     .action(withErrorHandling(async (id, opts) => {
+      if (!client || !orgId) throw new AppError(ERROR_CODE.AUTH_MISSING, 'Authentication required. Run: yunxiao auth login');
       const spaceId = opts.project || defaultProjectId;
       if (/^[A-Z]+-\d+$/i.test(id) && !spaceId) {
         printError("INVALID_ARGS", "project ID required for serial number lookup", jsonMode);
@@ -142,6 +145,7 @@ export function registerWorkitemCommands(program, client, orgId, defaultProjectI
     .option("--sprint <sprintId>", "Sprint ID to assign this work item to")
     .option("--extra-json <json>", "JSON string with additional fields (merged into request body)")
     .action(withErrorHandling(async (opts) => {
+      if (!client || !orgId) throw new AppError(ERROR_CODE.AUTH_MISSING, 'Authentication required. Run: yunxiao auth login');
       const spaceId = opts.project || defaultProjectId;
       if (!spaceId) {
         printError("INVALID_ARGS", "project ID required (--project or YUNXIAO_PROJECT_ID)", jsonMode);
@@ -201,6 +205,7 @@ export function registerWorkitemCommands(program, client, orgId, defaultProjectI
     .option("--sprint <sprintId>", "New sprint ID")
     .option("--extra-json <json>", "JSON string with additional fields (merged into request body)")
     .action(withErrorHandling(async (id, opts) => {
+      if (!client || !orgId) throw new AppError(ERROR_CODE.AUTH_MISSING, 'Authentication required. Run: yunxiao auth login');
       const spaceId = opts.project || defaultProjectId;
       const resolvedId = await resolveWorkitemId(client, orgId, spaceId, id);
 
@@ -236,6 +241,7 @@ export function registerWorkitemCommands(program, client, orgId, defaultProjectI
     .description("Add a comment to a work item by ID or serial number")
     .option("-p, --project <id>", "Project ID (needed for serial number)")
     .action(withErrorHandling(async (id, content, opts) => {
+      if (!client || !orgId) throw new AppError(ERROR_CODE.AUTH_MISSING, 'Authentication required. Run: yunxiao auth login');
       const spaceId = opts.project || defaultProjectId;
       if (/^[A-Za-z]+-\d+$/.test(id) && !spaceId) {
         printError("INVALID_ARGS", "project ID required for serial number lookup", jsonMode);
@@ -258,6 +264,7 @@ export function registerWorkitemCommands(program, client, orgId, defaultProjectI
     .option("--page <n>", "Page number", "1")
     .option("--limit <n>", "Per page", "20")
     .action(withErrorHandling(async (id, opts) => {
+      if (!client || !orgId) throw new AppError(ERROR_CODE.AUTH_MISSING, 'Authentication required. Run: yunxiao auth login');
       const spaceId = opts.project || defaultProjectId;
       const resolvedId = await resolveWorkitemId(client, orgId, spaceId, id);
       const comments = await listComments(client, orgId, resolvedId, {
@@ -286,6 +293,7 @@ export function registerWorkitemCommands(program, client, orgId, defaultProjectI
     .option("-p, --project <id>", "Project ID")
     .option("-c, --category <type>", "Category: Req, Task, Bug", "Req")
     .action(withErrorHandling(async (opts) => {
+      if (!client || !orgId) throw new AppError(ERROR_CODE.AUTH_MISSING, 'Authentication required. Run: yunxiao auth login');
       const spaceId = opts.project || defaultProjectId;
       if (!spaceId) {
         printError("INVALID_ARGS", "project ID required (--project or YUNXIAO_PROJECT_ID)", jsonMode);
@@ -315,6 +323,7 @@ export function registerWorkitemCommands(program, client, orgId, defaultProjectI
     .option("-p, --project <id>", "Project ID (needed for serial number)")
     .option("-f, --force", "Skip confirmation prompt")
     .action(withErrorHandling(async (id, opts) => {
+      if (!client || !orgId) throw new AppError(ERROR_CODE.AUTH_MISSING, 'Authentication required. Run: yunxiao auth login');
       const spaceId = opts.project || defaultProjectId;
       if (/^[A-Z]+-\d+$/i.test(id) && !spaceId) {
         printError("INVALID_ARGS", "project ID required for serial number lookup (--project or YUNXIAO_PROJECT_ID)", jsonMode);

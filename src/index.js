@@ -32,6 +32,8 @@ function withErrorHandling(fn) {
     } catch (err) {
       if (err instanceof AppError) {
         printError(err.code, err.message, jsonMode);
+      } else if (err.response?.status === 401 || err.response?.status === 403) {
+        printError(ERROR_CODE.AUTH_FAILED, 'Authentication failed or token expired. Run: yunxiao auth login', jsonMode);
       } else if (err.response) {
         const code = err.response.status === 404 ? ERROR_CODE.NOT_FOUND : ERROR_CODE.API_ERROR;
         printError(code, err.response.data?.errorMessage || err.response.statusText, jsonMode);
@@ -52,25 +54,12 @@ const token = config.token;
 
 let client = null;
 let currentUserId = config.userId;
-let currentUser = null;
 let orgId = config.orgId;
 let projectId = config.projectId;
 
 // Create client if token is available
 if (token) {
   client = createClientWithPat(token);
-
-  async function initCurrentUser() {
-    if (!currentUserId && client) {
-      try {
-        currentUser = await getCurrentUser(client);
-        currentUserId = currentUser.id;
-      } catch (e) {
-        // 获取失败不影响其他功能
-      }
-    }
-  }
-  await initCurrentUser();
 }
 
 // whoami 命令
@@ -79,10 +68,9 @@ program
   .description("Show current authenticated user")
   .action(withErrorHandling(async () => {
     if (!client) {
-      console.log(chalk.yellow("Not authenticated. Run: yunxiao auth login"));
-      return;
+      throw new AppError(ERROR_CODE.AUTH_MISSING, 'Authentication required. Run: yunxiao auth login');
     }
-    const user = currentUser || await getCurrentUser(client);
+    const user = await getCurrentUser(client);
     console.log(chalk.bold("\nCurrent user:\n"));
     console.log("  " + chalk.gray("ID:      ") + user.id);
     console.log("  " + chalk.gray("Name:    ") + (user.name || "-"));
@@ -92,25 +80,12 @@ program
     console.log();
   }));
 
-if (client && orgId) {
-  registerProjectCommands(program, client, orgId, withErrorHandling, jsonMode);
-  registerWorkitemCommands(program, client, orgId, projectId, withErrorHandling, currentUserId, jsonMode);
-  registerSprintCommands(program, client, orgId, projectId, withErrorHandling, jsonMode);
-  registerPipelineCommands(program, client, orgId, withErrorHandling, jsonMode);
-  registerStatusCommands(program, client, orgId, projectId, withErrorHandling, jsonMode);
-  registerQueryCommands(program, client, orgId, projectId, withErrorHandling, jsonMode);
-} else {
-  const authRequiredAction = withErrorHandling(async () => {
-    throw new AppError(ERROR_CODE.AUTH_MISSING, 'Authentication required. Run: yunxiao auth login');
-  });
-
-  for (const name of ['project', 'workitem', 'sprint', 'pipeline', 'status', 'user']) {
-    program
-      .command(`${name} [args...]`)
-      .allowUnknownOption(true)
-      .description(`Manage ${name}s (requires auth)`)
-      .action(authRequiredAction);
-  }
-}
+// Always register all commands (auth is checked per-command at runtime)
+registerProjectCommands(program, client, orgId, withErrorHandling, jsonMode);
+registerWorkitemCommands(program, client, orgId, projectId, withErrorHandling, currentUserId, jsonMode);
+registerSprintCommands(program, client, orgId, projectId, withErrorHandling, jsonMode);
+registerPipelineCommands(program, client, orgId, withErrorHandling, jsonMode);
+registerStatusCommands(program, client, orgId, projectId, withErrorHandling, jsonMode);
+registerQueryCommands(program, client, orgId, projectId, withErrorHandling, jsonMode);
 
 program.parse();

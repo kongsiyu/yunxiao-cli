@@ -2,6 +2,7 @@
 import chalk from "chalk";
 import { searchProjects, getProject } from "../api.js";
 import { printJson } from "../output.js";
+import { AppError, ERROR_CODE } from "../errors.js";
 
 function formatDate(ts) {
   if (!ts) return "-";
@@ -18,6 +19,7 @@ export function registerProjectCommands(program, client, orgId, withErrorHandlin
     .option("--page <n>", "Page number", "1")
     .option("--limit <n>", "Per page", "20")
     .action(withErrorHandling(async (opts) => {
+      if (!client || !orgId) throw new AppError(ERROR_CODE.AUTH_MISSING, 'Authentication required. Run: yunxiao auth login');
       const projects = await searchProjects(client, orgId, {
         name: opts.name,
         page: parseInt(opts.page),
@@ -43,6 +45,7 @@ export function registerProjectCommands(program, client, orgId, withErrorHandlin
     .command("view <id>")
     .description("View project details")
     .action(withErrorHandling(async (id) => {
+      if (!client || !orgId) throw new AppError(ERROR_CODE.AUTH_MISSING, 'Authentication required. Run: yunxiao auth login');
       const p = await getProject(client, orgId, id);
       if (jsonMode) {
         printJson(p);
