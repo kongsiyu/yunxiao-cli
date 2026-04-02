@@ -1,6 +1,6 @@
 # Story 2.2：wi list 命令
 
-Status: ready-for-dev
+Status: done
 
 ## Story
 

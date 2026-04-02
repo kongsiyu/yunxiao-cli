@@ -1,5 +1,5 @@
 # generated: 2026-03-31
-# last_updated: 2026-03-31
+# last_updated: 2026-04-02
 # project: yunxiao-cli
 # project_key: NOKEY
 # tracking_system: file-system
@@ -56,7 +56,7 @@ development_status:
   # Epic 2: 工作项生命周期管理
   epic-2: in-progress
   2-1-serial-number-resolve: done
-  2-2-wi-list: backlog
+  2-2-wi-list: done
   2-4-wi-create: done
   2-3-wi-view: done
   2-5-wi-update: backlog
@@ -99,7 +99,7 @@ development_status:
   7-1-test-infrastructure: done
   7-2-api-layer-tests: done
   7-3-serial-number-tests: done
-  7-4-command-layer-tests: backlog
+  7-4-command-layer-tests: done
   epic-7-retrospective: optional
 
   # Epic 8: 文档
@@ -107,5 +107,5 @@ development_status:
   8-1-readme-install-config: backlog
   8-2-readme-command-reference: done
   8-3-readme-workflow-examples: backlog
-  8-4-skill-file-optimization: backlog
+  8-4-skill-file-optimization: done
   epic-8-retrospective: optional
