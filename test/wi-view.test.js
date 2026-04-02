@@ -58,10 +58,15 @@ describe('wi view: resolveWorkitemId', () => {
     );
   });
 
-  test('null/undefined identifier: returns null', async () => {
+  test('null/undefined identifier: throws INVALID_ARGS', async () => {
     const client = createMockClient();
-    const result = await api.resolveWorkitemId(client, 'org1', 'space1', null);
-    assert.equal(result, null);
+    await assert.rejects(
+      () => api.resolveWorkitemId(client, 'org1', 'space1', null),
+      (err) => {
+        assert.equal(err.code, ERROR_CODE.INVALID_ARGS);
+        return true;
+      }
+    );
   });
 });
 
