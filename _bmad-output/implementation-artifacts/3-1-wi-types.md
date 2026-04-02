@@ -1,6 +1,6 @@
 # Story 3.1：wi types 命令
 
-Status: review
+Status: done
 
 ## Story
 
@@ -59,3 +59,11 @@ So that I can obtain the correct `typeId` before creating a workitem.
 ```
 
 `category` 字段从 `t.categoryId` 取，若为空则用 `opts.category` 兜底。
+
+### Review Findings
+
+- [x] [Review][Patch] 表格循环 `for (const t of types)` 未防护 null/undefined [src/commands/workitem.js:295] — 已修复：改为 `for (const t of (types || []))`
+- [x] [Review][Patch] `t.categoryId || opts.category` 应用 `??` 避免空串被覆盖 [src/commands/workitem.js:289,297] — 已修复：改为 `??` nullish coalescing
+- [x] [Review][Defer] `t.id` 缺失时 typeId 为 undefined [src/commands/workitem.js] — deferred, pre-existing
+- [x] [Review][Defer] `t.name` null/undefined 无防护 [src/commands/workitem.js] — deferred, pre-existing
+- [x] [Review][Defer] `total` 为本地计数非服务端总数 [src/commands/workitem.js] — deferred, 符合项目设计

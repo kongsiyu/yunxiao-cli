@@ -286,15 +286,15 @@ export function registerWorkitemCommands(program, client, orgId, defaultProjectI
         const mapped = (types || []).map(t => ({
           typeId: t.id,
           name: t.name,
-          category: t.categoryId || opts.category,
+          category: t.categoryId ?? opts.category,
         }));
         printJson({ types: mapped, total: mapped.length });
         return;
       }
       console.log(chalk.bold("\nWork item types (" + opts.category + "):\n"));
-      for (const t of types) {
+      for (const t of (types || [])) {
         const def = t.defaultType ? chalk.green(" [default]") : "";
-        const cat = chalk.gray("[" + (t.categoryId || opts.category) + "]");
+        const cat = chalk.gray("[" + (t.categoryId ?? opts.category) + "]");
         console.log("  " + chalk.cyan(t.id) + "  " + t.name + def + "  " + cat);
       }
     }));
