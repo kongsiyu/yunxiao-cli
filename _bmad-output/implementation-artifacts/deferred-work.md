@@ -24,3 +24,10 @@
 - `resolveWorkitemId` 仅搜索前 50 条记录 — 大型项目中序列号超出首页时会误报 NOT_FOUND，建议后续增加分页循环
 - `content` 参数无空字符串/空白校验 — 非 AC 要求，API 可能拒绝空评论，后续可加 guard
 - `wi comment` 命令无自动化测试覆盖 — 命令层测试在 Story 7-4 统一覆盖
+
+## Deferred from: code review of 1-6-whoami-always-register (2026-04-02)
+
+- **currentUserId 移除 eager init 后不再自动填充，影响 wi create 默认 assignee**：Story 1.6 明确任务要求移除 eager initCurrentUser()，副作用是 wi create 无 --assigned-to 时不能自动填充当前用户。应在 Story 2.4/后续迭代中通过 wi create 内懒加载解决。
+- **orgId 为 null 时报 AUTH_MISSING 但实为配置缺失**：错误信息 "Authentication required. Run: yunxiao auth login" 对 orgId 缺失场景有误导，应区分 AUTH_MISSING（无 token）和 CONFIG_MISSING（有 token 无 orgId）。Pre-existing 问题，不在本 Story 范围。
+- **update/comment/comments/delete 在 resolveWorkitemId 前无 spaceId 检查**：序列号格式 ID 在无 projectId 时会产生不友好的 API 错误而非 INVALID_ARGS。Pre-existing，应在对应 Story 中修复。
+- **client/orgId 注册时按值传入，同进程 re-auth 后不会刷新**：架构约束，Commander.js 命令注册后 handler 闭包捕获的是注册时的参数快照。若未来支持同进程 auth 切换需重构。Pre-existing 设计决策。

@@ -2,6 +2,7 @@
 import chalk from "chalk";
 import { listProjectMembers } from "../api.js";
 import { printJson, printError } from "../output.js";
+import { AppError, ERROR_CODE } from "../errors.js";
 
 export function registerQueryCommands(program, client, orgId, defaultProjectId, withErrorHandling, jsonMode) {
   const user = program.command("user").description("Manage and search project members");
@@ -12,6 +13,7 @@ export function registerQueryCommands(program, client, orgId, defaultProjectId, 
     .option("-p, --project <id>", "Project ID (default: YUNXIAO_PROJECT_ID)")
     .option("--limit <n>", "Per page", "20")
     .action(withErrorHandling(async (opts) => {
+      if (!client || !orgId) throw new AppError(ERROR_CODE.AUTH_MISSING, 'Authentication required. Run: yunxiao auth login');
       const projectId = opts.project || defaultProjectId;
       if (!projectId) {
         printError("INVALID_ARGS", "project ID required (--project or YUNXIAO_PROJECT_ID)", jsonMode);
@@ -38,6 +40,7 @@ export function registerQueryCommands(program, client, orgId, defaultProjectId, 
     .description("Search project members by keyword")
     .option("-p, --project <id>", "Project ID (default: YUNXIAO_PROJECT_ID)")
     .action(withErrorHandling(async (keyword, opts) => {
+      if (!client || !orgId) throw new AppError(ERROR_CODE.AUTH_MISSING, 'Authentication required. Run: yunxiao auth login');
       const projectId = opts.project || defaultProjectId;
       if (!projectId) {
         printError("INVALID_ARGS", "project ID required (--project or YUNXIAO_PROJECT_ID)", jsonMode);
