@@ -67,7 +67,7 @@ development_status:
 
   # Epic 3: 前置查询命令
   epic-3: in-progress
-  3-1-wi-types: backlog
+  3-1-wi-types: done
   3-2-status-list: done
   3-3-user-list-search: done
   3-4-project-list: done
