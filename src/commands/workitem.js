@@ -267,23 +267,29 @@ export function registerWorkitemCommands(program, client, orgId, defaultProjectI
     .action(withErrorHandling(async (id, opts) => {
       if (!client || !orgId) throw new AppError(ERROR_CODE.AUTH_MISSING, 'Authentication required. Run: yunxiao auth login');
       const spaceId = opts.project || defaultProjectId;
+      if (/^[A-Z]+-\d+$/i.test(id) && !spaceId) {
+        printError('INVALID_ARGS', 'project ID required for serial number lookup (--project or YUNXIAO_PROJECT_ID)', jsonMode);
+        process.exit(1);
+      }
       const resolvedId = await resolveWorkitemId(client, orgId, spaceId, id);
-      const comments = await listComments(client, orgId, resolvedId, {
+      const raw = await listComments(client, orgId, resolvedId, {
         page: parseInt(opts.page),
         perPage: parseInt(opts.limit),
       });
+      const comments = Array.isArray(raw) ? raw : (raw?.data ?? []);
+      const total = raw?.total ?? comments.length;
       if (jsonMode) {
-        printJson({ comments: comments || [], total: (comments || []).length });
+        printJson({ comments, total });
         return;
       }
-      if (!comments || comments.length === 0) {
-        console.log(chalk.yellow("No comments found"));
+      if (comments.length === 0) {
+        console.log(chalk.yellow('No comments found'));
         return;
       }
-      console.log(chalk.bold("\n" + comments.length + " comment(s):\n"));
+      console.log(chalk.bold('\n' + comments.length + ' comment(s):\n'));
       for (const c of comments) {
-        console.log(chalk.cyan(c.creator?.name || "unknown") + " " + chalk.gray(formatDate(c.gmtCreate)));
-        console.log("  " + (c.content || c.commentText || "(empty)"));
+        console.log(chalk.cyan(c.creator?.name || c.user?.name || 'unknown') + ' ' + chalk.gray(formatDate(c.gmtCreate)));
+        console.log('  ' + (c.content || c.commentText || '(empty)'));
         console.log();
       }
     }));
