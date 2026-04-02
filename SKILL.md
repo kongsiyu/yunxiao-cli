@@ -104,6 +104,8 @@ yunxiao sprint view <sprintId> [--project <id>] [--json]
 }
 ```
 
+> **注意**：`total` 是当前页返回的条目数（非服务端总数）。如需翻页请用 `--page` 和 `--limit`。
+
 **sprint view `--json` schema:**
 ```json
 {
@@ -244,7 +246,9 @@ yunxiao wi types [--project <id>] [--category Req|Task|Bug] [--json]
 ### status — 工作流状态
 
 ```bash
-yunxiao status list [--project <id>] [--type-id <typeId>] [--category Req|Task|Bug] [--json]
+yunxiao status list --type-id <typeId> [--project <id>] [--json]
+yunxiao status list --category Req|Task|Bug [--project <id>] [--json]
+# 注意：--type-id 或 --category 必须提供其中一个，否则返回 INVALID_ARGS
 # --category 是 --type-id 的便捷模式，自动查询 typeId 再查状态
 ```
 
