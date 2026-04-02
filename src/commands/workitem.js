@@ -288,7 +288,7 @@ export function registerWorkitemCommands(program, client, orgId, defaultProjectI
       }
       console.log(chalk.bold('\n' + comments.length + ' comment(s):\n'));
       for (const c of comments) {
-        console.log(chalk.cyan(c.creator?.name || 'unknown') + ' ' + chalk.gray(formatDate(c.gmtCreate)));
+        console.log(chalk.cyan(c.creator?.name || c.user?.name || 'unknown') + ' ' + chalk.gray(formatDate(c.gmtCreate)));
         console.log('  ' + (c.content || c.commentText || '(empty)'));
         console.log();
       }
