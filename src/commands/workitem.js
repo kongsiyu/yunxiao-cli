@@ -237,7 +237,7 @@ export function registerWorkitemCommands(program, client, orgId, defaultProjectI
     .option("-p, --project <id>", "Project ID (needed for serial number)")
     .action(withErrorHandling(async (id, content, opts) => {
       const spaceId = opts.project || defaultProjectId;
-      if (/^[A-Z]+-\d+$/i.test(id) && !spaceId) {
+      if (/^[A-Za-z]+-\d+$/.test(id) && !spaceId) {
         printError("INVALID_ARGS", "project ID required for serial number lookup", jsonMode);
         process.exit(1);
       }

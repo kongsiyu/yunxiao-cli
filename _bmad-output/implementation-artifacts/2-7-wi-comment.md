@@ -1,6 +1,6 @@
 # Story 2.7：wi comment 命令
 
-Status: review
+Status: done
 
 ## Story
 
@@ -96,3 +96,12 @@ claude-sonnet-4-6
 - `src/commands/workitem.js`（已有：wi comment 命令 line 229-242）
 - `_bmad-output/implementation-artifacts/2-7-wi-comment.md`（本文件，新建）
 - `_bmad-output/implementation-artifacts/sprint-status.yaml`（状态更新）
+
+### Review Findings
+
+- [x] [Review][Patch] 正则 `/^[A-Z]+-\d+$/i` 中 `[A-Z]` 与 `/i` flag 冗余 [src/commands/workitem.js:235] — 已修复为 `/^[A-Za-z]+-\d+$/`
+- [x] [Review][Defer] `process.exit(1)` 在 `withErrorHandling` 内绕过 wrapper [src/commands/workitem.js:237] — deferred, pre-existing 同文件其他命令使用相同模式
+- [x] [Review][Defer] `result?.id ?? resolvedId` 兜底时 `id` 与 `workitemId` 相同 [src/commands/workitem.js:241] — deferred, pre-existing spec 允许"评论 ID 或工作项 ID"，行为符合 AC
+- [x] [Review][Defer] `resolveWorkitemId` 仅搜索前 50 条记录 [src/api.js] — deferred, pre-existing 分页限制非本 diff 引入
+- [x] [Review][Defer] `content` 参数无空字符串/空白校验 [src/commands/workitem.js:243] — deferred, pre-existing 非 AC 要求，同其他命令参数处理一致
+- [x] [Review][Defer] `wi comment` 命令无自动化测试覆盖 — deferred, pre-existing 非 AC 要求，命令层测试覆盖在 Story 7-4 统一处理
