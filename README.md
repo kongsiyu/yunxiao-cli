@@ -476,11 +476,11 @@ yunxiao wi types -p <projectId> [-c <category>] [--json]
 yunxiao wi types --project proj123 --category Req
 # Work item types (Req):
 #
-#   type-uuid-001  需求 [default]
-#   type-uuid-002  技术需求
+#   type-uuid-001  需求 [default]  [Req]
+#   type-uuid-002  技术需求  [Req]
 
 yunxiao wi types --project proj123 --json
-# {"types":[{"id":"type-uuid-001","name":"需求","defaultType":true}],"total":2}
+# {"types":[{"typeId":"type-uuid-001","name":"需求","category":"Req"}],"total":2}
 ```
 
 ---
@@ -714,11 +714,11 @@ yunxiao user search 张 --project proj123 --json
 ```bash
 # 第 1 步：获取工作项类型 ID
 yunxiao wi types --project proj123 --category Req --json
-# {"types":[{"id":"type-uuid-001","name":"需求","defaultType":true},{"id":"type-uuid-002","name":"技术需求"}],"total":2}
+# {"types":[{"typeId":"type-uuid-001","name":"需求","category":"Req"},{"typeId":"type-uuid-002","name":"技术需求","category":"Req"}],"total":2}
 
-# 记录目标类型 id（如 type-uuid-002）
+# 记录目标 typeId（如 type-uuid-002）
 
-# 第 2 步：创建工作项并指定类型
+# 第 2 步：创建工作项并指定类型（typeId 作为 --type 参数）
 yunxiao wi create --title "重构认证模块" --type type-uuid-002 --project proj123
 # Using type: 技术需求 (type-uuid-002)
 # ✓ Work item created!
@@ -740,50 +740,6 @@ yunxiao status list --project proj123 --category Req --json
 # 第 2 步：更新工作项状态（以工作流一中创建的 GJBL-43 为例）
 yunxiao wi update GJBL-43 --status status-uuid-005 --project proj123
 # ✓ Work item GJBL-43 updated!
-```
-
-### Sprint 管理
-
-```bash
-# 列出迭代
-yunxiao sprint list
-yunxiao sprint list --status Active
-
-# 查看迭代详情
-yunxiao sprint view <sprintId>
-```
-
-### 流水线
-
-```bash
-# 列出流水线
-yunxiao pipeline list
-
-# 触发流水线
-yunxiao pipeline run <pipelineId>
-
-# 查看流水线状态
-yunxiao pipeline status <pipelineId>
-```
-
-### 前置查询
-
-```bash
-# 查询工作项状态列表
-yunxiao status list
-
-# 搜索用户
-yunxiao user search --name "张三"
-yunxiao user list
-```
-
-### JSON 输出
-
-所有 `list`/`view` 命令支持 `--json` 标志，输出纯 JSON，便于脚本处理：
-
-```bash
-yunxiao wi list --json
-yunxiao sprint view <id> --json
 ```
 
 ## 版本历史
