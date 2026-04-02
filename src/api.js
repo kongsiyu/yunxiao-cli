@@ -117,7 +117,8 @@ export async function listComments(client, orgId, workitemId, opts = {}) {
 
 export async function deleteWorkitem(client, orgId, workitemId) {
   const url = `/oapi/v1/projex/organizations/${orgId}/workitems/${workitemId}`;
-  await client.delete(url);
+  const res = await client.delete(url);
+  return res.data;
 }
 
 export async function getWorkitemTypes(client, orgId, projectId, category = "Req") {
@@ -204,7 +205,9 @@ export async function getPipelineRun(client, orgId, pipelineId, runId) {
 // ID Resolution
 // Supports: GJBL-1 (serialNumber format) or UUID
 export async function resolveWorkitemId(client, orgId, spaceId, identifier) {
-  if (!identifier) return null;
+  if (!identifier) {
+    throw new AppError(ERROR_CODE.INVALID_ARGS, 'workitem ID or serial number is required');
+  }
 
   // Serial number format: e.g. GJBL-1 (letters-digits)
   if (/^[A-Z]+-\d+$/i.test(identifier)) {
