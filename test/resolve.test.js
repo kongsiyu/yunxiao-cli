@@ -137,24 +137,35 @@ describe('resolveWorkitemId', () => {
   });
 
   // ---------------------------------------------------------------------------
-  // 边界情况：null / undefined → 返回 null
+  // 边界情况：null / undefined → 抛出 INVALID_ARGS（不发起 HTTP 请求）
+  // 注：原实现返回 null；7-2 重构后改为强制要求参数，抛出 INVALID_ARGS
   // ---------------------------------------------------------------------------
 
-  test('identifier 为 null → 返回 null，不调用 client.post', async () => {
+  test('identifier 为 null → 抛出 AppError(INVALID_ARGS)，不调用 client.post', async () => {
     mock.method(client, 'post', async () => ({ data: [] }));
 
-    const result = await resolveWorkitemId(client, 'org1', 'space1', null);
-
-    assert.equal(result, null);
+    await assert.rejects(
+      () => resolveWorkitemId(client, 'org1', 'space1', null),
+      (err) => {
+        assert.ok(err instanceof AppError);
+        assert.equal(err.code, ERROR_CODE.INVALID_ARGS);
+        return true;
+      }
+    );
     assert.equal(client.post.mock.calls.length, 0);
   });
 
-  test('identifier 为 undefined → 返回 null，不调用 client.post', async () => {
+  test('identifier 为 undefined → 抛出 AppError(INVALID_ARGS)，不调用 client.post', async () => {
     mock.method(client, 'post', async () => ({ data: [] }));
 
-    const result = await resolveWorkitemId(client, 'org1', 'space1', undefined);
-
-    assert.equal(result, null);
+    await assert.rejects(
+      () => resolveWorkitemId(client, 'org1', 'space1', undefined),
+      (err) => {
+        assert.ok(err instanceof AppError);
+        assert.equal(err.code, ERROR_CODE.INVALID_ARGS);
+        return true;
+      }
+    );
     assert.equal(client.post.mock.calls.length, 0);
   });
 
