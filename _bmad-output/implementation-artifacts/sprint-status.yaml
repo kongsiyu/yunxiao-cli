@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-03-31
-last_updated: 2026-04-03  # Epic 9 sprint planning
+last_updated: 2026-04-03  # Story 9-1 created
 project: yunxiao-cli
 project_key: NOKEY
 tracking_system: file-system
@@ -111,8 +111,8 @@ development_status:
   epic-8-retrospective: done  # 全项目复盘 2026-04-02
 
   # Epic 9: 稳定性修复与 v0.2 增强
-  epic-9: backlog
-  9-1-auth-login-pat-url-fix: backlog
+  epic-9: in-progress
+  9-1-auth-login-pat-url-fix: done
   9-2-project-list-layout-fix: backlog
   9-3-resolve-workitem-id-pagination: backlog
   9-4-sprint-view-done-schema: backlog
