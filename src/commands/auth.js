@@ -16,18 +16,46 @@ function prompt(question) {
 
 function promptSecret(question) {
   return new Promise((resolve) => {
-    const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
     process.stdout.write(question);
-    rl._writeToOutput = (s) => {
-      if (s === "\r\n" || s === "\n" || s === "\r") {
+
+    if (!process.stdin.isTTY) {
+      // Non-interactive (pipe/redirect): read a line without echo suppression
+      const rl = readline.createInterface({ input: process.stdin });
+      rl.once("line", (answer) => {
+        rl.close();
+        resolve(answer);
+      });
+      return;
+    }
+
+    process.stdin.setRawMode(true);
+    process.stdin.resume();
+
+    let input = "";
+    const onData = (buf) => {
+      const ch = buf.toString("utf8");
+      if (ch === "\r" || ch === "\n") {
         process.stdout.write("\n");
+        process.stdin.setRawMode(false);
+        process.stdin.pause();
+        process.stdin.removeListener("data", onData);
+        resolve(input);
+      } else if (ch === "\u0003") {
+        // Ctrl-C
+        process.stdout.write("\n");
+        process.stdin.setRawMode(false);
+        process.stdin.pause();
+        process.stdin.removeListener("data", onData);
+        process.exit(1);
+      } else if (ch === "\u007f" || ch === "\b") {
+        // Backspace/Delete
+        input = input.slice(0, -1);
+      } else if (ch.charCodeAt(0) >= 32) {
+        input += ch;
       }
-      // Suppress echoing of typed characters
     };
-    rl.question("", (answer) => {
-      rl.close();
-      resolve(answer);
-    });
+
+    process.stdin.on("data", onData);
   });
 }
 
