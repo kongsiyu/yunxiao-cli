@@ -11,6 +11,12 @@
 - Lone surrogate from malformed API response counted as width 1 — API returns well-formed UTF-8; original code had same behavior
 - Long project names overflow without truncation — pre-existing behavior; explicitly documented in JSDoc
 
+## Deferred from: code review of 9-1-auth-login-pat-url-fix (2026-04-03)
+
+- **语言不一致**：提示语已中文化，但同流程错误消息（"PAT cannot be empty"）仍为英文。国际化统一由 Story 9.6（i18n）处理。
+- **全角冒号在非 UTF-8 终端渲染**：`promptSecret` 参数含全角冒号（U+FF1A），在 `LANG=C` 等非 UTF-8 环境可能渲染异常。规格书明确要求该字符串，UTF-8 为 Node.js 生态标准；如需支持旧终端可在 i18n Story 中处理。
+- **`promptSecret` 返回值缺少 null 守卫**：`(await promptSecret(...)).trim()` 若返回 null/undefined（如用户 Ctrl-D EOF）会抛 TypeError。Pre-existing，不在本 Story 范围。
+
 ## Deferred from: code review of 8-3-readme-workflow-examples (second review, 2026-04-02)
 
 - **D5**: `status list --category` 仅返回默认工作项类型的 statusId，多类型项目中非默认类型更新会失败 — pre-existing CLI 行为

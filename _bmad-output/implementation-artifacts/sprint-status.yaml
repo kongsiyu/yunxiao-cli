@@ -112,7 +112,7 @@ development_status:
 
   # Epic 9: 稳定性修复与 v0.2 增强
   epic-9: in-progress
-  9-1-auth-login-pat-url-fix: backlog
+  9-1-auth-login-pat-url-fix: done
   9-2-project-list-layout-fix: done
   9-3-resolve-workitem-id-pagination: backlog
   9-4-sprint-view-done-schema: backlog
