@@ -1,6 +1,6 @@
 # Story 8.3: README 工作流示例章节
 
-Status: done
+Status: ready-for-dev
 
 ## Story
 
@@ -15,29 +15,10 @@ so that I understand how to compose commands for real tasks.
 
 ## Tasks / Subtasks
 
-- [x] 在 README.md 中添加「工作流示例」章节 (AC: #1, #2)
-  - [x] 添加 AI Agent 完整 Sprint 工作流示例（5步序列：sprint list → sprint view → wi list → user search → wi update）
-  - [x] 添加人类场景：站会前快速查看工作项示例
-- [x] 验证所有示例命令语法与 src/ 实际实现一致
-
-### Review Findings
-
-- [x] [Review][Patch] F1: status list tip 缺少必填参数 `--category`，示例会 INVALID_ARGS 退出 [README.md]
-- [x] [Review][Patch] F2: user search 依赖项目配置（YUNXIAO_PROJECT_ID），未在示例中注明 [README.md]
-- [x] [Review][Patch] F3: `--status` 描述为"整数 ID"不准确，状态 ID 格式为字符串 [README.md]
-- [x] [Review][Defer] F4: 无 DOING Sprint 时 sprints[0].id 为 undefined，工作流静默失败 — deferred, 示例性质文档可接受
-- [x] [Review][Defer] F5: user search 多结果歧义，未说明如何选择 userId — deferred, 超出本 story 范围
-- [x] [Review][Defer] F6: sprint view 超 100 条截断，统计可能不完整 — deferred, 现有行为说明
-- [x] [Review][Defer] F7: wi list 默认 limit 20，非完整列表 — deferred, 现有行为
-- [x] [Review][Defer] F8: --json 全局 flag 位置未说明 — deferred, Low 优先级
-
-#### Second Review (2026-04-02, rebased on origin/master b560380)
-
-- [x] [Review][Patch] N1: `status list` 提示硬编码 `Req`，应展示完整合法值 `<Req|Task|Bug>` [README.md] — 已修复
-- [x] [Review][Patch] N2: 人类场景代码块后多余空行 [README.md] — 已修复
-- [x] [Review][Defer] D5: `status list` 对非默认工作项类型返回错误 statusId — deferred, pre-existing CLI 行为
-- [x] [Review][Defer] D6: `wi update` 序列号模式无 YUNXIAO_PROJECT_ID 时报 API 错误而非 INVALID_ARGS — deferred, pre-existing（已在 1-6 review 记录）
-- [x] [Review][Defer] D7: `--status` 在 `sprint list`（枚举）和 `wi update`（statusId）中语义不同，文档未区分 — deferred, CLI 设计问题，非本 story 范围
+- [ ] 在 README.md 中添加「工作流示例」章节 (AC: #1, #2)
+  - [ ] 添加 AI Agent 完整 Sprint 工作流示例（5步序列：sprint list → sprint view → wi list → user search → wi update）
+  - [ ] 添加人类场景：站会前快速查看工作项示例
+- [ ] 验证所有示例命令语法与 src/ 实际实现一致
 
 ## Dev Notes
 
@@ -161,12 +142,4 @@ claude-sonnet-4-6
 
 ### Completion Notes List
 
-- 在 README.md `## 版本历史` 前插入 `## 工作流示例` 章节，含两个子章节：
-  - `### AI Agent 场景`：5 步 Sprint 工作流（sprint list → sprint view → wi list → user search → wi update），每步带中文注释，说明需从上一步 JSON 输出提取 ID
-  - `### 人类场景（站会前快速查看）`：3 条命令，不带 --json，供人类快速阅读
-- 所有命令选项已对照 src/ 源码（sprint.js、workitem.js、query.js）确认正确
-- 未修改 README 现有章节内容
-
 ### File List
-
-- README.md

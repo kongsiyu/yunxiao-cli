@@ -1,6 +1,6 @@
 # Story 8.2：README 命令参考章节
 
-Status: done
+Status: ready-for-dev
 
 ## Story
 
@@ -21,19 +21,19 @@ So that I can look up any command's syntax and options without reading source co
 
 ## Tasks / Subtasks
 
-- [x] 在 README.md 中新增"命令参考"章节，覆盖所有命令 (AC: #1)
-  - [x] auth 命令组（login / status / logout）
-  - [x] whoami 命令
-  - [x] project 命令组（list / view）
-  - [x] workitem/wi 命令组（list / view / create / update / delete / comment / comments / types）
-  - [x] sprint 命令组（list / view）
-  - [x] pipeline 命令组（list / run / status）
-  - [x] status 命令组（list）
-  - [x] user 命令组（list / search）
-  - [x] 全局选项说明（--json）
-- [x] 新增两步依赖工作流示例小节 (AC: #2)
-  - [x] `wi types` → `wi create` 工作流
-  - [x] `status list` → `wi update` 工作流
+- [ ] 在 README.md 中新增"命令参考"章节，覆盖所有命令 (AC: #1)
+  - [ ] auth 命令组（login / status / logout）
+  - [ ] whoami 命令
+  - [ ] project 命令组（list / view）
+  - [ ] workitem/wi 命令组（list / view / create / update / delete / comment / comments / types）
+  - [ ] sprint 命令组（list / view）
+  - [ ] pipeline 命令组（list / run / status）
+  - [ ] status 命令组（list）
+  - [ ] user 命令组（list / search）
+  - [ ] 全局选项说明（--json）
+- [ ] 新增两步依赖工作流示例小节 (AC: #2)
+  - [ ] `wi types` → `wi create` 工作流
+  - [ ] `status list` → `wi update` 工作流
 
 ## Dev Notes
 
@@ -279,58 +279,6 @@ yunxiao wi update GJBL-42 --status <statusId> --project <projectId>
 - Story 7-3 中使用了 Node.js test runner（非 Jest），测试风格为 `import { test, describe } from 'node:test'`
 - 本 Story 是纯文档工作，与测试无关
 - 项目使用 Conventional Commits 格式：`docs(readme): add complete command reference`
-
----
-
-## Dev Agent Record
-
-### Implementation Plan
-
-纯文档任务。对 `README.md` 的"使用"章节进行完整重写，替换为结构化"命令参考"章节。
-
-### Completion Notes
-
-- 将 `## 使用` 章节替换为完整的 `## 命令参考` 章节
-- 覆盖 8 个命令组共 20 个子命令：auth (login/status/logout)、whoami、project (list/view)、workitem/wi (list/view/create/update/delete/comment/comments/types)、sprint (list/view)、pipeline (list/run/status)、status (list)、user (list/search)
-- 每个命令包含：语法格式、选项表格（含默认值和说明）、bash 示例输出
-- 添加全局 `--json` 选项说明
-- 添加两步依赖工作流示例小节（wi types → wi create；status list → wi update）
-- 保留了 README 其他所有章节不变（安装、环境变量、API 说明、版本历史、开发计划）
-- 本任务为纯文档变更，无代码变更，无需单元测试
-
-## File List
-
-- `README.md` — 替换"使用"章节为完整"命令参考"章节（修改）
-- `_bmad-output/implementation-artifacts/8-2-readme-command-reference.md` — Story 文件（修改）
-- `_bmad-output/implementation-artifacts/sprint-status.yaml` — Sprint 状态更新（修改）
-
-### Review Findings
-
-代码审查（bmad-code-review 三层并行）完成于 2026-04-02。
-
-**Patch 项（9 项，已全部应用）：**
-
-1. **[AC #1 违规] `sprint view` 缺少选项表格** — 补充 `-p, --project <id>` 选项说明表格
-2. **[AC #1 违规] `project view` 缺少选项说明** — 补充无额外选项说明（仅 `<projectId>` 位置参数）
-3. **[AC #1 违规] `wi comment` options 表缺 `<content>` 参数说明** — 补充 `<content>` 说明行
-4. **`status list` 语法格式错误** — synopsis 由 `[--type-id | -c]` 改为 `(--type-id <id> | -c <category>)` 并在选项表下方补充"二选一必填"说明
-5. **`wi types`/`user list`/`user search` 必填 `-p` 括号误标可选** — 将三处 synopsis 中 `[-p <projectId>]` 改为 `-p <projectId>`
-6. **`auth login` 非交互模式说明不够明确** — 补充须同时提供 `--token` 和 `--org-id` 的说明
-7. **`sprint view` 工作项统计截断说明缺失** — 补充 100 项上限注意事项
-8. **两步工作流示例序列号前后矛盾** — 工作流一产出 GJBL-43，工作流二统一使用 GJBL-43 更新
-9. **`pipeline status` `-p` 标注含糊** — 明确注释 `-p` 是 `--pipeline`（非 `--project`）
-
-**Defer 项（1 项）：**
-
-- `wi update --sprint` API body 字段名为 `sprintId` 而 `wi create` 为 `sprint`（内部不一致）—— 属于源码问题，非文档问题，延后处理
-
-**Dismissed 项（约 25 项）：**
-- Edge Case Hunter 大量误报（功能已在 diff 中正确记录，属查阅范围不足）
-
-## Change Log
-
-- 2026-04-02：将 README.md `## 使用` 替换为完整 `## 命令参考`，覆盖所有命令组，添加两步依赖工作流示例
-- 2026-04-02：代码审查后应用 9 项 patch（修正选项表格缺失、synopsis 格式、注释明确性等）
 
 ---
 
