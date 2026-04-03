@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-03-31
-last_updated: 2026-04-02  # story 8-3 done
+last_updated: 2026-04-03  # Epic 9 sprint planning
 project: yunxiao-cli
 project_key: NOKEY
 tracking_system: file-system
@@ -43,7 +43,7 @@ story_location: yunxiao-cli/_bmad-output/implementation-artifacts
 
 development_status:
   # Epic 1: 核心基础设施与认证
-  epic-1: in-progress
+  epic-1: done
   1-1-cli-skeleton-refactor: done
   1-2-config-module: done
   1-3-output-module: done
@@ -51,61 +51,71 @@ development_status:
   1-5-auth-commands: done
   1-6-whoami-always-register: done
   1-7-api-verification-spike: done
-  epic-1-retrospective: optional
+  epic-1-retrospective: done  # 全项目复盘 2026-04-02
 
   # Epic 2: 工作项生命周期管理
-  epic-2: in-progress
+  epic-2: done
   2-1-serial-number-resolve: done
   2-2-wi-list: done
-  2-4-wi-create: done
   2-3-wi-view: done
+  2-4-wi-create: done
   2-5-wi-update: done
   2-6-wi-delete: done
   2-7-wi-comment: done
   2-8-wi-comments: done
-  epic-2-retrospective: optional
+  epic-2-retrospective: done  # 全项目复盘 2026-04-02
 
   # Epic 3: 前置查询命令
-  epic-3: in-progress
+  epic-3: done
   3-1-wi-types: done
   3-2-status-list: done
   3-3-user-list-search: done
   3-4-project-list: done
-  epic-3-retrospective: optional
+  epic-3-retrospective: done  # 全项目复盘 2026-04-02
 
   # Epic 4: Sprint 管理
-  epic-4: in-progress
+  epic-4: done
   4-1-sprint-list: done
   4-2-sprint-view: done
-  epic-4-retrospective: optional
+  epic-4-retrospective: done  # 全项目复盘 2026-04-02
 
   # Epic 5: 流水线触发
-  epic-5: in-progress
+  epic-5: done
   5-1-pipeline-list: done
   5-2-pipeline-run: done
   5-3-pipeline-status: done
-  epic-5-retrospective: optional
+  epic-5-retrospective: done  # 全项目复盘 2026-04-02
 
   # Epic 6: 发布与分发
-  epic-6: in-progress
+  epic-6: done
   6-1-npm-package-config: done
   6-2-manual-publish-verification: done
-  6-4-github-actions-cd: done
   6-3-github-actions-ci: done
-  epic-6-retrospective: optional
+  6-4-github-actions-cd: done
+  epic-6-retrospective: done  # 全项目复盘 2026-04-02
 
   # Epic 7: 测试覆盖
-  epic-7: in-progress
+  epic-7: done
   7-1-test-infrastructure: done
   7-2-api-layer-tests: done
   7-3-serial-number-tests: done
   7-4-command-layer-tests: done
-  epic-7-retrospective: optional
+  epic-7-retrospective: done  # 全项目复盘 2026-04-02
 
   # Epic 8: 文档
-  epic-8: in-progress
+  epic-8: done
   8-1-readme-install-config: done
   8-2-readme-command-reference: done
   8-3-readme-workflow-examples: done
   8-4-skill-file-optimization: done
-  epic-8-retrospective: optional
+  epic-8-retrospective: done  # 全项目复盘 2026-04-02
+
+  # Epic 9: 稳定性修复与 v0.2 增强
+  epic-9: backlog
+  9-1-auth-login-pat-url-fix: backlog
+  9-2-project-list-layout-fix: backlog
+  9-3-resolve-workitem-id-pagination: backlog
+  9-4-sprint-view-done-schema: backlog
+  9-5-version-check-update: backlog
+  9-6-i18n-chinese: backlog
+  epic-9-retrospective: optional
