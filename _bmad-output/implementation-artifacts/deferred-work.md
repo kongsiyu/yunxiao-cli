@@ -1,5 +1,9 @@
 # Deferred Work
 
+## Deferred from: code review of 9-4-sprint-view-done-schema (2026-04-03)
+
+- `isDoneStatus`: `nameEn` 含前后空格时精确匹配失败（如 `' done '`）— API 响应通常无空格填充，无实际案例；如有需要可在后续版本对 `nameEn` 加 `.trim()`
+
 ## Deferred from: code review of 9-2-project-list-layout-fix (2026-04-03)
 
 - Zero-width/combining chars (U+200B, U+0300–U+036F) counted as width 1 in `visualWidth` — pre-existing design limit; no impact for DevOps project names

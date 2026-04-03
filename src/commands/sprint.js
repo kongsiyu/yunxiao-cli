@@ -4,6 +4,26 @@ import { listSprints, getSprintInfo, searchWorkitems } from "../api.js";
 import { printJson, printError } from "../output.js";
 import { AppError, ERROR_CODE } from "../errors.js";
 
+/**
+ * Determine whether a workitem status object represents "done".
+ *
+ * Field priority order (based on confirmed API schema):
+ *   1. s.done boolean  — most direct indicator; short-circuits on false
+ *   2. s.stage enum    — stable platform enum (DONE / DOING / UNSTARTED)
+ *   3. s.nameEn exact  — case-insensitive exact match to avoid partial hits
+ *      (e.g. "undone" or "in-done" must NOT match)
+ *
+ * s.name Chinese fuzzy match is intentionally omitted: it is unreliable
+ * because common status names like "待完成" would incorrectly match /完成/.
+ */
+export function isDoneStatus(s) {
+  if (!s || typeof s !== 'object') return false;
+  if (typeof s.done === 'boolean') return s.done;
+  if (typeof s.stage === 'string') return s.stage.toUpperCase() === 'DONE';
+  if (typeof s.nameEn === 'string') return s.nameEn.toLowerCase() === 'done';
+  return false;
+}
+
 function formatDate(ts) {
   if (!ts) return "-";
   return new Date(ts).toISOString().split("T")[0];
@@ -82,19 +102,7 @@ export function registerSprintCommands(program, client, orgId, defaultProjectId,
 
       const total = items.length;
 
-      // Determine "done" status: prefer nameEn, then name
-      const done = items.filter(item => {
-        const s = item.status;
-        if (!s) return false;
-        if (typeof s === 'object') {
-          if (s.done === true) return true;
-          if (typeof s.nameEn === 'string' && /\bdone\b/i.test(s.nameEn)) return true;
-          if (typeof s.stage === 'string' && s.stage.toUpperCase() === 'DONE') return true;
-          if (typeof s.name === 'string' && /\bdone\b|完成/i.test(s.name)) return true;
-        }
-        if (typeof s === 'string' && /\bdone\b|完成/i.test(s)) return true;
-        return false;
-      }).length;
+      const done = items.filter(item => isDoneStatus(item.status)).length;
 
       // Count by workitemType.name (API returns name, not category)
       const byCategory = {};
