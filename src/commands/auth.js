@@ -56,11 +56,11 @@ export function registerAuthCommands(program) {
 
         // Interactive mode
         console.log(chalk.bold("\nYunxiao Authentication\n"));
-        console.log(chalk.gray("Generate a PAT at: https://devops.aliyun.com/account/setting/tokens\n"));
+        console.log(chalk.gray("Generate a PAT at: https://account-devops.aliyun.com/settings/personalAccessToken\n"));
 
         let pat = options.token ? options.token.trim() : "";
         if (!pat) {
-          pat = (await promptSecret("Enter your PAT: ")).trim();
+          pat = (await promptSecret("请粘贴你的 Personal Access Token：")).trim();
           if (!pat) {
             console.error(chalk.red("PAT cannot be empty"));
             process.exit(1);
