@@ -1,5 +1,16 @@
 # Deferred Work
 
+## Deferred from: code review of 9-2-project-list-layout-fix (2026-04-03)
+
+- Zero-width/combining chars (U+200B, U+0300–U+036F) counted as width 1 in `visualWidth` — pre-existing design limit; no impact for DevOps project names
+- Emoji characters counted as 1 column instead of 2 — out of story scope; emoji in project names extremely unlikely
+- Newer CJK Extension blocks (F/G/H, U+2B740+) not included in `visualWidth` ranges — U+4E00–U+9FFF covers 99.9% of Chinese characters in practice
+- `p.name` null/undefined causes TypeError in `visualWidth` — pre-existing; `p.name.padEnd(30)` had identical failure mode
+- `p.customCode.padEnd(12)` not updated to `padEndVisual` — explicitly out of scope per story spec; customCode is expected to be ASCII-only
+- No type guard for non-string input in `padEndVisual` — pre-existing issue; same root as null name above
+- Lone surrogate from malformed API response counted as width 1 — API returns well-formed UTF-8; original code had same behavior
+- Long project names overflow without truncation — pre-existing behavior; explicitly documented in JSDoc
+
 ## Deferred from: code review of 9-1-auth-login-pat-url-fix (2026-04-03)
 
 - **语言不一致**：提示语已中文化，但同流程错误消息（"PAT cannot be empty"）仍为英文。国际化统一由 Story 9.6（i18n）处理。

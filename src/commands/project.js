@@ -1,7 +1,7 @@
 // src/commands/project.js
 import chalk from "chalk";
 import { searchProjects, getProject } from "../api.js";
-import { printJson } from "../output.js";
+import { printJson, padEndVisual } from "../output.js";
 import { AppError, ERROR_CODE } from "../errors.js";
 
 function formatDate(ts) {
@@ -36,7 +36,7 @@ export function registerProjectCommands(program, client, orgId, withErrorHandlin
       }
       console.log(chalk.bold(`\nFound ${projects.length} project(s):\n`));
       for (const p of projects) {
-        console.log(`${chalk.cyan(p.customCode.padEnd(12))} ${chalk.white(p.name.padEnd(30))} ${chalk.gray(p.id)}`);
+        console.log(`${chalk.cyan(p.customCode.padEnd(12))} ${chalk.white(padEndVisual(p.name, 30))} ${chalk.gray(p.id)}`);
         console.log(`  ${chalk.gray("Status:")} ${p.status?.name || "-"}  ${chalk.gray("Created:")} ${formatDate(p.gmtCreate)}`);
       }
     }));
