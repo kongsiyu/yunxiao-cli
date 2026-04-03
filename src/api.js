@@ -214,18 +214,25 @@ export async function resolveWorkitemId(client, orgId, spaceId, identifier) {
   // Serial number format: e.g. GJBL-1 (letters-digits)
   if (/^[A-Z]+-\d+$/i.test(identifier)) {
     const serialNumber = identifier.toUpperCase();
-    const { items: results } = await searchWorkitems(client, orgId, spaceId, {
-      category: "Req,Task,Bug",
-      page: 1,
-      perPage: 50,
-    });
-    const match = results.find(
-      (i) => i.serialNumber?.toUpperCase() === serialNumber
-    );
-    if (!match) {
-      throw new AppError(ERROR_CODE.NOT_FOUND, `Workitem ${identifier} not found`);
+    // Note: Yunxiao API does not support serialNumber as a conditionGroup filter.
+    // We paginate through all workitems (perPage=200) until a match is found.
+    // Maximum pages traversed: ceil(total / 200).
+    let page = 1;
+    const perPage = 200;
+    while (true) {
+      const { items: results, total } = await searchWorkitems(client, orgId, spaceId, {
+        category: "Req,Task,Bug",
+        page,
+        perPage,
+      });
+      const match = results.find(
+        (i) => i.serialNumber?.toUpperCase() === serialNumber
+      );
+      if (match) return match.id;
+      if (results.length === 0 || page * perPage >= total) break;
+      page++;
     }
-    return match.id;
+    throw new AppError(ERROR_CODE.NOT_FOUND, `Workitem ${identifier} not found`);
   }
 
   // Otherwise assume it's already a UUID

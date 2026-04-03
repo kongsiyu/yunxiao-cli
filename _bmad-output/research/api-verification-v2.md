@@ -39,6 +39,8 @@
 
 > **关键修复（v1 已确认）：** 默认 category 应为 `"Req,Task,Bug"` 而非 `"Req"`
 
+> **serialNumber 过滤可行性（Story 9.3 评估）：** `serialNumber` 字段**不支持**作为 conditionGroups 的 fieldIdentifier 进行过滤。conditions 支持的字段仅包括 status、assignedTo、subject、sprint、priority、label、gmtCreate。因此 `resolveWorkitemId` 采用路径 B：perPage=200 + 分页循环遍历所有工作项，在本地精确匹配 `serialNumber` 字段。已知限制：每次翻页发起一次 API 请求，超大项目（>200*N 条工作项）仍有理论上限，但覆盖绝大多数实际场景。
+
 ### 1.2 GetWorkitem — 获取工作项详情 ✅
 
 - **Method:** GET

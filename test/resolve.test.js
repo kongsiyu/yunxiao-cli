@@ -38,7 +38,7 @@ describe('resolveWorkitemId', () => {
     assert.equal(client.post.mock.calls.length, 1);
   });
 
-  test('searchWorkitems 使用全类型 category=Req,Task,Bug，perPage=50', async () => {
+  test('searchWorkitems 使用全类型 category=Req,Task,Bug，perPage=200 分页循环', async () => {
     const item = makeWorkitem({ id: 'wi-uuid-002', serialNumber: 'PROJ-42' });
     mock.method(client, 'post', async () => ({ data: [item] }));
 
@@ -47,8 +47,7 @@ describe('resolveWorkitemId', () => {
     const body = client.post.mock.calls[0].arguments[1];
     assert.equal(body.category, 'Req,Task,Bug');
     assert.equal(body.spaceId, 'mySpace');
-    // perPage 固定 50；超出时不自动翻页，会抛 NOT_FOUND（已知限制）
-    assert.equal(body.perPage, 50);
+    assert.equal(body.perPage, 200);
   });
 
   test('结果中有多个工作项时，精确匹配 serialNumber', async () => {
@@ -179,6 +178,55 @@ describe('resolveWorkitemId', () => {
 
     await assert.rejects(
       () => resolveWorkitemId(client, 'org1', 'space1', 'GJBL-1'),
+      (err) => {
+        assert.ok(err instanceof AppError);
+        assert.equal(err.code, ERROR_CODE.NOT_FOUND);
+        return true;
+      }
+    );
+  });
+
+  // ---------------------------------------------------------------------------
+  // AC1: 大型项目分页 — 目标工作项不在第一页时仍能正确解析（Story 9.3）
+  // ---------------------------------------------------------------------------
+
+  test('目标工作项不在第一页时，分页循环能正确解析（AC1: 大型项目场景）', async () => {
+    const targetItem = makeWorkitem({ id: 'wi-page2-001', serialNumber: 'PROJ-201' });
+    // 第一页返回 200 条不匹配的工作项，x-total 标头表明总数为 201
+    const page1Items = Array.from({ length: 200 }, (_, i) =>
+      makeWorkitem({ id: `wi-p1-${i}`, serialNumber: `OTHER-${i + 1}` })
+    );
+
+    let callCount = 0;
+    mock.method(client, 'post', async (_url, _body) => {
+      callCount++;
+      if (callCount === 1) {
+        return { data: page1Items, headers: { 'x-total': '201' } };
+      }
+      return { data: [targetItem] };
+    });
+
+    const result = await resolveWorkitemId(client, 'org1', 'space1', 'PROJ-201');
+
+    assert.equal(result, 'wi-page2-001');
+    assert.equal(client.post.mock.calls.length, 2);
+    assert.equal(client.post.mock.calls[0].arguments[1].page, 1);
+    assert.equal(client.post.mock.calls[1].arguments[1].page, 2);
+  });
+
+  test('所有页遍历完仍无匹配 → 抛出 AppError(NOT_FOUND)（分页终止正确）', async () => {
+    // 两页各 1 条不匹配，total = 2
+    let callCount = 0;
+    mock.method(client, 'post', async (_url, _body) => {
+      callCount++;
+      if (callCount === 1) {
+        return { data: [makeWorkitem({ serialNumber: 'OTHER-1' })], headers: { 'x-total': '2' } };
+      }
+      return { data: [makeWorkitem({ serialNumber: 'OTHER-2' })] };
+    });
+
+    await assert.rejects(
+      () => resolveWorkitemId(client, 'org1', 'space1', 'PROJ-999'),
       (err) => {
         assert.ok(err instanceof AppError);
         assert.equal(err.code, ERROR_CODE.NOT_FOUND);

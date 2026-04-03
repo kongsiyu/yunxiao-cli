@@ -1,5 +1,11 @@
 # Deferred Work
 
+## Deferred from: code review of 9-3-resolve-workitem-id-pagination (2026-04-03)
+
+- `total` 为 NaN/0 时（header 缺失/异常），`page * perPage >= total` 在首页即为 true，导致仅查第一页后提前终止 [src/api.js resolveWorkitemId] — pre-existing 防御性问题，真实 API 始终返回有效 x-total 头
+- 分页循环无上界（缺少最大页数 guard），理论上恶意/异常 API 可导致无限循环 [src/api.js resolveWorkitemId] — pre-existing 增强性需求，正常 API 不会触发
+- `searchWorkitems` 在分页中途抛错时无重试逻辑，错误上下文（第几页失败）丢失 [src/api.js resolveWorkitemId] — pre-existing，与原单次调用实现风险相同
+
 ## Deferred from: code review of 9-2-project-list-layout-fix (2026-04-03)
 
 - Zero-width/combining chars (U+200B, U+0300–U+036F) counted as width 1 in `visualWidth` — pre-existing design limit; no impact for DevOps project names
