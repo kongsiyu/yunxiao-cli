@@ -39,6 +39,31 @@
 
 > **关键修复（v1 已确认）：** 默认 category 应为 `"Req,Task,Bug"` 而非 `"Req"`
 
+#### status 字段 Schema（Story 9.4 补充，2026-04-03）
+
+`status` 字段为对象，结构如下：
+
+```json
+{
+  "status": {
+    "id": "string",
+    "name": "已完成",
+    "nameEn": "Done",
+    "stage": "DONE",
+    "done": true
+  }
+}
+```
+
+| 字段 | 类型 | 可靠性 | 说明 |
+|------|------|--------|------|
+| `done` | boolean | ✅ **最高** | 平台直接标识，存在时最可靠；`false` 表示未完成，无需检查其他字段 |
+| `stage` | string enum | ✅ **高** | 平台统一枚举：`DONE` / `DOING` / `UNSTARTED`；`done` 字段缺失时使用 |
+| `nameEn` | string | ⚠️ **中** | 需精确匹配（`=== 'done'`），避免误匹配 `"undone"`、`"in-done"` 等；`done` 和 `stage` 均缺失时使用 |
+| `name` | string | ❌ **不可靠** | 中文名称模糊匹配（如 `/完成/`）会误匹配"待完成"，**不应用于 done 判断** |
+
+**done 判断字段优先级（已固化）：** `s.done` boolean → `s.stage` enum → `s.nameEn` 精确匹配。
+
 ### 1.2 GetWorkitem — 获取工作项详情 ✅
 
 - **Method:** GET

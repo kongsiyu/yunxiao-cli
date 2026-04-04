@@ -1,12 +1,89 @@
-// test/sprint.test.js - Tests for sprint API functions
+// test/sprint.test.js - Tests for sprint API functions and done-status logic
 import { describe, test, beforeEach, afterEach, mock } from 'node:test';
 import assert from 'node:assert/strict';
 import { createMockClient, makeSprint } from './setup.js';
 import { getSprintInfo, listSprints } from '../src/api.js';
+import { isDoneStatus } from '../src/commands/sprint.js';
 
 const ORG_ID = 'org-001';
 const PROJECT_ID = 'proj-001';
 const SPRINT_ID = 'sprint-001';
+
+// ---------------------------------------------------------------------------
+// isDoneStatus — done 状态判断逻辑单元测试
+// 验证字段优先级：done boolean > stage enum > nameEn exact match
+// ---------------------------------------------------------------------------
+describe('isDoneStatus', () => {
+  // Priority 1: s.done boolean
+  test('returns true when s.done === true', () => {
+    assert.equal(isDoneStatus({ done: true }), true);
+  });
+
+  test('returns false when s.done === false (stops at boolean check)', () => {
+    // s.done === false must short-circuit; do NOT fall through to stage
+    assert.equal(isDoneStatus({ done: false, stage: 'DONE', nameEn: 'done' }), false);
+  });
+
+  // Priority 2: s.stage enum
+  test('returns true when s.stage === "DONE" and s.done absent', () => {
+    assert.equal(isDoneStatus({ stage: 'DONE' }), true);
+  });
+
+  test('returns true for lowercase stage "done"', () => {
+    assert.equal(isDoneStatus({ stage: 'done' }), true);
+  });
+
+  test('returns false when s.stage is "DOING"', () => {
+    assert.equal(isDoneStatus({ stage: 'DOING' }), false);
+  });
+
+  test('returns false when s.stage is "UNSTARTED"', () => {
+    assert.equal(isDoneStatus({ stage: 'UNSTARTED' }), false);
+  });
+
+  // Priority 3: s.nameEn exact match (case-insensitive)
+  test('returns true when s.nameEn === "done" (exact match)', () => {
+    assert.equal(isDoneStatus({ nameEn: 'done' }), true);
+  });
+
+  test('returns true when s.nameEn === "Done" (case-insensitive exact)', () => {
+    assert.equal(isDoneStatus({ nameEn: 'Done' }), true);
+  });
+
+  test('returns false when s.nameEn === "undone" (no partial match)', () => {
+    assert.equal(isDoneStatus({ nameEn: 'undone' }), false);
+  });
+
+  test('returns false when s.nameEn === "in-done" (no partial match)', () => {
+    assert.equal(isDoneStatus({ nameEn: 'in-done' }), false);
+  });
+
+  // s.name Chinese fuzzy match removed — must NOT count '待完成' or '完成' via name
+  test('returns false for s.name "完成" when done/stage/nameEn all absent', () => {
+    assert.equal(isDoneStatus({ name: '完成' }), false);
+  });
+
+  test('returns false for s.name "待完成"', () => {
+    assert.equal(isDoneStatus({ name: '待完成' }), false);
+  });
+
+  // Edge cases
+  test('returns false for null status', () => {
+    assert.equal(isDoneStatus(null), false);
+  });
+
+  test('returns false for undefined status', () => {
+    assert.equal(isDoneStatus(undefined), false);
+  });
+
+  test('returns false for string status (string check removed)', () => {
+    assert.equal(isDoneStatus('done'), false);
+  });
+
+  test('returns false for empty object', () => {
+    assert.equal(isDoneStatus({}), false);
+  });
+});
 
 describe('getSprintInfo', () => {
   let client;
