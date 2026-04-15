@@ -39,6 +39,40 @@
 
 > **关键修复（v1 已确认）：** 默认 category 应为 `"Req,Task,Bug"` 而非 `"Req"`
 
+#### 1.1.1 serialNumber 过滤可行性评估（Story 9.3）
+
+**评估结论：** ❌ **API 不支持 serialNumber 作为 conditionGroup 的 fieldIdentifier**
+
+**分析：**
+- 官方文档中 SearchWorkitems 的 `conditions` 参数支持多种 fieldIdentifier（如 `status`、`assignedTo`、`subject`、`sprint`、`priority`、`label`、`gmtCreate`）
+- 但 **serialNumber 未在文档中列为支持的过滤字段**
+- SearchWorkitems 返回结果中包含 `serialNumber` 字段，但该字段仅用于显示，不支持作为过滤条件
+
+**实现方案（路径 B - 分页循环）：**
+- 将 `perPage` 从 50 扩大至 200，减少 API 调用次数
+- 实现分页循环：从 page 1 开始，逐页搜索，直到找到匹配的 serialNumber 或遍历完所有结果
+- 最大遍历页数：50 页（200 items/page = 10000 items max），覆盖绝大多数项目场景
+- 在函数注释中标注已知限制：超过 10000 个活跃工作项的项目可能无法通过序列号查找
+
+**已知限制（技术债务）：**
+- 对于超大型项目（>10000 个活跃工作项），序列号查找可能超时或无法完成
+- 建议用户在此类项目中直接使用 UUID 或通过 Web UI 获取工作项 ID
+
+### 1.1 SearchWorkitems — 搜索工作项 ✅
+
+- **Method:** POST
+- **Path:** `/oapi/v1/projex/organizations/{orgId}/workitems:search`
+- **必填参数：**
+  | 参数 | 类型 | 说明 |
+  |------|------|------|
+  | category | string | 工作项类型，**支持逗号分隔**（如 `"Req,Task,Bug"`） |
+  | spaceId | string | 项目 ID |
+- **可选参数：** conditions（JSON 过滤条件）、orderBy、page、perPage（默认20）、sort
+- **返回字段：** `id`（UUID）、`subject`、`serialNumber`（如 `GJBL-1`）、`status`（对象）、`assignedTo`、`sprint`、`workitemType`、`gmtCreate` 等
+- **分页：** 响应 Header `x-total` 含总数
+
+> **关键修复（v1 已确认）：** 默认 category 应为 `"Req,Task,Bug"` 而非 `"Req"`
+
 #### status 字段 Schema（Story 9.4 补充，2026-04-03）
 
 `status` 字段为对象，结构如下：
