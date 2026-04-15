@@ -209,6 +209,9 @@ export async function getPipelineRun(client, orgId, pipelineId, runId) {
 
 // ID Resolution
 // Supports: GJBL-1 (serialNumber format) or UUID
+// For serial numbers, uses pagination loop to handle projects with many workitems.
+// SearchWorkitems exposes serialNumber in results, but not as a documented filter.
+// Max pages: 50 (200 items per page = 10000 items max per search)
 export async function resolveWorkitemId(client, orgId, spaceId, identifier) {
   if (!identifier) {
     throw new AppError(ERROR_CODE.INVALID_ARGS, 'workitem ID or serial number is required');
@@ -217,18 +220,35 @@ export async function resolveWorkitemId(client, orgId, spaceId, identifier) {
   // Serial number format: e.g. GJBL-1 (letters-digits)
   if (/^[A-Z]+-\d+$/i.test(identifier)) {
     const serialNumber = identifier.toUpperCase();
-    const { items: results } = await searchWorkitems(client, orgId, spaceId, {
-      category: "Req,Task,Bug",
-      page: 1,
-      perPage: 50,
-    });
-    const match = results.find(
-      (i) => i.serialNumber?.toUpperCase() === serialNumber
-    );
-    if (!match) {
-      throw new AppError(ERROR_CODE.NOT_FOUND, `Workitem ${identifier} not found`);
+
+    for (let page = 1; page <= RESOLVE_WORKITEM_ID_MAX_PAGES; page++) {
+      const { items: results = [], total = 0, totalKnown = false } = await searchWorkitems(client, orgId, spaceId, {
+        category: ALL_WORKITEM_CATEGORIES,
+        page,
+        perPage: RESOLVE_WORKITEM_ID_PER_PAGE,
+      });
+
+      const match = results.find(
+        (i) => i.serialNumber?.toUpperCase() === serialNumber
+      );
+      if (match) {
+        return match.id;
+      }
+
+      if (results.length === 0) {
+        break;
+      }
+
+      if (totalKnown && page * RESOLVE_WORKITEM_ID_PER_PAGE >= total) {
+        break;
+      }
+
+      if (!totalKnown && results.length < RESOLVE_WORKITEM_ID_PER_PAGE) {
+        break;
+      }
     }
-    return match.id;
+
+    throw new AppError(ERROR_CODE.NOT_FOUND, `Workitem ${identifier} not found`);
   }
 
   // Otherwise assume it's already a UUID

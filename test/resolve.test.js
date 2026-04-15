@@ -38,17 +38,17 @@ describe('resolveWorkitemId', () => {
     assert.equal(client.post.mock.calls.length, 1);
   });
 
-  test('searchWorkitems 使用全类型 category=Req,Task,Bug，perPage=50', async () => {
+  test('searchWorkitems 使用全类型 category=Req,Task,Bug，perPage=200，支持分页循环', async () => {
     const item = makeWorkitem({ id: 'wi-uuid-002', serialNumber: 'PROJ-42' });
-    mock.method(client, 'post', async () => ({ data: [item] }));
+    mock.method(client, 'post', async () => ({ data: [item], headers: { 'x-total': '1' } }));
 
     await resolveWorkitemId(client, 'myOrg', 'mySpace', 'PROJ-42');
 
     const body = client.post.mock.calls[0].arguments[1];
     assert.equal(body.category, 'Req,Task,Bug');
     assert.equal(body.spaceId, 'mySpace');
-    // perPage 固定 50；超出时不自动翻页，会抛 NOT_FOUND（已知限制）
-    assert.equal(body.perPage, 50);
+    // perPage 扩大至 200；支持分页循环（page 1 → page N）
+    assert.equal(body.perPage, 200);
   });
 
   test('结果中有多个工作项时，精确匹配 serialNumber', async () => {
