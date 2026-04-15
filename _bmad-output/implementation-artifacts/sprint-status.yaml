@@ -115,7 +115,7 @@ development_status:
   9-1-auth-login-pat-url-fix: done
   9-2-project-list-layout-fix: done
   9-3-resolve-workitem-id-pagination: in-progress
-  9-4-sprint-view-done-schema: in-progress
+  9-4-sprint-view-done-schema: done
   9-5-version-check-update: backlog
   9-6-i18n-chinese: backlog
   epic-9-retrospective: optional

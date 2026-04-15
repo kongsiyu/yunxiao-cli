@@ -3,6 +3,9 @@ import axios from "axios";
 import { AppError, ERROR_CODE } from "./errors.js";
 
 const API_BASE = "https://openapi-rdc.aliyuncs.com";
+const ALL_WORKITEM_CATEGORIES = "Req,Task,Bug";
+const RESOLVE_WORKITEM_ID_PER_PAGE = 200;
+const RESOLVE_WORKITEM_ID_MAX_PAGES = 50;
 
 export function createClientWithPat(pat) {
   return axios.create({
@@ -75,7 +78,7 @@ export async function searchWorkitems(client, orgId, spaceId, opts = {}) {
   }
   const body = {
     spaceId,
-    category: opts.category || "Req,Task,Bug",
+    category: opts.category || ALL_WORKITEM_CATEGORIES,
     page: opts.page || 1,
     perPage: opts.perPage || 20,
     orderBy: opts.orderBy || "gmtCreate",
@@ -90,10 +93,10 @@ export async function searchWorkitems(client, orgId, spaceId, opts = {}) {
     // Some response formats: res.data is { data: [...], total: N }
     const rawData = res.data;
     const items = Array.isArray(rawData) ? rawData : (rawData?.data ?? []);
-    const total = parseInt(
-      res.headers?.['x-total'] ?? rawData?.total ?? items.length, 10
-    ) || 0;
-    return { items, total };
+    const totalValue = res.headers?.['x-total'] ?? rawData?.total;
+    const total = parseInt(totalValue ?? items.length, 10) || 0;
+    const totalKnown = totalValue !== undefined && totalValue !== null && totalValue !== "";
+    return { items, total, totalKnown };
   });
 }
 
