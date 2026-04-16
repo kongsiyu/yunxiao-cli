@@ -1,6 +1,6 @@
 # Story 9.4：sprint view 工作项 done 状态 schema 固化
 
-Status: ready-for-dev
+Status: review
 
 ## Story
 
@@ -24,24 +24,24 @@ So that the done count is accurate regardless of project workflow configuration.
 
 ## Tasks / Subtasks
 
-- [ ] 分析当前 done 判断逻辑并确认字段优先级 (AC: #1)
-  - [ ] 阅读 `src/commands/sprint.js` 当前多级降级实现（`s.done === true` → `s.nameEn /done/i` → `s.stage.toUpperCase() === 'DONE'` → `s.name /done|完成/`）
-  - [ ] 查阅 `_bmad-output/research/api-verification-v2.md` 中 SearchWorkitems 返回字段的 status 对象结构
-  - [ ] 确认哪个字段是 API 返回中最可靠的 done 标识（`s.done` boolean 优先，`s.stage` 次之）
-  - [ ] 记录确认结论
+- [x] 分析当前 done 判断逻辑并确认字段优先级 (AC: #1)
+  - [x] 阅读 `src/commands/sprint.js` 当前多级降级实现（`s.done === true` → `s.nameEn /done/i` → `s.stage.toUpperCase() === 'DONE'` → `s.name /done|完成/`）
+  - [x] 查阅 `_bmad-output/research/api-verification-v2.md` 中 SearchWorkitems 返回字段的 status 对象结构
+  - [x] 确认哪个字段是 API 返回中最可靠的 done 标识（`s.done` boolean 优先，`s.stage` 次之）
+  - [x] 记录确认结论
 
-- [ ] 优化 done 判断逻辑（简化降级链） (AC: #1, #3)
-  - [ ] 保留 `s.done === true` 作为第一优先级（boolean，最可靠）
-  - [ ] 保留 `s.stage?.toUpperCase() === 'DONE'` 作为第二优先级（enum，可靠）
-  - [ ] 如 `s.nameEn` 和 `s.name` 模糊匹配确认为不可靠，降低或移除该降级
-  - [ ] 在代码中添加注释说明字段优先级顺序及依据
+- [x] 优化 done 判断逻辑（简化降级链） (AC: #1, #3)
+  - [x] 保留 `s.done === true` 作为第一优先级（boolean，最可靠）
+  - [x] 保留 `s.stage?.toUpperCase() === 'DONE'` 作为第二优先级（enum，可靠）
+  - [x] 如 `s.nameEn` 和 `s.name` 模糊匹配确认为不可靠，降低或移除该降级
+  - [x] 在代码中添加注释说明字段优先级顺序及依据
 
-- [ ] 更新 API 验证文档 (AC: #2)
-  - [ ] 在 `_bmad-output/research/api-verification-v2.md` SearchWorkitems 章节补充 status 字段 schema 说明
-  - [ ] 明确标注 `done` boolean 字段、`stage` enum 字段的存在性和可靠性
+- [x] 更新 API 验证文档 (AC: #2)
+  - [x] 在 `_bmad-output/research/api-verification-v2.md` SearchWorkitems 章节补充 status 字段 schema 说明
+  - [x] 明确标注 `done` boolean 字段、`stage` enum 字段的存在性和可靠性
 
-- [ ] 验证现有测试仍通过
-  - [ ] 运行 `npm test`，确认无回归
+- [x] 验证现有测试仍通过
+  - [x] 运行 `npm test`，确认无回归
 
 ## Dev Notes
 
@@ -134,9 +134,25 @@ _bmad-output/research/api-verification-v2.md ← 补充 status 字段 schema 说
 ## Dev Agent Record
 
 ### Agent Model Used
+gpt-5.3-codex
 
 ### Debug Log References
+- `node --test test/sprint-done-status.test.js`（RED：初次失败，缺少 `isSprintWorkitemDone` 导出）
+- `node --test test/sprint-done-status.test.js`（GREEN：3/3 通过）
+- `npm test`（全量回归：184/184 通过）
 
 ### Completion Notes List
+- 确认并固化 `sprint view` done 判定优先级为：`status.done`（boolean）→ `status.stage`（enum）→ `status.nameEn`（严格等于 `done`）
+- 移除 `status.name` 中文模糊匹配与字符串状态降级，降低误判风险
+- 在 `src/commands/sprint.js` 新增可复用函数 `isSprintWorkitemDone(status)`，并在 `sprint view` 统计中统一调用
+- 新增单元测试 `test/sprint-done-status.test.js` 覆盖优先级、非可靠字段排除、重复调用一致性
+- 在 `_bmad-output/research/api-verification-v2.md` 的 SearchWorkitems 章节补充 `status` schema 与可靠性说明
 
 ### File List
+- src/commands/sprint.js
+- test/sprint-done-status.test.js
+- _bmad-output/research/api-verification-v2.md
+- _bmad-output/implementation-artifacts/9-4-sprint-view-done-schema.md
+
+### Change Log
+- 2026-04-16：完成 Story 9.4 实现，固化 sprint view done 字段优先级并补充 API 验证文档；新增 done 判定单元测试并通过全量回归测试。
