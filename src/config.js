@@ -43,5 +43,6 @@ export function loadConfig(cliArgs = {}) {
     userId: file?.userId,
     userName: file?.userName,
     orgName: file?.orgName,
+    language: file?.language || process.env.YUNXIAO_LANGUAGE,
   };
 }
