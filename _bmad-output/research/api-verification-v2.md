@@ -39,6 +39,33 @@
 
 > **关键修复（v1 已确认）：** 默认 category 应为 `"Req,Task,Bug"` 而非 `"Req"`
 
+#### status 字段 schema（Sprint 统计相关）
+
+`SearchWorkitems` 返回的 `status` 在工作项对象中为结构化对象，Sprint 完成统计可使用如下字段优先级：
+
+1. `status.done`（boolean）  
+   语义最直接，若存在则优先使用。
+2. `status.stage`（enum）  
+   平台标准枚举，常见值：`DONE` / `DOING` / `UNSTARTED`。
+3. `status.nameEn`（string）  
+   仅建议作为严格回退（如精确匹配 `done`），不建议模糊匹配。
+
+不建议把 `status.name`（中文文案）作为完成态主判断依据，因其是展示文本，存在词义歧义风险（如“待完成”）。
+
+参考结构：
+
+```json
+{
+  "status": {
+    "id": "status-xxx",
+    "name": "已完成",
+    "nameEn": "Done",
+    "stage": "DONE",
+    "done": true
+  }
+}
+```
+
 ### 1.2 GetWorkitem — 获取工作项详情 ✅
 
 - **Method:** GET

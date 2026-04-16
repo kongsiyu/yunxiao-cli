@@ -18,6 +18,19 @@ function statusColor(status) {
   return chalk.white(status);
 }
 
+export function isSprintWorkitemDone(status) {
+  if (!status || typeof status !== 'object') return false;
+
+  // Priority 1: explicit boolean done field from API is the most reliable.
+  if (typeof status.done === 'boolean') return status.done;
+  // Priority 2: stage enum is a stable workflow marker (DONE/DOING/UNSTARTED).
+  if (typeof status.stage === 'string') return status.stage.toUpperCase() === 'DONE';
+  // Priority 3: exact English status name fallback; avoid fuzzy matching.
+  if (typeof status.nameEn === 'string') return status.nameEn.trim().toLowerCase() === 'done';
+
+  return false;
+}
+
 export function registerSprintCommands(program, client, orgId, defaultProjectId, withErrorHandling, jsonMode) {
   const sp = program.command("sprint").description("Manage sprints/iterations");
 
@@ -82,18 +95,9 @@ export function registerSprintCommands(program, client, orgId, defaultProjectId,
 
       const total = items.length;
 
-      // Determine "done" status: prefer nameEn, then name
+      // Determine done by confirmed API schema priority: done(boolean) > stage(enum) > nameEn(exact)
       const done = items.filter(item => {
-        const s = item.status;
-        if (!s) return false;
-        if (typeof s === 'object') {
-          if (s.done === true) return true;
-          if (typeof s.nameEn === 'string' && /\bdone\b/i.test(s.nameEn)) return true;
-          if (typeof s.stage === 'string' && s.stage.toUpperCase() === 'DONE') return true;
-          if (typeof s.name === 'string' && /\bdone\b|完成/i.test(s.name)) return true;
-        }
-        if (typeof s === 'string' && /\bdone\b|完成/i.test(s)) return true;
-        return false;
+        return isSprintWorkitemDone(item.status);
       }).length;
 
       // Count by workitemType.name (API returns name, not category)
