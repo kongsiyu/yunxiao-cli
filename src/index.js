@@ -7,6 +7,7 @@ import { loadConfig } from "./config.js";
 import { AppError, ERROR_CODE } from "./errors.js";
 import { printError } from "./output.js";
 import { checkVersionAsync } from "./version-check.js";
+import { initI18n } from "./i18n/index.js";
 import { registerProjectCommands } from "./commands/project.js";
 import { registerWorkitemCommands } from "./commands/workitem.js";
 import { registerAuthCommands } from "./commands/auth.js";
@@ -19,6 +20,10 @@ const program = new Command();
 
 // Detect --json mode before parse so withErrorHandling and command handlers can use it
 const jsonMode = process.argv.includes('--json');
+
+// Load config and initialize i18n
+const config = loadConfig();
+initI18n(config.language);
 
 program
   .name("yunxiao")
