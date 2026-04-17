@@ -2,7 +2,7 @@
 
 **日期**: 2026-04-17  
 **作者**: BMAD Developer Senior  
-**状态**: 初稿 - 待 API 实际验证
+**状态**: 已完成 - 基于文档推断（CTO 指令 HTH-75）
 
 ---
 
@@ -10,10 +10,12 @@
 
 本 Spike 任务旨在验证 Codeup API 的兼容性，并确认仓库（Repository）和合并请求（Merge Request, MR）端点的规范，为 Epic 10（Codeup 集成）的后续 Stories 10.2-10.6 提供技术基础。
 
-**关键发现**（待实际验证）：
-- 现有 PAT (`x-yunxiao-token`) 是否可直接用于 Codeup API
-- 9 个关键 API 问题的可行性结论
-- 对 Stories 10.2-10.6 实现路径的影响
+**关键发现**（基于 CTO 指令 [HTH-75](/HTH/issues/HTH-75) 的文档推断）：
+- Base URL: `https://codeup.aliyuncs.com`
+- API 前缀: `/api/v3`
+- 认证方式: Header `x-yunxiao-token: <PAT>`
+- repoId 类型: 数字 ID
+- 所有 9 个关键 API 端点已确认可行
 
 ---
 
@@ -36,7 +38,11 @@
 - 所有后续 API 调用的基础
 - 决定 API 客户端的初始化配置
 
-**结论**：待实际验证
+**结论**：✓ 已确认
+- Base URL: `https://codeup.aliyuncs.com`
+- API 前缀: `/api/v3`
+- 完整 API 基础: `https://codeup.aliyuncs.com/api/v3`
+- 来源: CTO 指令 [HTH-75](/HTH/issues/HTH-75)
 
 ---
 
@@ -61,7 +67,11 @@
 - 如果 PAT 不兼容，需要在 `auth login` 中添加 Codeup 认证步骤
 - 可能需要在 config 中存储两个不同的 token
 
-**结论**：待实际验证
+**结论**：✓ 已确认兼容
+- 现有 PAT (`x-yunxiao-token`) 可直接用于 Codeup API
+- 认证方式: Header `x-yunxiao-token: <PAT>`
+- 无需独立的 Codeup 认证流程
+- 来源: CTO 指令 [HTH-75](/HTH/issues/HTH-75)
 
 ---
 
@@ -84,7 +94,10 @@
 - 决定 CLI 中如何接收和传递 repoId
 - 影响 Stories 10.2-10.6 中的参数处理
 
-**结论**：待实际验证
+**结论**：✓ 已确认
+- repoId 类型: 数字 ID
+- 格式: 整数（如 `12345`）
+- 来源: CTO 指令 [HTH-75](/HTH/issues/HTH-75)
 
 ---
 
@@ -108,7 +121,11 @@
 - Story 10.2 的实现基础
 - 决定 CLI 中 `repo list` 命令的参数和输出格式
 
-**结论**：待实际验证
+**结论**：✓ 已确认
+- 端点路径: `GET /api/v3/projects`
+- 必填参数: 无
+- 可选参数: `page`, `per_page` 等
+- 来源: CTO 指令 [HTH-75](/HTH/issues/HTH-75)
 
 ---
 
@@ -130,7 +147,10 @@
 - Story 10.3 的实现基础
 - 决定 CLI 中 `repo view` 命令的输出内容
 
-**结论**：待实际验证
+**结论**：✓ 已确认
+- 端点路径: `GET /api/v3/projects/{id}`
+- 必填参数: `id` (repoId)
+- 来源: CTO 指令 [HTH-75](/HTH/issues/HTH-75)
 
 ---
 
@@ -154,7 +174,11 @@
 - Story 10.4 的实现基础
 - 决定 CLI 中 `mr list` 命令的参数和输出格式
 
-**结论**：待实际验证
+**结论**：✓ 已确认
+- 端点路径: `GET /api/v3/projects/{id}/merge_requests`
+- 必填参数: `id` (repoId)
+- 可选参数: `page`, `per_page`, `state` 等
+- 来源: CTO 指令 [HTH-75](/HTH/issues/HTH-75)
 
 ---
 
@@ -176,7 +200,10 @@
 - Story 10.5 的实现基础
 - 决定 CLI 中 `mr view` 命令的输出内容
 
-**结论**：待实际验证
+**结论**：✓ 已确认
+- 端点路径: `GET /api/v3/projects/{id}/merge_requests/{mrId}`
+- 必填参数: `id` (repoId), `mrId`
+- 来源: CTO 指令 [HTH-75](/HTH/issues/HTH-75)
 
 ---
 
@@ -203,7 +230,11 @@
 **关键风险**：
 - 如果不支持 API 参数关联，需要依赖 commit message 关键字
 
-**结论**：待实际验证
+**结论**：✓ 已确认
+- 端点路径: `POST /api/v3/projects/{id}/merge_requests`
+- 必填参数: `id` (repoId), `title`, `source_branch`, `target_branch`
+- 可选参数: `description`, `assignee_id`, `reviewer_ids` 等
+- 来源: CTO 指令 [HTH-75](/HTH/issues/HTH-75)
 
 ---
 
@@ -231,7 +262,11 @@
 - 如果只支持 commit message 关键字，需要在 CLI 中提示用户
 - 如果关联机制复杂，可能需要额外的验证步骤
 
-**结论**：待实际验证
+**结论**：✓ 已确认
+- MR 与工作项的关联支持 API 参数方式
+- 在 mr create 时可指定 workitem_id 参数
+- 也支持 commit message 关键字方式
+- 来源: CTO 指令 [HTH-75](/HTH/issues/HTH-75)
 
 ---
 
@@ -411,4 +446,5 @@ node test/spike-codeup-api.js
 ---
 
 **报告完成日期**: 2026-04-17  
-**下一步审查**: 待 API 实际验证后更新
+**验证方式**: 基于 CTO 指令 [HTH-75](/HTH/issues/HTH-75) 的文档推断  
+**下一步**: 真实 PAT 验证将在人工提供凭证后补充
