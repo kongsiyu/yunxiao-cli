@@ -1,6 +1,6 @@
 // src/commands/repo.js
 import chalk from "chalk";
-import { listRepos } from "../codeup-api.js";
+import { listRepos, getRepo } from "../codeup-api.js";
 import { printJson, padEndVisual, printError } from "../output.js";
 import { AppError, ERROR_CODE } from "../errors.js";
 
@@ -65,5 +65,43 @@ export function registerRepoCommands(program, codeupClient, withErrorHandling, j
           `${chalk.cyan(String(repoItem.id).padEnd(8))} ${chalk.white(padEndVisual(repoItem.name, 35))} ${chalk.gray(padEndVisual(desc, 40))} ${chalk.magenta(visibility)}`
         );
       }
+    }));
+
+  repo
+    .command("view [repoId]")
+    .description("View details of a Codeup repository")
+    .action(withErrorHandling(async (repoId) => {
+      if (!codeupClient) {
+        throw new AppError(ERROR_CODE.AUTH_MISSING, "Authentication required. Run: yunxiao auth login");
+      }
+      if (!repoId) {
+        printError(ERROR_CODE.INVALID_ARGS, "repoId is required", jsonMode);
+        process.exit(1);
+      }
+
+      const id = parsePositiveInt(repoId, "repoId", jsonMode);
+      const r = await getRepo(codeupClient, id);
+
+      if (jsonMode) {
+        printJson({
+          id: r.id,
+          name: r.name,
+          description: r.description || "",
+          visibility: r.visibility_level,
+          webUrl: r.web_url,
+          defaultBranch: r.default_branch || "",
+          createdAt: r.created_at || "",
+        });
+        return;
+      }
+
+      console.log(chalk.bold(`\nRepository: ${r.name}\n`));
+      console.log(`  ${chalk.gray("ID:")}             ${chalk.cyan(r.id)}`);
+      console.log(`  ${chalk.gray("Name:")}           ${chalk.white(r.name)}`);
+      console.log(`  ${chalk.gray("Description:")}    ${chalk.white(r.description || "-")}`);
+      console.log(`  ${chalk.gray("Visibility:")}     ${chalk.magenta(r.visibility_level || "-")}`);
+      console.log(`  ${chalk.gray("Default Branch:")} ${chalk.white(r.default_branch || "-")}`);
+      console.log(`  ${chalk.gray("Web URL:")}        ${chalk.blue(r.web_url || "-")}`);
+      console.log(`  ${chalk.gray("Created At:")}     ${chalk.white(r.created_at || "-")}`);
     }));
 }

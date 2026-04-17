@@ -156,3 +156,109 @@ describe("repo list command", () => {
     assert.equal(output.code, "INVALID_ARGS");
   });
 });
+
+describe("repo view command", () => {
+  afterEach(() => mock.restoreAll());
+
+  test("normal mode prints repo details", async () => {
+    const codeupClient = createMockClient();
+    mock.method(codeupClient, "get", async () => ({
+      data: {
+        id: 12345,
+        name: "alpha",
+        description: "repo desc",
+        visibility_level: "private",
+        web_url: "https://codeup.aliyun.com/alpha",
+        default_branch: "main",
+        created_at: "2026-04-17T00:00:00Z",
+      },
+    }));
+    const { logs } = setupCapture();
+    const program = buildProgram(codeupClient, false);
+
+    await program.parseAsync(["node", "yunxiao", "repo", "view", "12345"]);
+
+    const text = logs.join("\n");
+    assert.ok(text.includes("Repository: alpha"));
+    assert.ok(text.includes("12345"));
+    assert.ok(text.includes("private"));
+    assert.ok(text.includes("https://codeup.aliyun.com/alpha"));
+  });
+
+  test("--json prints mapped repo details", async () => {
+    const codeupClient = createMockClient();
+    mock.method(codeupClient, "get", async () => ({
+      data: {
+        id: 12345,
+        name: "alpha",
+        description: "repo desc",
+        visibility_level: "private",
+        web_url: "https://codeup.aliyun.com/alpha",
+        default_branch: "main",
+        created_at: "2026-04-17T00:00:00Z",
+      },
+    }));
+    const { stdout, logs } = setupCapture();
+    const program = buildProgram(codeupClient, true);
+
+    await program.parseAsync(["node", "yunxiao", "--json", "repo", "view", "12345"]);
+
+    assert.equal(logs.length, 0, "json mode should not print details logs");
+    const payload = JSON.parse(stdout.join(""));
+    assert.equal(payload.id, 12345);
+    assert.equal(payload.name, "alpha");
+    assert.equal(payload.visibility, "private");
+    assert.equal(payload.webUrl, "https://codeup.aliyun.com/alpha");
+    assert.equal(payload.defaultBranch, "main");
+    assert.equal(payload.createdAt, "2026-04-17T00:00:00Z");
+  });
+
+  test("missing repoId returns INVALID_ARGS and exits 1", async () => {
+    const codeupClient = createMockClient();
+    const { stderr, exitCodes } = setupCapture();
+    const program = buildProgram(codeupClient, true);
+
+    try {
+      await program.parseAsync(["node", "yunxiao", "--json", "repo", "view"]);
+    } catch (err) {
+      assert.ok(err instanceof MockExit);
+    }
+
+    assert.equal(exitCodes[0], 1);
+    const output = JSON.parse(stderr[0]);
+    assert.equal(output.code, "INVALID_ARGS");
+    assert.equal(output.error, "repoId is required");
+  });
+
+  test("invalid repoId returns INVALID_ARGS and exits 1", async () => {
+    const codeupClient = createMockClient();
+    const { stderr, exitCodes } = setupCapture();
+    const program = buildProgram(codeupClient, true);
+
+    try {
+      await program.parseAsync(["node", "yunxiao", "--json", "repo", "view", "abc"]);
+    } catch (err) {
+      assert.ok(err instanceof MockExit);
+    }
+
+    assert.equal(exitCodes[0], 1);
+    const output = JSON.parse(stderr[0]);
+    assert.equal(output.code, "INVALID_ARGS");
+    assert.equal(output.error, "repoId must be a positive integer");
+  });
+
+  test("missing codeupClient returns AUTH_MISSING and exits 1", async () => {
+    const { stderr, exitCodes } = setupCapture();
+    const program = buildProgram(null, true);
+
+    try {
+      await program.parseAsync(["node", "yunxiao", "--json", "repo", "view", "12345"]);
+    } catch (err) {
+      assert.ok(err instanceof MockExit);
+    }
+
+    assert.equal(exitCodes[0], 1);
+    const output = JSON.parse(stderr.join(""));
+    assert.equal(output.code, "AUTH_MISSING");
+  });
+});

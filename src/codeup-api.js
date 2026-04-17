@@ -33,3 +33,9 @@ export async function listRepos(codeupClient, opts = {}) {
     codeupClient.get("/projects", { params }).then((r) => r.data)
   );
 }
+
+export async function getRepo(codeupClient, repoId) {
+  return codeupCall(() =>
+    codeupClient.get(`/projects/${repoId}`).then((r) => r.data)
+  );
+}
