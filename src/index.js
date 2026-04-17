@@ -54,8 +54,6 @@ function withErrorHandling(fn) {
 // Register auth commands first (they don't require a client)
 registerAuthCommands(program);
 
-// Load config with correct priority: file > env vars (CLI args handled per-command)
-const config = loadConfig();
 const token = config.token;
 
 let client = null;
@@ -97,8 +95,6 @@ registerQueryCommands(program, client, orgId, projectId, withErrorHandling, json
 // Check for version updates (non-blocking, async)
 checkVersionAsync().then(({ hasUpdate, latestVersion }) => {
   if (hasUpdate && latestVersion) {
-    const packageJson = JSON.parse(require('fs').readFileSync(new URL('../package.json', import.meta.url), 'utf-8'));
-    const localVersion = packageJson.version;
     process.stderr.write(`yunxiao v${latestVersion} available, run \`npm update -g @kongsiyu/yunxiao-cli\` to update\n`);
   }
 }).catch(() => {
