@@ -15,6 +15,8 @@ import { registerSprintCommands } from "./commands/sprint.js";
 import { registerPipelineCommands } from "./commands/pipeline.js";
 import { registerStatusCommands } from "./commands/status.js";
 import { registerQueryCommands } from "./commands/query.js";
+import { createCodeupClient } from "./codeup-api.js";
+import { registerRepoCommands } from "./commands/repo.js";
 
 const program = new Command();
 
@@ -54,11 +56,10 @@ function withErrorHandling(fn) {
 // Register auth commands first (they don't require a client)
 registerAuthCommands(program);
 
-// Load config with correct priority: file > env vars (CLI args handled per-command)
-const config = loadConfig();
 const token = config.token;
 
 let client = null;
+let codeupClient = null;
 let currentUserId = config.userId;
 let orgId = config.orgId;
 let projectId = config.projectId;
@@ -66,6 +67,7 @@ let projectId = config.projectId;
 // Create client if token is available
 if (token) {
   client = createClientWithPat(token);
+  codeupClient = createCodeupClient(token);
 }
 
 // whoami 命令
@@ -93,6 +95,7 @@ registerSprintCommands(program, client, orgId, projectId, withErrorHandling, jso
 registerPipelineCommands(program, client, orgId, withErrorHandling, jsonMode);
 registerStatusCommands(program, client, orgId, projectId, withErrorHandling, jsonMode);
 registerQueryCommands(program, client, orgId, projectId, withErrorHandling, jsonMode);
+registerRepoCommands(program, codeupClient, withErrorHandling, jsonMode);
 
 // Check for version updates (non-blocking, async)
 checkVersionAsync().then(({ hasUpdate, latestVersion }) => {
