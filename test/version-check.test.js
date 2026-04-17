@@ -4,6 +4,8 @@ import assert from 'node:assert';
 import fs from 'fs';
 import path from 'path';
 import os from 'os';
+import { spawnSync } from 'node:child_process';
+import { fileURLToPath } from 'url';
 import { checkVersionAsync, getVersionCheckCacheFileForTest, setTestCacheFile } from '../src/version-check.js';
 
 // Mock cache directory for testing
@@ -192,4 +194,38 @@ test('version check - cache file path exists', () => {
   assert.strictEqual(typeof cacheFile, 'string');
   assert(cacheFile.includes('.yunxiao'));
   assert(cacheFile.includes('version-check-cache.json'));
+});
+
+test('cli entrypoint prints update notice from cache during a normal command', () => {
+  const tempHome = fs.mkdtempSync(path.join(os.tmpdir(), 'yunxiao-cli-home-'));
+  const cacheDir = path.join(tempHome, '.yunxiao');
+  const repoRoot = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
+  const packageJson = JSON.parse(
+    fs.readFileSync(new URL('../package.json', import.meta.url), 'utf-8')
+  );
+
+  try {
+    fs.mkdirSync(cacheDir, { recursive: true });
+    fs.writeFileSync(
+      path.join(cacheDir, 'version-check-cache.json'),
+      JSON.stringify({
+        lastCheckTime: Date.now(),
+        latestVersion: '9.9.9',
+        localVersion: packageJson.version
+      }),
+      'utf-8'
+    );
+
+    const result = spawnSync(process.execPath, ['src/index.js', 'auth', 'status'], {
+      cwd: repoRoot,
+      env: { ...process.env, HOME: tempHome },
+      encoding: 'utf-8'
+    });
+
+    assert.strictEqual(result.status, 0, result.stderr || result.stdout);
+    assert.match(result.stdout, /Authentication Status/i);
+    assert.match(result.stderr, /yunxiao v9\.9\.9 available/i);
+  } finally {
+    fs.rmSync(tempHome, { recursive: true, force: true });
+  }
 });

@@ -100,8 +100,6 @@ registerRepoCommands(program, codeupClient, withErrorHandling, jsonMode);
 // Check for version updates (non-blocking, async)
 checkVersionAsync().then(({ hasUpdate, latestVersion }) => {
   if (hasUpdate && latestVersion) {
-    const packageJson = JSON.parse(require('fs').readFileSync(new URL('../package.json', import.meta.url), 'utf-8'));
-    const localVersion = packageJson.version;
     process.stderr.write(`yunxiao v${latestVersion} available, run \`npm update -g @kongsiyu/yunxiao-cli\` to update\n`);
   }
 }).catch(() => {
