@@ -2,7 +2,7 @@
 import { test, describe, afterEach, mock } from "node:test";
 import assert from "node:assert/strict";
 import { createMockClient } from "./setup.js";
-import { listRepos } from "../src/codeup-api.js";
+import { listRepos, getRepo } from "../src/codeup-api.js";
 
 function make401() {
   const err = new Error("Unauthorized");
@@ -81,6 +81,65 @@ describe("listRepos", () => {
     await assert.rejects(
       () => listRepos(client, {}),
       (err) => err === err500
+    );
+  });
+});
+
+describe("getRepo", () => {
+  afterEach(() => mock.restoreAll());
+
+  test("calls GET /projects/:id and returns response data", async () => {
+    const client = createMockClient();
+    const repo = { id: 123, name: "repo-123" };
+    mock.method(client, "get", async () => ({ data: repo }));
+
+    const result = await getRepo(client, 123);
+
+    assert.deepEqual(result, repo);
+    assert.equal(client.get.mock.calls[0].arguments[0], "/projects/123");
+  });
+
+  test("maps 401 to AUTH_FAILED", async () => {
+    const client = createMockClient();
+    mock.method(client, "get", async () => {
+      throw make401();
+    });
+
+    await assert.rejects(
+      () => getRepo(client, 123),
+      (err) => {
+        assert.equal(err.code, "AUTH_FAILED");
+        return true;
+      }
+    );
+  });
+
+  test("maps 403 to AUTH_FAILED", async () => {
+    const client = createMockClient();
+    mock.method(client, "get", async () => {
+      throw make403();
+    });
+
+    await assert.rejects(
+      () => getRepo(client, 123),
+      (err) => {
+        assert.equal(err.code, "AUTH_FAILED");
+        return true;
+      }
+    );
+  });
+
+  test("rethrows non-auth errors like 404", async () => {
+    const client = createMockClient();
+    const err404 = new Error("Not Found");
+    err404.response = { status: 404 };
+    mock.method(client, "get", async () => {
+      throw err404;
+    });
+
+    await assert.rejects(
+      () => getRepo(client, 123),
+      (err) => err === err404
     );
   });
 });
