@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-03-31
-last_updated: 2026-04-17  # Story 9-5 formal delivery closed; Epic 9 done
+last_updated: 2026-04-17  # Story 10-2 done; Story 9-5 formal delivery closed; Epic 9 done
 project: yunxiao-cli
 project_key: NOKEY
 tracking_system: file-system
@@ -123,3 +123,8 @@ development_status:
   # Epic 10: Codeup 集成
   epic-10: in-progress
   10-1-codeup-api-verification: done
+  10-2-repo-list: done
+  10-3-repo-view: backlog
+  10-4-mr-list: backlog
+  10-5-mr-view: backlog
+  10-6-mr-create: backlog
