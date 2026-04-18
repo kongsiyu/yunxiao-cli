@@ -1,6 +1,6 @@
 // src/commands/repo.js
 import chalk from "chalk";
-import { listRepos, getRepo, listMrs, getMr } from "../codeup-api.js";
+import { listRepos, getRepo, listMrs, getMr, createMr } from "../codeup-api.js";
 import { printJson, padEndVisual, printError } from "../output.js";
 import { AppError, ERROR_CODE } from "../errors.js";
 
@@ -45,6 +45,36 @@ function mapMrDetail(mrDetail) {
     createdAt: mrDetail.created_at || "",
     updatedAt: mrDetail.updated_at || "",
   };
+}
+
+function mapCreatedMr(mrDetail, requestedWorkitemId = "") {
+  return {
+    ...mapMrDetail(mrDetail),
+    workitemId: mrDetail.workitem_id || mrDetail.workitemId || requestedWorkitemId || "",
+  };
+}
+
+function validateNonEmptyOption(value, fieldName, jsonMode) {
+  const trimmed = String(value || "").trim();
+  if (!trimmed) {
+    printError(ERROR_CODE.INVALID_ARGS, `${fieldName} must be a non-empty value`, jsonMode);
+    process.exit(1);
+  }
+  return trimmed;
+}
+
+function parseReviewerIds(raw, jsonMode) {
+  const ids = String(raw || "")
+    .split(",")
+    .map((id) => id.trim())
+    .filter(Boolean);
+
+  if (ids.length === 0) {
+    printError(ERROR_CODE.INVALID_ARGS, "reviewerIds must contain at least one id", jsonMode);
+    process.exit(1);
+  }
+
+  return ids;
 }
 
 export function registerRepoCommands(program, codeupClient, withErrorHandling, jsonMode) {
@@ -237,5 +267,83 @@ export function registerRepoCommands(program, codeupClient, withErrorHandling, j
       console.log(`  ${chalk.gray("Created At:")}    ${chalk.white(mrDetail.createdAt || "-")}`);
       console.log(`  ${chalk.gray("Updated At:")}    ${chalk.white(mrDetail.updatedAt || "-")}`);
       console.log(`  ${chalk.gray("Description:")}   ${chalk.white(mrDetail.description || "-")}`);
+    }));
+
+  mr
+    .command("create [repoId]")
+    .description("Create a Codeup merge request")
+    .option("--title <title>", "Merge request title")
+    .option("--source-branch <branch>", "Source branch")
+    .option("--target-branch <branch>", "Target branch")
+    .option("--description <description>", "Merge request description")
+    .option("--assignee-id <id>", "Assignee user id")
+    .option("--reviewer-ids <ids>", "Comma-separated reviewer user ids")
+    .option("--workitem-id <id>", "Yunxiao workitem id to associate with the MR")
+    .action(withErrorHandling(async (repoId, opts) => {
+      if (!repoId) {
+        printError(ERROR_CODE.INVALID_ARGS, "repoId is required", jsonMode);
+        process.exit(1);
+      }
+
+      const id = parsePositiveInt(repoId, "repoId", jsonMode);
+      const title = String(opts.title || "").trim();
+      if (!title) {
+        printError(ERROR_CODE.INVALID_ARGS, "title is required", jsonMode);
+        process.exit(1);
+      }
+
+      const sourceBranch = String(opts.sourceBranch || "").trim();
+      if (!sourceBranch) {
+        printError(ERROR_CODE.INVALID_ARGS, "sourceBranch is required", jsonMode);
+        process.exit(1);
+      }
+
+      const targetBranch = String(opts.targetBranch || "").trim();
+      if (!targetBranch) {
+        printError(ERROR_CODE.INVALID_ARGS, "targetBranch is required", jsonMode);
+        process.exit(1);
+      }
+
+      const payload = {
+        title,
+        source_branch: sourceBranch,
+        target_branch: targetBranch,
+      };
+
+      if (opts.description !== undefined) payload.description = opts.description;
+      if (opts.assigneeId !== undefined) {
+        payload.assignee_id = validateNonEmptyOption(opts.assigneeId, "assigneeId", jsonMode);
+      }
+      if (opts.reviewerIds !== undefined) {
+        payload.reviewer_ids = parseReviewerIds(opts.reviewerIds, jsonMode);
+      }
+      if (opts.workitemId !== undefined) {
+        payload.workitem_id = validateNonEmptyOption(opts.workitemId, "workitemId", jsonMode);
+      }
+
+      if (!codeupClient) {
+        throw new AppError(ERROR_CODE.AUTH_MISSING, "Authentication required. Run: yunxiao auth login");
+      }
+
+      const mrDetail = mapCreatedMr(await createMr(codeupClient, id, payload), payload.workitem_id);
+
+      if (jsonMode) {
+        printJson(mrDetail);
+        return;
+      }
+
+      console.log(chalk.bold("\nCreated Merge Request\n"));
+      console.log(`  ${chalk.gray("ID:")}            ${chalk.cyan(mrDetail.id || "-")}`);
+      console.log(`  ${chalk.gray("Title:")}         ${chalk.white(mrDetail.title || "-")}`);
+      console.log(`  ${chalk.gray("State:")}         ${chalk.magenta(mrDetail.state || "-")}`);
+      console.log(`  ${chalk.gray("Source Branch:")} ${chalk.white(mrDetail.sourceBranch || "-")}`);
+      console.log(`  ${chalk.gray("Target Branch:")} ${chalk.white(mrDetail.targetBranch || "-")}`);
+      console.log(`  ${chalk.gray("Author:")}        ${chalk.blue(mrDetail.author.name || "-")}`);
+      console.log(`  ${chalk.gray("Assignee:")}      ${chalk.blue(mrDetail.assignee.name || "-")}`);
+      console.log(`  ${chalk.gray("Web URL:")}       ${chalk.blue(mrDetail.webUrl || "-")}`);
+      console.log(`  ${chalk.gray("Created At:")}    ${chalk.white(mrDetail.createdAt || "-")}`);
+      if (mrDetail.workitemId) {
+        console.log(`  ${chalk.gray("Workitem ID:")}   ${chalk.white(mrDetail.workitemId)}`);
+      }
     }));
 }

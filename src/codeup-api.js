@@ -55,3 +55,9 @@ export async function getMr(codeupClient, repoId, mrId) {
     codeupClient.get(`/projects/${repoId}/merge_requests/${mrId}`).then((r) => r.data)
   );
 }
+
+export async function createMr(codeupClient, repoId, payload) {
+  return codeupCall(() =>
+    codeupClient.post(`/projects/${repoId}/merge_requests`, payload).then((r) => r.data)
+  );
+}
