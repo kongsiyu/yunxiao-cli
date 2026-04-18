@@ -2,7 +2,7 @@
 
 **Story ID**: 10.4
 **Epic**: 10 - Codeup 集成
-**Status**: ready-for-dev
+**Status**: done
 **Created**: 2026-04-17
 **Author**: Sue (PM Senior)
 
@@ -284,3 +284,35 @@ Found 3 merge request(s):
   "total": 1
 }
 ```
+
+---
+
+## Review Findings
+
+- [x] No blocking defects found in merged PR #78 (`8940411`) during follow-up code review on 2026-04-18
+
+## Dev Agent Record
+
+### Agent Model Used
+
+Codex (GPT-5)
+
+### Completion Notes List
+
+- Verified PR #78 was merged into `master` on 2026-04-18 and local `master` contains merge commit `03ca61c`
+- Reviewed merged Story 10.4 implementation against acceptance criteria and existing command patterns; no blocking issues found
+- Re-ran full unit test suite after merge follow-up: `npm test` passed (`251` tests)
+- Confirmed Epic 10 remains `in-progress`; Story 10.5 can now be prepared because Story 10.4 delivery is formally closed
+
+### File List
+
+- `src/codeup-api.js`
+- `src/commands/repo.js`
+- `test/codeup-api.test.js`
+- `test/repo.test.js`
+- `_bmad-output/implementation-artifacts/10-4-mr-list.md`
+- `_bmad-output/implementation-artifacts/sprint-status.yaml`
+
+### Change Log
+
+- 2026-04-18: Completed Story 10.4 formal delivery follow-up after PR #78 merge; validated tests and review status

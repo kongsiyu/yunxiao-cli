@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-03-31
-last_updated: 2026-04-18  # Story 10-2 done; Story 9-5 formal delivery closed; Epic 9 done; Story 10-3 done; Story 10-4 done (mr list)
+last_updated: 2026-04-18  # Story 10-2 done; Story 9-5 formal delivery closed; Epic 9 done; Story 10-3 done; Story 10-4 formal delivery closed (PR #78 merged)
 project: yunxiao-cli
 project_key: NOKEY
 tracking_system: file-system
