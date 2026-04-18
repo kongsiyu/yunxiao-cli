@@ -2,7 +2,7 @@
 import { test, describe, afterEach, mock } from "node:test";
 import assert from "node:assert/strict";
 import { createMockClient } from "./setup.js";
-import { listRepos, getRepo } from "../src/codeup-api.js";
+import { listRepos, getRepo, listMrs } from "../src/codeup-api.js";
 
 function make401() {
   const err = new Error("Unauthorized");
@@ -140,6 +140,75 @@ describe("getRepo", () => {
     await assert.rejects(
       () => getRepo(client, 123),
       (err) => err === err404
+    );
+  });
+});
+
+describe("listMrs", () => {
+  afterEach(() => mock.restoreAll());
+
+  test("calls GET /projects/:id/merge_requests and returns response data", async () => {
+    const client = createMockClient();
+    const mrs = [{ id: 1, title: "mr-1" }];
+    mock.method(client, "get", async () => ({ data: mrs }));
+
+    const result = await listMrs(client, 123, {});
+
+    assert.deepEqual(result, mrs);
+    assert.equal(client.get.mock.calls[0].arguments[0], "/projects/123/merge_requests");
+  });
+
+  test("passes page, per_page and state query params", async () => {
+    const client = createMockClient();
+    mock.method(client, "get", async () => ({ data: [] }));
+
+    await listMrs(client, 123, { page: 2, perPage: 10, state: "opened" });
+
+    const call = client.get.mock.calls[0];
+    assert.deepEqual(call.arguments[1], { params: { page: 2, per_page: 10, state: "opened" } });
+  });
+
+  test("maps 401 to AUTH_FAILED", async () => {
+    const client = createMockClient();
+    mock.method(client, "get", async () => {
+      throw make401();
+    });
+
+    await assert.rejects(
+      () => listMrs(client, 123, {}),
+      (err) => {
+        assert.equal(err.code, "AUTH_FAILED");
+        return true;
+      }
+    );
+  });
+
+  test("maps 403 to AUTH_FAILED", async () => {
+    const client = createMockClient();
+    mock.method(client, "get", async () => {
+      throw make403();
+    });
+
+    await assert.rejects(
+      () => listMrs(client, 123, {}),
+      (err) => {
+        assert.equal(err.code, "AUTH_FAILED");
+        return true;
+      }
+    );
+  });
+
+  test("rethrows non-auth errors", async () => {
+    const client = createMockClient();
+    const err500 = new Error("Server Error");
+    err500.response = { status: 500 };
+    mock.method(client, "get", async () => {
+      throw err500;
+    });
+
+    await assert.rejects(
+      () => listMrs(client, 123, {}),
+      (err) => err === err500
     );
   });
 });
