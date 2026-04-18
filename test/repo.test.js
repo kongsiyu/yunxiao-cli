@@ -262,3 +262,171 @@ describe("repo view command", () => {
     assert.equal(output.code, "AUTH_MISSING");
   });
 });
+
+describe("mr list command", () => {
+  afterEach(() => mock.restoreAll());
+
+  test("normal mode prints MR list output with id/title/state/branches/author", async () => {
+    const codeupClient = createMockClient();
+    mock.method(codeupClient, "get", async () => ({
+      data: [
+        {
+          iid: 88,
+          title: "Fix release branch merge conflict",
+          state: "opened",
+          source_branch: "feature/fix-mr",
+          target_branch: "master",
+          author: { id: "u-1", name: "alice" },
+          created_at: "2026-04-18T00:00:00Z",
+        },
+      ],
+    }));
+    const { logs } = setupCapture();
+    const program = buildProgram(codeupClient, false);
+
+    await program.parseAsync(["node", "yunxiao", "mr", "list", "12345"]);
+
+    const text = logs.join("\n");
+    assert.ok(text.includes("Found 1 merge request(s):"));
+    assert.ok(text.includes("88"));
+    assert.ok(text.includes("opened"));
+    assert.ok(text.includes("feature/fix-mr"));
+    assert.ok(text.includes("master"));
+    assert.ok(text.includes("alice"));
+  });
+
+  test("--json prints { mrs, total } to stdout", async () => {
+    const codeupClient = createMockClient();
+    mock.method(codeupClient, "get", async () => ({
+      data: [
+        {
+          iid: 88,
+          title: "Fix release branch merge conflict",
+          state: "merged",
+          source_branch: "feature/fix-mr",
+          target_branch: "master",
+          author: { id: "u-1", username: "alice" },
+          created_at: "2026-04-18T00:00:00Z",
+        },
+      ],
+    }));
+    const { stdout, logs } = setupCapture();
+    const program = buildProgram(codeupClient, true);
+
+    await program.parseAsync(["node", "yunxiao", "--json", "mr", "list", "12345"]);
+
+    assert.equal(logs.length, 0, "json mode should not print table logs");
+    const payload = JSON.parse(stdout.join(""));
+    assert.equal(payload.total, 1);
+    assert.equal(payload.mrs[0].id, 88);
+    assert.equal(payload.mrs[0].title, "Fix release branch merge conflict");
+    assert.equal(payload.mrs[0].state, "merged");
+    assert.equal(payload.mrs[0].sourceBranch, "feature/fix-mr");
+    assert.equal(payload.mrs[0].targetBranch, "master");
+    assert.equal(payload.mrs[0].author.name, "alice");
+    assert.equal(payload.mrs[0].createdAt, "2026-04-18T00:00:00Z");
+  });
+
+  test("empty result prints no merge requests found", async () => {
+    const codeupClient = createMockClient();
+    mock.method(codeupClient, "get", async () => ({ data: [] }));
+    const { logs } = setupCapture();
+    const program = buildProgram(codeupClient, false);
+
+    await program.parseAsync(["node", "yunxiao", "mr", "list", "12345"]);
+
+    assert.ok(logs.some((line) => line.includes("No merge requests found")));
+  });
+
+  test("passes state/page/limit params to listMrs", async () => {
+    const codeupClient = createMockClient();
+    mock.method(codeupClient, "get", async () => ({ data: [] }));
+    const { logs } = setupCapture();
+    const program = buildProgram(codeupClient, false);
+
+    await program.parseAsync([
+      "node",
+      "yunxiao",
+      "mr",
+      "list",
+      "12345",
+      "--state",
+      "opened",
+      "--page",
+      "2",
+      "--limit",
+      "10",
+    ]);
+
+    assert.ok(logs.some((line) => line.includes("No merge requests found")));
+    const call = codeupClient.get.mock.calls[0];
+    assert.equal(call.arguments[0], "/projects/12345/merge_requests");
+    assert.deepEqual(call.arguments[1], { params: { page: 2, per_page: 10, state: "opened" } });
+  });
+
+  test("missing repoId returns INVALID_ARGS and exits 1", async () => {
+    const codeupClient = createMockClient();
+    const { stderr, exitCodes } = setupCapture();
+    const program = buildProgram(codeupClient, true);
+
+    try {
+      await program.parseAsync(["node", "yunxiao", "--json", "mr", "list"]);
+    } catch (err) {
+      assert.ok(err instanceof MockExit);
+    }
+
+    assert.equal(exitCodes[0], 1);
+    const output = JSON.parse(stderr[0]);
+    assert.equal(output.code, "INVALID_ARGS");
+    assert.equal(output.error, "repoId is required");
+  });
+
+  test("invalid repoId returns INVALID_ARGS and exits 1", async () => {
+    const codeupClient = createMockClient();
+    const { stderr, exitCodes } = setupCapture();
+    const program = buildProgram(codeupClient, true);
+
+    try {
+      await program.parseAsync(["node", "yunxiao", "--json", "mr", "list", "abc"]);
+    } catch (err) {
+      assert.ok(err instanceof MockExit);
+    }
+
+    assert.equal(exitCodes[0], 1);
+    const output = JSON.parse(stderr[0]);
+    assert.equal(output.code, "INVALID_ARGS");
+    assert.equal(output.error, "repoId must be a positive integer");
+  });
+
+  test("invalid --state returns INVALID_ARGS and exits 1", async () => {
+    const codeupClient = createMockClient();
+    const { stderr, exitCodes } = setupCapture();
+    const program = buildProgram(codeupClient, true);
+
+    try {
+      await program.parseAsync(["node", "yunxiao", "--json", "mr", "list", "12345", "--state", "invalid"]);
+    } catch (err) {
+      assert.ok(err instanceof MockExit);
+    }
+
+    assert.equal(exitCodes[0], 1);
+    const output = JSON.parse(stderr[0]);
+    assert.equal(output.code, "INVALID_ARGS");
+    assert.equal(output.error, "state must be one of: opened, merged, closed");
+  });
+
+  test("missing codeupClient returns AUTH_MISSING and exits 1", async () => {
+    const { stderr, exitCodes } = setupCapture();
+    const program = buildProgram(null, true);
+
+    try {
+      await program.parseAsync(["node", "yunxiao", "--json", "mr", "list", "12345"]);
+    } catch (err) {
+      assert.ok(err instanceof MockExit);
+    }
+
+    assert.equal(exitCodes[0], 1);
+    const output = JSON.parse(stderr.join(""));
+    assert.equal(output.code, "AUTH_MISSING");
+  });
+});

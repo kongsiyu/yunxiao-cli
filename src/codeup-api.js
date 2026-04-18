@@ -39,3 +39,13 @@ export async function getRepo(codeupClient, repoId) {
     codeupClient.get(`/projects/${repoId}`).then((r) => r.data)
   );
 }
+
+export async function listMrs(codeupClient, repoId, opts = {}) {
+  const params = {};
+  if (opts.page !== undefined) params.page = opts.page;
+  if (opts.perPage !== undefined) params.per_page = opts.perPage;
+  if (opts.state !== undefined) params.state = opts.state;
+  return codeupCall(() =>
+    codeupClient.get(`/projects/${repoId}/merge_requests`, { params }).then((r) => r.data)
+  );
+}
