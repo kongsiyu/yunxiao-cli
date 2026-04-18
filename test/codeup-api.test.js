@@ -2,7 +2,7 @@
 import { test, describe, afterEach, mock } from "node:test";
 import assert from "node:assert/strict";
 import { createMockClient } from "./setup.js";
-import { listRepos, getRepo, listMrs, getMr } from "../src/codeup-api.js";
+import { listRepos, getRepo, listMrs, getMr, createMr } from "../src/codeup-api.js";
 
 function make401() {
   const err = new Error("Unauthorized");
@@ -268,6 +268,116 @@ describe("getMr", () => {
     await assert.rejects(
       () => getMr(client, 123, 88),
       (err) => err === err404
+    );
+  });
+});
+
+describe("createMr", () => {
+  afterEach(() => mock.restoreAll());
+
+  test("calls POST /projects/:repoId/merge_requests and returns response data", async () => {
+    const client = createMockClient();
+    const payload = {
+      title: "Fix release branch",
+      source_branch: "feature/fix",
+      target_branch: "master",
+      workitem_id: "GJBL-123",
+    };
+    const mr = { id: 88, title: "Fix release branch" };
+    mock.method(client, "post", async () => ({ data: mr }));
+
+    const result = await createMr(client, 123, payload);
+
+    assert.deepEqual(result, mr);
+    assert.equal(client.post.mock.calls[0].arguments[0], "/projects/123/merge_requests");
+  });
+
+  test("passes payload through unchanged", async () => {
+    const client = createMockClient();
+    const payload = {
+      title: "Fix release branch",
+      source_branch: "feature/fix",
+      target_branch: "master",
+      workitem_id: "GJBL-123",
+    };
+    mock.method(client, "post", async () => ({ data: { id: 88 } }));
+
+    await createMr(client, 123, payload);
+
+    assert.equal(client.post.mock.calls[0].arguments[1], payload);
+  });
+
+  test("maps 401 to AUTH_FAILED", async () => {
+    const client = createMockClient();
+    mock.method(client, "post", async () => {
+      throw make401();
+    });
+
+    await assert.rejects(
+      () => createMr(client, 123, {
+        title: "T",
+        source_branch: "feature/a",
+        target_branch: "master",
+      }),
+      (err) => {
+        assert.equal(err.code, "AUTH_FAILED");
+        return true;
+      }
+    );
+  });
+
+  test("maps 403 to AUTH_FAILED", async () => {
+    const client = createMockClient();
+    mock.method(client, "post", async () => {
+      throw make403();
+    });
+
+    await assert.rejects(
+      () => createMr(client, 123, {
+        title: "T",
+        source_branch: "feature/a",
+        target_branch: "master",
+      }),
+      (err) => {
+        assert.equal(err.code, "AUTH_FAILED");
+        return true;
+      }
+    );
+  });
+
+  test("rethrows 404 for command-level NOT_FOUND handling", async () => {
+    const client = createMockClient();
+    const err404 = new Error("Not Found");
+    err404.response = { status: 404 };
+    mock.method(client, "post", async () => {
+      throw err404;
+    });
+
+    await assert.rejects(
+      () => createMr(client, 123, {
+        title: "T",
+        source_branch: "feature/a",
+        target_branch: "master",
+      }),
+      (err) => err === err404
+    );
+  });
+
+  test("rethrows 409 for command-level API_ERROR handling", async () => {
+    const client = createMockClient();
+    const err409 = new Error("Conflict");
+    err409.response = { status: 409 };
+    mock.method(client, "post", async () => {
+      throw err409;
+    });
+
+    await assert.rejects(
+      () => createMr(client, 123, {
+        title: "T",
+        source_branch: "feature/a",
+        target_branch: "master",
+      }),
+      (err) => err === err409
     );
   });
 });
