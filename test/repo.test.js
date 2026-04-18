@@ -430,3 +430,246 @@ describe("mr list command", () => {
     assert.equal(output.code, "AUTH_MISSING");
   });
 });
+
+describe("mr view command", () => {
+  afterEach(() => mock.restoreAll());
+
+  function makeMrDetail(overrides = {}) {
+    return {
+      iid: 88,
+      id: 188,
+      title: "Fix release branch merge conflict",
+      description: "Resolve conflicts before release",
+      state: "opened",
+      source_branch: "feature/fix-mr",
+      target_branch: "master",
+      author: { id: "u-1", name: "alice" },
+      assignee: { id: "u-2", username: "bob" },
+      web_url: "https://codeup.aliyun.com/repo/merge_requests/88",
+      created_at: "2026-04-18T00:00:00Z",
+      updated_at: "2026-04-18T01:00:00Z",
+      ...overrides,
+    };
+  }
+
+  test("normal mode prints MR details", async () => {
+    const codeupClient = createMockClient();
+    mock.method(codeupClient, "get", async () => ({ data: makeMrDetail() }));
+    const { logs } = setupCapture();
+    const program = buildProgram(codeupClient, false);
+
+    await program.parseAsync(["node", "yunxiao", "mr", "view", "12345", "88"]);
+
+    const text = logs.join("\n");
+    assert.ok(text.includes("Merge Request: Fix release branch merge conflict"));
+    assert.ok(text.includes("opened"));
+    assert.ok(text.includes("feature/fix-mr"));
+    assert.ok(text.includes("master"));
+    assert.ok(text.includes("alice"));
+    assert.ok(text.includes("bob"));
+    assert.ok(text.includes("https://codeup.aliyun.com/repo/merge_requests/88"));
+  });
+
+  test("--json prints mapped MR details", async () => {
+    const codeupClient = createMockClient();
+    mock.method(codeupClient, "get", async () => ({ data: makeMrDetail() }));
+    const { stdout, logs } = setupCapture();
+    const program = buildProgram(codeupClient, true);
+
+    await program.parseAsync(["node", "yunxiao", "--json", "mr", "view", "12345", "88"]);
+
+    assert.equal(logs.length, 0, "json mode should not print details logs");
+    const payload = JSON.parse(stdout.join(""));
+    assert.equal(payload.id, 88);
+    assert.equal(payload.title, "Fix release branch merge conflict");
+    assert.equal(payload.description, "Resolve conflicts before release");
+    assert.equal(payload.state, "opened");
+    assert.equal(payload.sourceBranch, "feature/fix-mr");
+    assert.equal(payload.targetBranch, "master");
+    assert.deepEqual(payload.author, { id: "u-1", name: "alice" });
+    assert.deepEqual(payload.assignee, { id: "u-2", name: "bob" });
+    assert.equal(payload.webUrl, "https://codeup.aliyun.com/repo/merge_requests/88");
+    assert.equal(payload.createdAt, "2026-04-18T00:00:00Z");
+    assert.equal(payload.updatedAt, "2026-04-18T01:00:00Z");
+  });
+
+  test("--json uses stable fallbacks for missing optional fields", async () => {
+    const codeupClient = createMockClient();
+    mock.method(codeupClient, "get", async () => ({
+      data: makeMrDetail({
+        iid: undefined,
+        description: undefined,
+        source_branch: undefined,
+        target_branch: undefined,
+        author: { id: "u-1", username: "alice-login" },
+        assignee: null,
+        web_url: undefined,
+        updated_at: undefined,
+      }),
+    }));
+    const { stdout } = setupCapture();
+    const program = buildProgram(codeupClient, true);
+
+    await program.parseAsync(["node", "yunxiao", "--json", "mr", "view", "12345", "188"]);
+
+    const payload = JSON.parse(stdout.join(""));
+    assert.equal(payload.id, 188);
+    assert.equal(payload.description, "");
+    assert.equal(payload.sourceBranch, "");
+    assert.equal(payload.targetBranch, "");
+    assert.deepEqual(payload.author, { id: "u-1", name: "alice-login" });
+    assert.deepEqual(payload.assignee, { id: "", name: "" });
+    assert.equal(payload.webUrl, "");
+    assert.equal(payload.updatedAt, "");
+  });
+
+  test("passes repoId and mrId as positive integers to getMr endpoint", async () => {
+    const codeupClient = createMockClient();
+    mock.method(codeupClient, "get", async () => ({ data: makeMrDetail() }));
+    const { logs } = setupCapture();
+    const program = buildProgram(codeupClient, false);
+
+    await program.parseAsync(["node", "yunxiao", "mr", "view", "12345", "88"]);
+
+    assert.ok(logs.some((line) => line.includes("Merge Request:")));
+    assert.equal(codeupClient.get.mock.calls[0].arguments[0], "/projects/12345/merge_requests/88");
+  });
+
+  test("missing repoId returns INVALID_ARGS and exits 1", async () => {
+    const codeupClient = createMockClient();
+    const { stderr, exitCodes } = setupCapture();
+    const program = buildProgram(codeupClient, true);
+
+    try {
+      await program.parseAsync(["node", "yunxiao", "--json", "mr", "view"]);
+    } catch (err) {
+      assert.ok(err instanceof MockExit);
+    }
+
+    assert.equal(exitCodes[0], 1);
+    const output = JSON.parse(stderr[0]);
+    assert.equal(output.code, "INVALID_ARGS");
+    assert.equal(output.error, "repoId is required");
+  });
+
+  test("missing mrId returns INVALID_ARGS and exits 1", async () => {
+    const codeupClient = createMockClient();
+    const { stderr, exitCodes } = setupCapture();
+    const program = buildProgram(codeupClient, true);
+
+    try {
+      await program.parseAsync(["node", "yunxiao", "--json", "mr", "view", "12345"]);
+    } catch (err) {
+      assert.ok(err instanceof MockExit);
+    }
+
+    assert.equal(exitCodes[0], 1);
+    const output = JSON.parse(stderr[0]);
+    assert.equal(output.code, "INVALID_ARGS");
+    assert.equal(output.error, "mrId is required");
+  });
+
+  test("invalid repoId returns INVALID_ARGS and exits 1", async () => {
+    const codeupClient = createMockClient();
+    const { stderr, exitCodes } = setupCapture();
+    const program = buildProgram(codeupClient, true);
+
+    try {
+      await program.parseAsync(["node", "yunxiao", "--json", "mr", "view", "abc", "88"]);
+    } catch (err) {
+      assert.ok(err instanceof MockExit);
+    }
+
+    assert.equal(exitCodes[0], 1);
+    const output = JSON.parse(stderr[0]);
+    assert.equal(output.code, "INVALID_ARGS");
+    assert.equal(output.error, "repoId must be a positive integer");
+  });
+
+  test("partially numeric repoId returns INVALID_ARGS and exits 1", async () => {
+    const codeupClient = createMockClient();
+    const { stderr, exitCodes } = setupCapture();
+    const program = buildProgram(codeupClient, true);
+
+    try {
+      await program.parseAsync(["node", "yunxiao", "--json", "mr", "view", "123abc", "88"]);
+    } catch (err) {
+      assert.ok(err instanceof MockExit);
+    }
+
+    assert.equal(exitCodes[0], 1);
+    const output = JSON.parse(stderr[0]);
+    assert.equal(output.code, "INVALID_ARGS");
+    assert.equal(output.error, "repoId must be a positive integer");
+  });
+
+  test("invalid mrId returns INVALID_ARGS and exits 1", async () => {
+    const codeupClient = createMockClient();
+    const { stderr, exitCodes } = setupCapture();
+    const program = buildProgram(codeupClient, true);
+
+    try {
+      await program.parseAsync(["node", "yunxiao", "--json", "mr", "view", "12345", "xyz"]);
+    } catch (err) {
+      assert.ok(err instanceof MockExit);
+    }
+
+    assert.equal(exitCodes[0], 1);
+    const output = JSON.parse(stderr[0]);
+    assert.equal(output.code, "INVALID_ARGS");
+    assert.equal(output.error, "mrId must be a positive integer");
+  });
+
+  test("partially numeric mrId returns INVALID_ARGS and exits 1", async () => {
+    const codeupClient = createMockClient();
+    const { stderr, exitCodes } = setupCapture();
+    const program = buildProgram(codeupClient, true);
+
+    try {
+      await program.parseAsync(["node", "yunxiao", "--json", "mr", "view", "12345", "88x"]);
+    } catch (err) {
+      assert.ok(err instanceof MockExit);
+    }
+
+    assert.equal(exitCodes[0], 1);
+    const output = JSON.parse(stderr[0]);
+    assert.equal(output.code, "INVALID_ARGS");
+    assert.equal(output.error, "mrId must be a positive integer");
+  });
+
+  test("missing codeupClient returns AUTH_MISSING and exits 1", async () => {
+    const { stderr, exitCodes } = setupCapture();
+    const program = buildProgram(null, true);
+
+    try {
+      await program.parseAsync(["node", "yunxiao", "--json", "mr", "view", "12345", "88"]);
+    } catch (err) {
+      assert.ok(err instanceof MockExit);
+    }
+
+    assert.equal(exitCodes[0], 1);
+    const output = JSON.parse(stderr.join(""));
+    assert.equal(output.code, "AUTH_MISSING");
+  });
+
+  test("404 response returns NOT_FOUND and exits 1", async () => {
+    const codeupClient = createMockClient();
+    const err404 = new Error("Not Found");
+    err404.response = { status: 404, statusText: "Not Found" };
+    mock.method(codeupClient, "get", async () => {
+      throw err404;
+    });
+    const { stderr, exitCodes } = setupCapture();
+    const program = buildProgram(codeupClient, true);
+
+    try {
+      await program.parseAsync(["node", "yunxiao", "--json", "mr", "view", "12345", "99999"]);
+    } catch (err) {
+      assert.ok(err instanceof MockExit);
+    }
+
+    assert.equal(exitCodes[0], 1);
+    const output = JSON.parse(stderr[0]);
+    assert.equal(output.code, "NOT_FOUND");
+  });
+});

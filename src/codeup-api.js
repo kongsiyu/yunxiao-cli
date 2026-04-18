@@ -49,3 +49,9 @@ export async function listMrs(codeupClient, repoId, opts = {}) {
     codeupClient.get(`/projects/${repoId}/merge_requests`, { params }).then((r) => r.data)
   );
 }
+
+export async function getMr(codeupClient, repoId, mrId) {
+  return codeupCall(() =>
+    codeupClient.get(`/projects/${repoId}/merge_requests/${mrId}`).then((r) => r.data)
+  );
+}
