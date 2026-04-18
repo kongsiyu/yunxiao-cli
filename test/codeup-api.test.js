@@ -2,7 +2,7 @@
 import { test, describe, afterEach, mock } from "node:test";
 import assert from "node:assert/strict";
 import { createMockClient } from "./setup.js";
-import { listRepos, getRepo, listMrs } from "../src/codeup-api.js";
+import { listRepos, getRepo, listMrs, getMr } from "../src/codeup-api.js";
 
 function make401() {
   const err = new Error("Unauthorized");
@@ -209,6 +209,65 @@ describe("listMrs", () => {
     await assert.rejects(
       () => listMrs(client, 123, {}),
       (err) => err === err500
+    );
+  });
+});
+
+describe("getMr", () => {
+  afterEach(() => mock.restoreAll());
+
+  test("calls GET /projects/:repoId/merge_requests/:mrId and returns response data", async () => {
+    const client = createMockClient();
+    const mr = { id: 88, title: "mr-88" };
+    mock.method(client, "get", async () => ({ data: mr }));
+
+    const result = await getMr(client, 123, 88);
+
+    assert.deepEqual(result, mr);
+    assert.equal(client.get.mock.calls[0].arguments[0], "/projects/123/merge_requests/88");
+  });
+
+  test("maps 401 to AUTH_FAILED", async () => {
+    const client = createMockClient();
+    mock.method(client, "get", async () => {
+      throw make401();
+    });
+
+    await assert.rejects(
+      () => getMr(client, 123, 88),
+      (err) => {
+        assert.equal(err.code, "AUTH_FAILED");
+        return true;
+      }
+    );
+  });
+
+  test("maps 403 to AUTH_FAILED", async () => {
+    const client = createMockClient();
+    mock.method(client, "get", async () => {
+      throw make403();
+    });
+
+    await assert.rejects(
+      () => getMr(client, 123, 88),
+      (err) => {
+        assert.equal(err.code, "AUTH_FAILED");
+        return true;
+      }
+    );
+  });
+
+  test("rethrows 404 for command-level NOT_FOUND handling", async () => {
+    const client = createMockClient();
+    const err404 = new Error("Not Found");
+    err404.response = { status: 404 };
+    mock.method(client, "get", async () => {
+      throw err404;
+    });
+
+    await assert.rejects(
+      () => getMr(client, 123, 88),
+      (err) => err === err404
     );
   });
 });

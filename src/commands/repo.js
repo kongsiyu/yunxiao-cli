@@ -1,16 +1,15 @@
 // src/commands/repo.js
 import chalk from "chalk";
-import { listRepos, getRepo, listMrs } from "../codeup-api.js";
+import { listRepos, getRepo, listMrs, getMr } from "../codeup-api.js";
 import { printJson, padEndVisual, printError } from "../output.js";
 import { AppError, ERROR_CODE } from "../errors.js";
 
 function parsePositiveInt(raw, fieldName, jsonMode) {
-  const parsed = parseInt(raw, 10);
-  if (Number.isNaN(parsed) || parsed <= 0) {
+  if (!/^[1-9]\d*$/.test(String(raw))) {
     printError(ERROR_CODE.INVALID_ARGS, `${fieldName} must be a positive integer`, jsonMode);
     process.exit(1);
   }
-  return parsed;
+  return Number(raw);
 }
 
 function mapRepo(repo) {
@@ -24,6 +23,29 @@ function mapRepo(repo) {
 }
 
 const VALID_MR_STATES = ["opened", "merged", "closed"];
+
+function mapUser(user) {
+  return {
+    id: user?.id ?? "",
+    name: user?.name || user?.username || "",
+  };
+}
+
+function mapMrDetail(mrDetail) {
+  return {
+    id: mrDetail.iid ?? mrDetail.id ?? "",
+    title: mrDetail.title || "",
+    description: mrDetail.description || "",
+    state: mrDetail.state || "",
+    sourceBranch: mrDetail.source_branch || "",
+    targetBranch: mrDetail.target_branch || "",
+    author: mapUser(mrDetail.author),
+    assignee: mapUser(mrDetail.assignee),
+    webUrl: mrDetail.web_url || "",
+    createdAt: mrDetail.created_at || "",
+    updatedAt: mrDetail.updated_at || "",
+  };
+}
 
 export function registerRepoCommands(program, codeupClient, withErrorHandling, jsonMode) {
   const repo = program.command("repo").description("Manage Codeup repositories");
@@ -176,5 +198,44 @@ export function registerRepoCommands(program, codeupClient, withErrorHandling, j
           `${chalk.cyan(String(mrItem.id).padEnd(6))} ${chalk.white(padEndVisual(title, 46))} ${chalk.magenta(state)} ${chalk.gray(mrItem.sourceBranch)} → ${chalk.gray(mrItem.targetBranch)} ${chalk.blue(padEndVisual(authorName, 20))}`
         );
       }
+    }));
+
+  mr
+    .command("view [repoId] [mrId]")
+    .description("View details of a Codeup merge request")
+    .action(withErrorHandling(async (repoId, mrId) => {
+      if (!codeupClient) {
+        throw new AppError(ERROR_CODE.AUTH_MISSING, "Authentication required. Run: yunxiao auth login");
+      }
+      if (!repoId) {
+        printError(ERROR_CODE.INVALID_ARGS, "repoId is required", jsonMode);
+        process.exit(1);
+      }
+      if (!mrId) {
+        printError(ERROR_CODE.INVALID_ARGS, "mrId is required", jsonMode);
+        process.exit(1);
+      }
+
+      const id = parsePositiveInt(repoId, "repoId", jsonMode);
+      const mergeRequestId = parsePositiveInt(mrId, "mrId", jsonMode);
+      const mrDetail = mapMrDetail(await getMr(codeupClient, id, mergeRequestId));
+
+      if (jsonMode) {
+        printJson(mrDetail);
+        return;
+      }
+
+      console.log(chalk.bold(`\nMerge Request: ${mrDetail.title || "-"}\n`));
+      console.log(`  ${chalk.gray("ID:")}            ${chalk.cyan(mrDetail.id || "-")}`);
+      console.log(`  ${chalk.gray("Title:")}         ${chalk.white(mrDetail.title || "-")}`);
+      console.log(`  ${chalk.gray("State:")}         ${chalk.magenta(mrDetail.state || "-")}`);
+      console.log(`  ${chalk.gray("Source Branch:")} ${chalk.white(mrDetail.sourceBranch || "-")}`);
+      console.log(`  ${chalk.gray("Target Branch:")} ${chalk.white(mrDetail.targetBranch || "-")}`);
+      console.log(`  ${chalk.gray("Author:")}        ${chalk.blue(mrDetail.author.name || "-")}`);
+      console.log(`  ${chalk.gray("Assignee:")}      ${chalk.blue(mrDetail.assignee.name || "-")}`);
+      console.log(`  ${chalk.gray("Web URL:")}       ${chalk.blue(mrDetail.webUrl || "-")}`);
+      console.log(`  ${chalk.gray("Created At:")}    ${chalk.white(mrDetail.createdAt || "-")}`);
+      console.log(`  ${chalk.gray("Updated At:")}    ${chalk.white(mrDetail.updatedAt || "-")}`);
+      console.log(`  ${chalk.gray("Description:")}   ${chalk.white(mrDetail.description || "-")}`);
     }));
 }
