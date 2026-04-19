@@ -17,13 +17,18 @@
 - [ ] `execution tracker` 只负责当前波次 child issues、gating 与 handoff，不重写 planning 结论或 story 细节。
 - [ ] `独立执行单` 只服务单一 story，不混入多 story 或 planning/tracker 职责。
 
-## 3. `REPO_PATH` / `start story` 触发约定
+## 3. Canonical `story-dev` / `REPO_PATH` / `start story` 触发约定
 
+- [ ] `workflow/story-dev-workflow-single-repo.md` 明确声明自己是 single-repo story 执行的 canonical 规范源。
+- [ ] `workflow/story-dev-workflow-single-repo.md` 明确定义 `start story <epic>-<story> [可选步骤...] [确认模式]` 的合法语法、默认值、可选步骤、确认模式。
+- [ ] 文档明确区分 `REPO_PATH`、`BACKEND_ROOT`、`BACKEND_ROOT_ABS`、`WORKTREE_MODE` 的层次与含义。
+- [ ] 文档明确哪些参数属于启动词，哪些只在 ambiguous / blocked / 高风险场景中交互采集。
+- [ ] 跨会话接力格式包含 `BACKEND_ROOT_ABS`、`BRANCH`、`WORKTREE_MODE`，且恢复时不得无条件从 step 1 重启。
 - [ ] repo 型 planning issue 明确要求带 `REPO_PATH`，且不带 `start story`。
 - [ ] repo 型 execution tracker 明确要求带 `REPO_PATH`，且不带 `start story`。
 - [ ] repo 型独立执行单明确要求带 `REPO_PATH`，并且仅在单 story 执行场景使用 `start story`。
 - [ ] 文档明确声明 `start story` 不是“直接开始编码”的同义词，而是进入 `workflow/story-dev-workflow-single-repo.md`。
-- [ ] 模板 wording 没有改写 `workflow/story-dev-workflow-single-repo.md` 的既有触发语义。
+- [ ] 下游模板只引用 `workflow/story-dev-workflow-single-repo.md` 的 canonical 契约，不自行发明额外语法、默认值或恢复格式。
 - [ ] 若提到可选步骤、确认模式或跨会话接力，描述必须与 `workflow/story-dev-workflow-single-repo.md` 当前规则一致。
 
 ## 4. Baseline / Worktree Guardrails

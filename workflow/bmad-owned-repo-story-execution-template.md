@@ -8,7 +8,8 @@
 
 ## 1. 已被 issue 流程验证的规则
 
-- repo 型独立执行单必须同时携带 `REPO_PATH` 与 `start story <epic>-<story>`。
+- repo 型独立执行单必须同时携带 `REPO_PATH` 与 canonical `start story` 命令。
+- `start story` 的语法、默认值、可选步骤、确认模式、跨会话接力格式均以 [story-dev-workflow-single-repo.md](./story-dev-workflow-single-repo.md) 为唯一规范源。
 - `start story` 的含义是“进入 [story-dev-workflow-single-repo.md](./story-dev-workflow-single-repo.md)”，不是“直接开始编码”。
 - `bmad-create-story` 必须先于实现发生，且 Story 编号必须已经存在于 `epics.md` / `sprint-status.yaml`。
 - Worktree 模式只有在 baseline guardrails 已满足时才能启用。
@@ -30,8 +31,8 @@
 ## 4. 触发约定
 
 - 必带 `REPO_PATH`。
-- 必带 `start story <epic>-<story> [可选步骤] [确认模式]`。
-- 可选步骤与确认模式以 [story-dev-workflow-single-repo.md](./story-dev-workflow-single-repo.md) 为准。
+- 必带 canonical 启动命令：`start story <epic>-<story> [单元测试|代码审查|编译验证|Worktree模式] [全部跳过|AI判断|全部确认]`。
+- 可选步骤、确认模式、默认值、恢复格式只引用 [story-dev-workflow-single-repo.md](./story-dev-workflow-single-repo.md)，本模板不另行定义。
 - `start story` 只应出现在独立执行单中，不应出现在 planning issue / execution tracker 中。
 
 ## 5. 可复制模板
@@ -39,11 +40,11 @@
 ````md
 REPO_PATH: {repo abs path}
 
-start story {epic}-{story} {可选步骤} {确认模式}
+start story {epic}-{story} {optional_steps} {confirmation_mode}
 
 ---
 
-请执行 Story `{epic}-{story}`。本 issue 是独立执行单，按 `workflow/story-dev-workflow-single-repo.md` 执行；`start story` 仅表示进入该工作流，不表示可以跳过 `bmad-create-story` 直接开始编码。
+请执行 Story `{epic}-{story}`。本 issue 是独立执行单，按 `workflow/story-dev-workflow-single-repo.md` 执行；该文件是 single-repo story 执行的唯一规范源。`start story` 仅表示进入该工作流，不表示可以跳过 `bmad-create-story` 直接开始编码。
 
 Story 来源
 
@@ -65,6 +66,7 @@ Story 来源
 
 - 严格遵循 `workflow/story-dev-workflow-single-repo.md`
 - 先执行 `bmad-create-story`，再进入实现 / 验证 / PR
+- 若启动命令包含 `Worktree模式`，必须先在 workflow step 1 创建 worktree，再执行 story 创建、实现、验证或审查
 - 若选用 `Worktree模式`，必须保证所需 planning artifacts 已在目标基线或明确基点分支中可见
 - 若启用 `单元测试` / `编译验证` / `代码审查`，必须在 issue 评论中回填结果
 - PR 创建失败时，不得跳过，必须标记 blocked 并附错误信息
@@ -89,7 +91,7 @@ Blocked 时必须回填
 ```text
 BLOCKED at step <N>: <reason>
 
-To resume, comment with: start story {epic}-{story} — resume from step <N>
+To resume, comment with: start story {epic}-{story} -- resume from step <N>
 BACKEND_ROOT_ABS=<abs path>
 BRANCH=<branch name>
 WORKTREE_MODE=<true|false>
