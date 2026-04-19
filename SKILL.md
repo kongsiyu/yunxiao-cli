@@ -57,11 +57,19 @@ yunxiao auth logout
 ## 全局 Flag
 
 ```
---json    所有 list/view 命令输出纯 JSON（AI 解析用）
+--json    全局选项；只有下文明确给出 schema 的命令才承诺稳定 JSON contract（AI 解析用）
 --help    帮助
 ```
 
 > `--json` 模式：stdout 输出纯 JSON，chalk 着色文字写入 stderr；错误格式：`{"error": "...", "code": "ERROR_CODE"}`
+
+## v1.2.0 中文化边界
+
+- v1.2.0 当前只为高频命令的人类可读输出提供中文支持：`auth`、`whoami`、`project list`、`wi list/view/update`、`sprint list/view`。
+- 这层中文化只影响 human-readable 文本，不翻译 `--json` 字段名、JSON schema、stdout 纯 JSON 约束或 `ERROR_CODE`。
+- 不要把当前版本理解为“全 CLI 已中文化”。`project view`、`wi create/delete/comment/comments/types`、`user list/search`、`status list`、`pipeline*`、`repo*`、`mr*` 仍属于后置命令。
+- `whoami`、`auth status`、`auth logout` 当前没有稳定的 `--json` contract；自动化链路不要依赖它们的 JSON 输出。
+- 并非所有命令都承诺稳定 `--json` contract；只有下文明确给出 schema 的命令适合直接串入自动化步骤。
 
 ---
 
@@ -84,8 +92,10 @@ yunxiao project view <projectId> [--json]
 
 **project list `--json` schema:**
 ```json
-{ "items": [{ "id": "string", "name": "string", "customCode": "string", "status": "string" }], "total": 1 }
+{ "projects": [{ "projectId": "string", "name": "string" }], "total": 1 }
 ```
+
+> `project view` 不在 v1.2.0 首批中文化范围内；human-readable label 仍可能保持英文。
 
 ---
 
@@ -197,7 +207,16 @@ yunxiao wi update <id|序列号> [--title "新标题"] [--status <statusId>]
 
 **`--json` schema：**
 ```json
-{ "success": true, "id": "resolved-workitem-id" }
+{
+  "id": "string",
+  "serialNumber": "GJBL-42",
+  "subject": "工作项标题",
+  "status": { "id": "string", "displayName": "开发中" },
+  "assignedTo": { "id": "string", "name": "string" },
+  "iteration": { "name": "Sprint 2" },
+  "space": { "name": "项目名" },
+  "gmtModified": "ISO8601"
+}
 ```
 
 #### wi delete
@@ -238,7 +257,7 @@ yunxiao wi types [--project <id>] [--category Req|Task|Bug] [--json]
 
 **`--json` schema:**
 ```json
-{ "types": [{ "id": "typeId-abc", "name": "需求", "category": "Req", "defaultType": true }], "total": 3 }
+{ "types": [{ "typeId": "typeId-abc", "name": "需求", "category": "Req" }], "total": 3 }
 ```
 
 ---
@@ -254,7 +273,7 @@ yunxiao status list --category Req|Task|Bug [--project <id>] [--json]
 
 **`--json` schema:**
 ```json
-{ "statuses": [{ "id": "string", "name": "设计中", "type": "INIT|PROCESSING|DONE" }], "total": 6 }
+{ "statuses": [{ "id": "string", "displayName": "设计中", "name": "设计中", "type": "INIT|PROCESSING|DONE" }], "total": 6 }
 ```
 
 ---
@@ -390,6 +409,10 @@ export YUNXIAO_ORG_ID=<orgId>
 
 ## 注意事项
 
+- v1.2.0 只完成高频命令的人类可读中文化，不代表后置命令已完成中文输出。
+- `--json` 字段名、JSON schema、stdout 纯 JSON 约束和 `ERROR_CODE` 必须保持英文；不要在 stdout JSON 中混入中文提示。
+- `whoami`、`auth status`、`auth logout` 当前没有稳定的 `--json` contract；AI workflow 中优先使用具备明确 schema 的 list/view 命令。
+- 并非所有命令都承诺稳定 `--json` contract；只有本文明确给出 schema 的命令适合直接串入自动化步骤。
 - **评论不支持 emoji**（API 限制）
 - **评论不可编辑或删除**（PAT API 无此端点）
 - **状态更新需要 statusId**，不能传中文名，需先 `status list` 获取
