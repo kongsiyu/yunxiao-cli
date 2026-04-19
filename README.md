@@ -783,6 +783,53 @@ yunxiao sprint view <sprintId>
 yunxiao wi list --sprint <sprintId>
 ```
 
+## Smoke 验证
+
+真实 CLI smoke 通过 `node` 子进程直接执行 `src/index.js`，不走命令层 mock。runner 会为每个 case 创建独立的临时 `HOME`，并预写 `.yunxiao/version-check-cache.json`，避免污染本机配置或让版本检查噪音干扰 stdout/stderr 判定。
+
+### CI 安全 smoke
+
+```bash
+npm run smoke
+```
+
+该命令会执行无需真实 PAT 的 case：
+
+- `yunxiao --version`
+- `yunxiao --help`
+- `yunxiao auth status`（空配置）
+- `yunxiao project list --json` 的 `AUTH_MISSING` 失败路径
+- 中文 human-readable 路径：`yunxiao auth login` 空 PAT 提示
+
+需要真实环境的 case 仍会出现在 matrix 中，但在 `npm run smoke` 下会被标记为 `skipped`，不会导致 CI 假失败。
+
+### Live smoke
+
+```bash
+export YUNXIAO_SMOKE_PAT=your_pat
+export YUNXIAO_SMOKE_ORG_ID=your_org_id
+export YUNXIAO_SMOKE_PROJECT_ID=your_project_id
+npm run smoke:live
+```
+
+可选变量：
+
+- `YUNXIAO_SMOKE_LANGUAGE`：写入临时 smoke config 的 `language`
+
+`npm run smoke:live` 会在 CI 安全 case 之外，额外执行以下真实环境命令：
+
+- `yunxiao project list --json`
+- `yunxiao wi list --json`
+- `yunxiao sprint list --json`
+
+### 预期输出与失败判定
+
+- `--version` 必须与 `package.json` 中的 `version` 完全一致。
+- 成功的 `--json` case 必须满足：stdout 为可解析的纯 JSON，stderr 为空。
+- 失败路径 case 必须满足：stdout 为空，stderr 为稳定的错误输出（如 `AUTH_MISSING` JSON）。
+- 中文 human-readable case 必须在 stdout 中看到中文提示。
+- `smoke:live` 缺少任一必填环境变量会直接失败，不进入真实 API 调用。
+
 ## 版本历史
 
 - **v0.1.1** - 认证命令：auth login/status/logout
