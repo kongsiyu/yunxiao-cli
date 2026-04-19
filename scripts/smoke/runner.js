@@ -110,6 +110,8 @@ export function executeSmokeCase(caseDef, context) {
 
     if (caseDef.profile === "live") {
       writeSmokeConfig(homeDir, context.liveEnv);
+    } else if (caseDef.config) {
+      writeSmokeConfig(homeDir, caseDef.config);
     }
 
     const env = buildChildEnv(homeDir, caseDef, context.liveEnv, context.baseEnv);

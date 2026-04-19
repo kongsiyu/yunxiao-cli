@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-03-31
-last_updated: 2026-04-18  # Story 10-2 done; Story 9-5 formal delivery closed; Epic 9 done; Story 10-3 done; Story 10-4 formal delivery closed (PR #78 merged); Story 10-5 done; Story 10-6 done; Epic 10 done after PR #81 merge
+last_updated: 2026-04-19  # v1.2.0 Correct Course planning added Epic 11-13; create-story will generate story files per issue
 project: yunxiao-cli
 project_key: NOKEY
 tracking_system: file-system
@@ -118,7 +118,7 @@ development_status:
   9-4-sprint-view-done-schema: done
   9-5-version-check-update: done
   9-6-i18n-chinese: done
-  epic-9-retrospective: optional
+  epic-9-retrospective: done  # v1.1.0 release retro 2026-04-19
 
   # Epic 10: Codeup 集成
   epic-10: done
@@ -128,7 +128,26 @@ development_status:
   10-4-mr-list: done
   10-5-mr-view: done
   10-6-mr-create: done
-  
+  epic-10-retrospective: done  # v1.1.0 release retro 2026-04-19
+
+  # Epic 11: v1.2.0 CLI 可用性收口与中文化 rollout
+  epic-11: backlog
+  11-1-i18n-audit-rollout-scope: backlog
+  11-2-high-frequency-i18n-rollout: backlog
+  11-3-readme-skill-i18n-boundaries: backlog
+  epic-11-retrospective: optional
+
   # Epic 12: v1.2.0 AI workflow 契约加固与 release gate
   epic-12: in-progress
   12-1-real-cli-smoke-matrix: done
+  12-2-json-stdio-error-contract-tests: done
+  12-3-release-checklist-template: backlog
+  12-4-release-evidence-summary: backlog
+  epic-12-retrospective: optional
+
+  # Epic 13: v1.2.0 BMAD 工件卫生与 Codeup 证据治理
+  epic-13: backlog
+  13-1-story-artifact-sync-rules: backlog
+  13-2-codeup-evidence-ledger: backlog
+  13-3-v1-2-0-handoff-index: backlog
+  epic-13-retrospective: optional

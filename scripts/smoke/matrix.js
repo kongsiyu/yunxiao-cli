@@ -1,3 +1,5 @@
+import { ERROR_CODE } from "../../src/errors.js";
+
 function pass(detail) {
   return { ok: true, detail };
 }
@@ -14,7 +16,12 @@ function parseJson(value) {
   return JSON.parse(normalizeText(value).trim());
 }
 
-function validateJsonShape(result, fieldName) {
+const ALLOWED_ERROR_CODES = new Set(Object.values(ERROR_CODE));
+
+export function validateJsonSuccessContract(result, options = {}) {
+  const rootKey = options.rootKey;
+  const requiredKeys = options.requiredKeys ?? (rootKey ? [rootKey, "total"] : []);
+
   if (result.status !== 0) {
     return fail(`expected exit 0, got ${result.status}`);
   }
@@ -30,23 +37,63 @@ function validateJsonShape(result, fieldName) {
     return fail(`stdout is not valid JSON: ${error.message}`);
   }
 
-  if (!Object.prototype.hasOwnProperty.call(payload, fieldName)) {
-    return fail(`stdout JSON is missing "${fieldName}"`);
+  for (const key of requiredKeys) {
+    if (!Object.prototype.hasOwnProperty.call(payload, key)) {
+      return fail(`stdout JSON is missing "${key}"`);
+    }
   }
 
-  if (!Object.prototype.hasOwnProperty.call(payload, "total")) {
-    return fail('stdout JSON is missing "total"');
+  if (rootKey && !Array.isArray(payload[rootKey])) {
+    return fail(`stdout JSON field "${rootKey}" is not an array`);
   }
 
-  if (!Array.isArray(payload[fieldName])) {
-    return fail(`stdout JSON field "${fieldName}" is not an array`);
-  }
-
-  if (typeof payload.total !== "number") {
+  if (Object.prototype.hasOwnProperty.call(payload, "total") && typeof payload.total !== "number") {
     return fail('stdout JSON field "total" is not a number');
   }
 
-  return pass(`stdout JSON contains ${fieldName}[${payload[fieldName].length}] and total=${payload.total}`);
+  return pass(
+    rootKey
+      ? `stdout JSON contains ${rootKey}[${payload[rootKey].length}] and total=${payload.total}`
+      : "stdout JSON contract is valid"
+  );
+}
+
+export function validateJsonErrorContract(result, options = {}) {
+  const expectedCode = options.expectedCode;
+
+  if (result.status === 0) {
+    return fail("expected non-zero exit, got 0");
+  }
+
+  if (normalizeText(result.stdout).trim() !== "") {
+    return fail(`expected empty stdout, got: ${normalizeText(result.stdout).trim()}`);
+  }
+
+  let payload;
+  try {
+    payload = parseJson(result.stderr);
+  } catch (error) {
+    return fail(`stderr is not valid JSON: ${error.message}`);
+  }
+
+  const keys = Object.keys(payload).sort();
+  if (keys.length !== 2 || keys[0] !== "code" || keys[1] !== "error") {
+    return fail(`stderr JSON keys must be exactly "error" and "code", got: ${keys.join(", ")}`);
+  }
+
+  if (typeof payload.error !== "string" || payload.error.length === 0) {
+    return fail("stderr JSON is missing a non-empty error message");
+  }
+
+  if (!ALLOWED_ERROR_CODES.has(payload.code)) {
+    return fail(`stderr JSON code must be a known ERROR_CODE, got: ${payload.code || "<missing>"}`);
+  }
+
+  if (expectedCode && payload.code !== expectedCode) {
+    return fail(`expected ${expectedCode}, got ${payload.code}`);
+  }
+
+  return pass(`stderr emitted ${payload.code} JSON and stdout stayed empty`);
 }
 
 export const LIVE_ENV_VARS = [
@@ -126,27 +173,44 @@ export const SMOKE_CASES = [
     command: ["project", "list", "--json"],
     profile: "clean",
     validate(result) {
-      if (result.status !== 1) {
-        return fail(`expected exit 1, got ${result.status}`);
-      }
-      if (normalizeText(result.stdout).trim() !== "") {
-        return fail(`expected empty stdout, got: ${normalizeText(result.stdout).trim()}`);
-      }
-
-      let payload;
-      try {
-        payload = parseJson(result.stderr);
-      } catch (error) {
-        return fail(`stderr is not valid JSON: ${error.message}`);
-      }
-
-      if (payload.code !== "AUTH_MISSING") {
-        return fail(`expected AUTH_MISSING, got ${payload.code || "<missing>"}`);
-      }
-      if (typeof payload.error !== "string" || payload.error.length === 0) {
-        return fail("stderr JSON is missing a non-empty error message");
-      }
-      return pass("stderr emitted AUTH_MISSING JSON and stdout stayed empty");
+      return validateJsonErrorContract(result, { expectedCode: ERROR_CODE.AUTH_MISSING });
+    },
+  },
+  {
+    id: "project-list-json-auth-missing-zh",
+    title: "Chinese mode keeps JSON error schema and code stable",
+    tier: "ci",
+    command: ["project", "list", "--json"],
+    profile: "clean",
+    config: {
+      language: "zh",
+    },
+    env: {
+      LANG: "zh_CN.UTF-8",
+      LC_ALL: "zh_CN.UTF-8",
+    },
+    validate(result) {
+      return validateJsonErrorContract(result, { expectedCode: ERROR_CODE.AUTH_MISSING });
+    },
+  },
+  {
+    id: "wi-list-json-auth-missing",
+    title: "workitem list failure keeps JSON contract on stderr",
+    tier: "ci",
+    command: ["wi", "list", "--json"],
+    profile: "clean",
+    validate(result) {
+      return validateJsonErrorContract(result, { expectedCode: ERROR_CODE.AUTH_MISSING });
+    },
+  },
+  {
+    id: "sprint-list-json-auth-missing",
+    title: "sprint list failure keeps JSON contract on stderr",
+    tier: "ci",
+    command: ["sprint", "list", "--json"],
+    profile: "clean",
+    validate(result) {
+      return validateJsonErrorContract(result, { expectedCode: ERROR_CODE.AUTH_MISSING });
     },
   },
   {
@@ -182,7 +246,10 @@ export const SMOKE_CASES = [
     command: ["project", "list", "--json"],
     profile: "live",
     validate(result) {
-      return validateJsonShape(result, "projects");
+      return validateJsonSuccessContract(result, {
+        rootKey: "projects",
+        requiredKeys: ["projects", "total"],
+      });
     },
   },
   {
@@ -192,7 +259,10 @@ export const SMOKE_CASES = [
     command: ["wi", "list", "--json"],
     profile: "live",
     validate(result) {
-      return validateJsonShape(result, "items");
+      return validateJsonSuccessContract(result, {
+        rootKey: "items",
+        requiredKeys: ["items", "total"],
+      });
     },
   },
   {
@@ -202,7 +272,10 @@ export const SMOKE_CASES = [
     command: ["sprint", "list", "--json"],
     profile: "live",
     validate(result) {
-      return validateJsonShape(result, "sprints");
+      return validateJsonSuccessContract(result, {
+        rootKey: "sprints",
+        requiredKeys: ["sprints", "total"],
+      });
     },
   },
 ];

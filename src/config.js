@@ -11,8 +11,8 @@ export function loadSavedConfig() {
   try {
     if (!existsSync(CONFIG_FILE)) return null;
     const data = JSON.parse(readFileSync(CONFIG_FILE, 'utf8'));
-    // Support both new 'token' key and legacy 'pat' key
-    if (data && (data.token || data.pat)) return data;
+    // Support config files that only set non-auth preferences such as language.
+    if (data && (data.token || data.pat || data.language)) return data;
     return null;
   } catch {
     return null;
