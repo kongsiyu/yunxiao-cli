@@ -140,7 +140,7 @@ development_status:
   # Epic 12: v1.2.0 AI workflow 契约加固与 release gate
   epic-12: in-progress
   12-1-real-cli-smoke-matrix: done
-  12-2-json-stdio-error-contract-tests: ready-for-dev
+  12-2-json-stdio-error-contract-tests: done
   12-3-release-checklist-template: backlog
   12-4-release-evidence-summary: backlog
   epic-12-retrospective: optional

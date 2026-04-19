@@ -1,6 +1,6 @@
 # Story 12.2: JSON/stdout/stderr/error-code 契约回归测试补强
 
-Status: ready-for-dev
+Status: done
 
 ## Story
 
@@ -16,28 +16,28 @@ so that i18n and release changes cannot silently break agent parsing.
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: 盘点并锁定机器契约测试覆盖范围 (AC: #1, #2, #3)
-  - [ ] Subtask 1.1: 复用 Story 12.1 的真实子进程 smoke runner 架构, 不新增第三方测试依赖.
-  - [ ] Subtask 1.2: 覆盖高频 JSON 成功路径: `project list --json`, `wi list --json`, `sprint list --json`, 并优先使用 Story 12.1 已有 live/manual profile.
-  - [ ] Subtask 1.3: 覆盖无需真实 PAT 的失败路径: `project list --json`, `wi list --json`, `sprint list --json`, 至少验证 `AUTH_MISSING`.
-  - [ ] Subtask 1.4: 覆盖中文 i18n 配置或 locale 下的 JSON 路径, 验证 schema keys/code 仍为英文稳定值.
+- [x] Task 1: 盘点并锁定机器契约测试覆盖范围 (AC: #1, #2, #3)
+  - [x] Subtask 1.1: 复用 Story 12.1 的真实子进程 smoke runner 架构, 不新增第三方测试依赖.
+  - [x] Subtask 1.2: 覆盖高频 JSON 成功路径: `project list --json`, `wi list --json`, `sprint list --json`, 并优先使用 Story 12.1 已有 live/manual profile.
+  - [x] Subtask 1.3: 覆盖无需真实 PAT 的失败路径: `project list --json`, `wi list --json`, `sprint list --json`, 至少验证 `AUTH_MISSING`.
+  - [x] Subtask 1.4: 覆盖中文 i18n 配置或 locale 下的 JSON 路径, 验证 schema keys/code 仍为英文稳定值.
 
-- [ ] Task 2: 增强 smoke matrix 契约断言 (AC: #1, #2, #3)
-  - [ ] Subtask 2.1: 抽出通用 JSON stdout validator, 检查 stdout 可 `JSON.parse`, stderr 无非空 human-readable 污染, 必需字段存在且为英文 key.
-  - [ ] Subtask 2.2: 抽出通用 JSON stderr error validator, 检查 stdout 为空, stderr 可 `JSON.parse`, shape 精确包含 `error`/`code`, `code` 属于 `Object.values(ERROR_CODE)`.
-  - [ ] Subtask 2.3: 为 live JSON case 添加稳定 schema key 白名单断言, 避免中文翻译或字段重命名进入机器输出.
-  - [ ] Subtask 2.4: 为中文语言环境下的 JSON 失败路径添加断言, 允许 `error` message 翻译, 禁止 `code` 或 JSON field name 翻译.
+- [x] Task 2: 增强 smoke matrix 契约断言 (AC: #1, #2, #3)
+  - [x] Subtask 2.1: 抽出通用 JSON stdout validator, 检查 stdout 可 `JSON.parse`, stderr 无非空 human-readable 污染, 必需字段存在且为英文 key.
+  - [x] Subtask 2.2: 抽出通用 JSON stderr error validator, 检查 stdout 为空, stderr 可 `JSON.parse`, shape 精确包含 `error`/`code`, `code` 属于 `Object.values(ERROR_CODE)`.
+  - [x] Subtask 2.3: 为 live JSON case 添加稳定 schema key 白名单断言, 避免中文翻译或字段重命名进入机器输出.
+  - [x] Subtask 2.4: 为中文语言环境下的 JSON 失败路径添加断言, 允许 `error` message 翻译, 禁止 `code` 或 JSON field name 翻译.
 
-- [ ] Task 3: 增加自动化回归测试 (AC: #1, #2, #3)
-  - [ ] Subtask 3.1: 扩展 `test/smoke.test.js` 或新增同类测试文件, 直接测试 matrix validators 和 runner behavior.
-  - [ ] Subtask 3.2: 使用隔离临时 `HOME` / `.yunxiao/config.json` 写入 `language: "zh"`, 验证中文配置不改变 JSON stdout/stderr contract.
-  - [ ] Subtask 3.3: 保持无真实 PAT 的 `npm run smoke` 可通过; live cases 缺少 env 时只在 `smoke:live` 前置检查失败, 不影响 CI.
-  - [ ] Subtask 3.4: 确认 `npm test` 覆盖新增 contract tests.
+- [x] Task 3: 增加自动化回归测试 (AC: #1, #2, #3)
+  - [x] Subtask 3.1: 扩展 `test/smoke.test.js` 或新增同类测试文件, 直接测试 matrix validators 和 runner behavior.
+  - [x] Subtask 3.2: 使用隔离临时 `HOME` / `.yunxiao/config.json` 写入 `language: "zh"`, 验证中文配置不改变 JSON stdout/stderr contract.
+  - [x] Subtask 3.3: 保持无真实 PAT 的 `npm run smoke` 可通过; live cases 缺少 env 时只在 `smoke:live` 前置检查失败, 不影响 CI.
+  - [x] Subtask 3.4: 确认 `npm test` 覆盖新增 contract tests.
 
-- [ ] Task 4: 更新交付记录 (AC: #1, #2, #3)
-  - [ ] Subtask 4.1: 在本 Story 的 Dev Agent Record 中记录新增/修改文件和验证结果.
-  - [ ] Subtask 4.2: 若修改 smoke runner README 说明, 仅补充 contract 判定标准, 不扩大命令范围.
-  - [ ] Subtask 4.3: 完成后将 sprint status 中本 story 更新为 `done`.
+- [x] Task 4: 更新交付记录 (AC: #1, #2, #3)
+  - [x] Subtask 4.1: 在本 Story 的 Dev Agent Record 中记录新增/修改文件和验证结果.
+  - [x] Subtask 4.2: 若修改 smoke runner README 说明, 仅补充 contract 判定标准, 不扩大命令范围.
+  - [x] Subtask 4.3: 完成后将 sprint status 中本 story 更新为 `done`.
 
 ## Dev Notes
 
@@ -100,12 +100,38 @@ gpt-5.4
 ### Debug Log References
 
 - 2026-04-20: Story created by BMAD Developer in worktree after merging v1.2.0 planning baseline with Story 12.1 smoke runner branch.
+- 2026-04-20: Red test confirmed missing exported JSON contract validators before implementation.
 
 ### Completion Notes List
 
-- Pending implementation.
+- Added shared smoke JSON contract validators for success stdout and failure stderr.
+- Expanded CI-safe unauthenticated JSON failure coverage for `project list --json`, `wi list --json`, and `sprint list --json`.
+- Added Chinese config/locale JSON failure coverage that keeps `error`/`code` keys and `AUTH_MISSING` code stable.
+- Updated live JSON cases to use the shared success contract validator with English root keys: `projects`, `items`, `sprints`, and `total`.
+- Fixed review finding: language-only saved config files now load, so `language: "zh"` does not require token/pat in config.
+- Verified focused smoke tests with `node --test test/smoke.test.js`.
+- Verified full regression suite with `npm test`.
+- Verified CI-safe smoke with `npm run smoke`.
 
 ### File List
 
 - `_bmad-output/implementation-artifacts/12-2-json-stdio-error-contract-tests.md`
 - `_bmad-output/implementation-artifacts/sprint-status.yaml`
+- `scripts/smoke/matrix.js`
+- `scripts/smoke/runner.js`
+- `src/config.js`
+- `test/smoke.test.js`
+
+### Change Log
+
+- 2026-04-20: Implemented JSON stdout/stderr/error-code contract regression coverage in the smoke matrix and tests.
+- 2026-04-20: Fixed code review finding for language-only saved config loading and reverified tests.
+
+### Senior Developer Review (AI)
+
+**Review Date**: 2026-04-20
+**Outcome**: Approved after patch
+
+#### Findings
+
+- [x] [Review][Patch] Language-only config path was not actually exercised — `src/config.js` ignored saved config files without `token`/`pat`, so the new Chinese JSON smoke case was relying on locale rather than `.yunxiao/config.json` language. Fixed by loading config files that contain `language` and adding a child-process regression test.
