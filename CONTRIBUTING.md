@@ -137,13 +137,16 @@
 
 ## 发布流程
 
+发布前必须复制并完成 [`docs/release-checklist-template.md`](docs/release-checklist-template.md)。Checklist 中若存在任何 open `Release blocker`，不得推送 release tag，不得触发 `.github/workflows/publish.yml`，也不得执行 `npm publish`。
+
 ### 手动发布
 
 1. 确认 `master` 分支所有测试通过：`npm test`
 2. 更新 `package.json` 中的 `version` 字段（遵循 SemVer）
-3. 运行 `npm pack --dry-run` 验证包内容（确认无多余文件）
-4. 运行 `npm publish --access public`（需要 npm 账号拥有 `@kongsiyu` scope 发布权限）
-5. 打 tag 并推送：`git tag v<version> && git push origin v<version>`（**注意**：若仓库配置了 GitHub Actions 自动发布，推送 tag 会再次触发 `publish.yml`。已手动发布时请跳过此步，或使用下方"自动发布"流程替代手动发布）
+3. 完成 `docs/release-checklist-template.md`，确认 runtime version、package version、git tag、release note 和 commit/tag traceability 一致
+4. 运行 `npm pack --dry-run` 验证包内容（确认无多余文件）
+5. 运行 `npm publish --access public`（需要 npm 账号拥有 `@kongsiyu` scope 发布权限）
+6. 打 tag 并推送：`git tag v<version> && git push origin v<version>`（**注意**：若仓库配置了 GitHub Actions 自动发布，推送 tag 会再次触发 `publish.yml`。已手动发布时请跳过此步，或使用下方"自动发布"流程替代手动发布）
 
 ### 自动发布（推荐）
 
@@ -155,6 +158,8 @@ git push origin v0.2.0
 ```
 
 需要在 GitHub 仓库 **Settings → Secrets and variables → Actions** 中配置 `NPM_TOKEN`（从 [npmjs.com](https://www.npmjs.com/settings/~/tokens) 生成 Automation token）。
+
+自动发布前同样必须完成 `docs/release-checklist-template.md`。若版本元数据不一致、缺少 release note、`npm test` 失败、`npm pack --dry-run` 异常或 publish workflow 前置条件未知并被 release owner 判定为 release blocker，则最终结论必须为 `NO-GO`。
 
 ---
 
