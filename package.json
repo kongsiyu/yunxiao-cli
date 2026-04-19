@@ -12,7 +12,9 @@
   ],
   "scripts": {
     "lint": "node src/index.js --version",
-    "test": "node --test test/*.test.js"
+    "test": "node --test test/*.test.js",
+    "smoke": "node scripts/smoke/runner.js ci",
+    "smoke:live": "node scripts/smoke/runner.js live"
   },
   "keywords": [
     "yunxiao",

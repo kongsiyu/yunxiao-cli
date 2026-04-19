@@ -128,3 +128,7 @@ development_status:
   10-4-mr-list: done
   10-5-mr-view: done
   10-6-mr-create: done
+  
+  # Epic 12: v1.2.0 AI workflow 契约加固与 release gate
+  epic-12: in-progress
+  12-1-real-cli-smoke-matrix: done
