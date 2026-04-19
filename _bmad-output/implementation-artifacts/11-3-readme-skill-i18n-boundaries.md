@@ -1,6 +1,6 @@
 # Story 11.3: README / SKILL 边界补充
 
-Status: review
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -126,6 +126,7 @@ GPT-5 Codex
 
 - `_bmad-output/implementation-artifacts/11-3-readme-skill-i18n-boundaries.md` - Story 11.3 实施规范文件。
 - `_bmad-output/implementation-artifacts/sprint-status.yaml` - Story 11.3 状态同步到 `ready-for-dev` 与 `review`。
+- `_bmad-output/implementation-artifacts/sprint-status.yaml` - Story 11.3 状态同步到 `ready-for-dev`、`review` 与 `done`。
 - `README.md` - 增补 v1.2.0 中文化边界、machine-contract 稳定性和已知限制说明。
 - `SKILL.md` - 增补 AI 使用边界并修正与实现不一致的 `--json` schema。
 - `test/i18n-docs-boundaries.test.js` - 新增 README / SKILL 文档 guardrail 测试。
@@ -134,3 +135,4 @@ GPT-5 Codex
 
 - 2026-04-20: 创建 Story 11.3，状态 `ready-for-dev`。
 - 2026-04-20: 完成 README / SKILL 边界补充、文档 guardrail 测试、全量 `npm test` 与本地代码审查，Story 状态更新为 `review`。
+- 2026-04-20: 创建 PR `#92` 后完成工件回写，Story 状态更新为 `done`。
