@@ -148,6 +148,6 @@ development_status:
   # Epic 13: v1.2.0 BMAD 工件卫生与 Codeup 证据治理
   epic-13: in-progress
   13-1-story-artifact-sync-rules: done
-  13-2-codeup-evidence-ledger: backlog
+  13-2-codeup-evidence-ledger: done
   13-3-v1-2-0-handoff-index: backlog
   epic-13-retrospective: optional
