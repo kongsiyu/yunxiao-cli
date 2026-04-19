@@ -159,6 +159,12 @@ git branch -d story/1-1-xxx
 
 在 **`$BACKEND_ROOT`** 执行 `bmad-dev-story`；遵守 `project-context.md`。
 
+实现完成前必须执行 Story 工件同步检查：story 文件头 `Status`、Task/Subtask 勾选、Dev Agent Record、File List 与 `_bmad-output/implementation-artifacts/sprint-status.yaml` 必须反映同一真实交付状态。
+
+若 story 只完成基础设施而未完成用户可见 rollout，必须在 story 文件 `Delivery Scope` 中标记 `foundation-only`，并在 `User-visible Rollout Follow-up` 写明后续 user-visible rollout story。
+
+若 story 文件与 `sprint-status.yaml` 或复盘记录冲突，以 release evidence / merged PR / final review 为裁决源；裁决后必须回写 story 文件和 `sprint-status.yaml`。
+
 ### 4. 编译验证（可选）
 
 启动勾选时执行，否则跳过。
@@ -190,6 +196,13 @@ git branch -d story/1-1-xxx
 ### 9. 更新 Sprint 状态
 
 `_bmad-output/implementation-artifacts/sprint-status.yaml` 中该 Story → `done`。
+
+更新前必须确认：
+- story 文件头 `Status` 已是 `done` 或将与本步骤同时更新为 `done`
+- Tasks/Subtasks 与 Artifact Sync Closeout 已按真实完成状态勾选
+- Dev Agent Record、File List、Change Log 已记录最终实现、测试、审查和残余风险
+- `foundation-only` story 已列出 user-visible rollout 后续 story
+- 若存在状态冲突，已按 release evidence / merged PR / final review 裁决并回写 story 文件
 
 ### 10. 合并 & 清理
 
