@@ -50,6 +50,21 @@ export function t(key, fallback = '') {
 }
 
 /**
+ * Get translated string and apply simple {placeholder} interpolation.
+ * @param {string} key
+ * @param {string} fallback
+ * @param {Record<string, string | number>} values
+ * @returns {string}
+ */
+export function tx(key, fallback = '', values = {}) {
+  let message = t(key, fallback);
+  for (const [name, value] of Object.entries(values)) {
+    message = message.split(`{${name}}`).join(String(value));
+  }
+  return message;
+}
+
+/**
  * Get current language
  */
 export function getLanguage() {

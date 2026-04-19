@@ -3,6 +3,7 @@ import readline from "readline";
 import chalk from "chalk";
 import { createClientWithPat } from "../api.js";
 import { loadSavedConfig, saveConfig, clearConfig } from "../config.js";
+import { t, tx } from "../i18n/index.js";
 
 function prompt(question) {
   return new Promise((resolve) => {
@@ -59,7 +60,16 @@ function promptSecret(question) {
   });
 }
 
-export function registerAuthCommands(program) {
+export function registerAuthCommands(program, deps = {}) {
+  const {
+    createClientWithPat: createClient = createClientWithPat,
+    loadSavedConfig: loadConfig = loadSavedConfig,
+    saveConfig: persistConfig = saveConfig,
+    clearConfig: clearSavedConfig = clearConfig,
+    prompt: promptInput = prompt,
+    promptSecret: promptSecretInput = promptSecret,
+  } = deps;
+
   const auth = program.command("auth").description("Manage authentication");
 
   // auth login
@@ -72,32 +82,40 @@ export function registerAuthCommands(program) {
       try {
         // Non-interactive mode: both --token and --org-id provided
         if (options.token && options.orgId) {
-          saveConfig({
+          persistConfig({
             token: options.token.trim(),
             orgId: options.orgId.trim(),
           });
-          console.log(chalk.green("✓ Login successful!"));
-          console.log(chalk.gray("  Config saved to ~/.yunxiao/config.json"));
+          console.log(chalk.green(`✓ ${t("commands.auth.login.success", "Login successful!")}`));
+          console.log(chalk.gray(`  ${t("commands.auth.configSaved", "Config saved to ~/.yunxiao/config.json")}`));
           console.log();
           return;
         }
 
         // Interactive mode
-        console.log(chalk.bold("\nYunxiao Authentication\n"));
-        console.log(chalk.gray("Generate a PAT at: https://account-devops.aliyun.com/settings/personalAccessToken\n"));
+        console.log(chalk.bold(`\n${t("commands.auth.login.title", "Yunxiao Authentication")}\n`));
+        console.log(
+          chalk.gray(
+            `${tx(
+              "commands.auth.login.patHelp",
+              "Generate a PAT at: {url}",
+              { url: "https://account-devops.aliyun.com/settings/personalAccessToken" }
+            )}\n`
+          )
+        );
 
         let pat = options.token ? options.token.trim() : "";
         if (!pat) {
-          pat = (await promptSecret("请粘贴你的 Personal Access Token：")).trim();
+          pat = (await promptSecretInput(t("commands.auth.login.prompt", "Paste your Personal Access Token: "))).trim();
           if (!pat) {
-            console.error(chalk.red("PAT cannot be empty"));
+            console.error(chalk.red(t("errors.auth.emptyPat", "PAT cannot be empty")));
             process.exit(1);
           }
         }
 
         // Verify PAT by fetching current user
-        process.stdout.write(chalk.gray("\nVerifying PAT... "));
-        const client = createClientWithPat(pat);
+        process.stdout.write(chalk.gray(`\n${t("commands.auth.login.verifyingPat", "Verifying PAT...")} `));
+        const client = createClient(pat);
         let user;
         try {
           const res = await client.get("/oapi/v1/platform/user");
@@ -106,14 +124,22 @@ export function registerAuthCommands(program) {
         } catch (err) {
           console.log(chalk.red("✗"));
           if (err.response?.status === 401 || err.response?.status === 403) {
-            console.error(chalk.red("Invalid PAT. Please check and try again."));
+            console.error(chalk.red(t("errors.auth.invalidPat", "Invalid PAT. Please check and try again.")));
           } else {
-            console.error(chalk.red("Failed to verify PAT:"), err.response?.data?.errorMessage || err.message);
+            console.error(
+              chalk.red(t("errors.auth.verifyPatFailed", "Failed to verify PAT:")),
+              err.response?.data?.errorMessage || err.message
+            );
           }
           process.exit(1);
         }
 
-        console.log(chalk.green("✓") + " Authenticated as " + chalk.bold(user.name || user.id));
+        console.log(
+          chalk.green("✓ ") +
+            tx("commands.auth.login.authenticatedAs", "Authenticated as {name}", {
+              name: chalk.bold(user.name || user.id),
+            })
+        );
 
         let orgId = options.orgId ? options.orgId.trim() : "";
         let selectedOrg;
@@ -123,7 +149,7 @@ export function registerAuthCommands(program) {
           selectedOrg = { id: orgId, name: null };
         } else {
           // Fetch organizations interactively
-          process.stdout.write(chalk.gray("Fetching organizations... "));
+          process.stdout.write(chalk.gray(`${t("commands.auth.login.fetchingOrgs", "Fetching organizations...")} `));
           let orgs;
           try {
             const res = await client.get("/oapi/v1/platform/organizations");
@@ -131,35 +157,43 @@ export function registerAuthCommands(program) {
             console.log(chalk.green("✓"));
           } catch (err) {
             console.log(chalk.red("✗"));
-            console.error(chalk.red("Failed to fetch organizations:"), err.response?.data?.errorMessage || err.message);
+            console.error(
+              chalk.red(t("errors.auth.fetchOrgsFailed", "Failed to fetch organizations:")),
+              err.response?.data?.errorMessage || err.message
+            );
             process.exit(1);
           }
 
           if (!orgs || orgs.length === 0) {
-            console.error(chalk.red("No organizations found for this account."));
+            console.error(chalk.red(t("errors.auth.noOrganizations", "No organizations found for this account.")));
             process.exit(1);
           }
 
           if (orgs.length === 1) {
             selectedOrg = orgs[0];
-            console.log(chalk.green("✓") + " Organization: " + chalk.bold(selectedOrg.name));
+            console.log(
+              chalk.green("✓ ") +
+                tx("commands.auth.login.organizationSelected", "Organization: {name}", {
+                  name: chalk.bold(selectedOrg.name),
+                })
+            );
           } else {
-            console.log(chalk.bold("\nSelect an organization:\n"));
+            console.log(chalk.bold(`\n${t("commands.auth.login.selectOrg", "Select an organization:")}\n`));
             orgs.forEach((org, i) => {
               console.log(`  ${chalk.cyan((i + 1) + ".")} ${org.name} ${chalk.gray("(" + org.id + ")")}`);
             });
             console.log();
-            const choice = await prompt("Enter number [1]: ");
+            const choice = await promptInput(t("commands.auth.login.enterOrgNumber", "Enter number [1]: "));
             const idx = choice.trim() === "" ? 0 : parseInt(choice.trim(), 10) - 1;
             if (isNaN(idx) || idx < 0 || idx >= orgs.length) {
-              console.error(chalk.red("Invalid selection."));
+              console.error(chalk.red(t("errors.validation.invalidSelection", "Invalid selection.")));
               process.exit(1);
             }
             selectedOrg = orgs[idx];
           }
         }
 
-        saveConfig({
+        persistConfig({
           token: pat,
           userId: user.id,
           userName: user.name || null,
@@ -168,11 +202,11 @@ export function registerAuthCommands(program) {
         });
 
         console.log();
-        console.log(chalk.green("✓ Login successful!"));
-        console.log(chalk.gray("  Config saved to ~/.yunxiao/config.json"));
+        console.log(chalk.green(`✓ ${t("commands.auth.login.success", "Login successful!")}`));
+        console.log(chalk.gray(`  ${t("commands.auth.configSaved", "Config saved to ~/.yunxiao/config.json")}`));
         console.log();
       } catch (err) {
-        console.error(chalk.red("Error:"), err.message);
+        console.error(chalk.red(t("commands.common.errorPrefix", "Error:")), err.message);
         process.exit(1);
       }
     });
@@ -182,20 +216,20 @@ export function registerAuthCommands(program) {
     .command("status")
     .description("Show current authentication status")
     .action(() => {
-      const config = loadSavedConfig();
-      console.log(chalk.bold("\nAuthentication Status:\n"));
+      const config = loadConfig();
+      console.log(chalk.bold(`\n${t("commands.auth.status.title", "Authentication Status:")}\n`));
       const token = config?.token || config?.pat;
       if (!config || !token) {
-        console.log("  " + chalk.yellow("Not authenticated"));
-        console.log("  " + chalk.gray("Run: yunxiao auth login"));
+        console.log("  " + chalk.yellow(t("commands.auth.status.notAuthenticated", "Not authenticated")));
+        console.log("  " + chalk.gray(t("commands.auth.status.runLogin", "Run: yunxiao auth login")));
       } else {
         const maskedPat = "*****" + token.slice(-4);
-        console.log("  " + chalk.gray("Status:  ") + chalk.green("Authenticated"));
-        console.log("  " + chalk.gray("User:    ") + (config.userName || "-"));
-        console.log("  " + chalk.gray("User ID: ") + (config.userId || "-"));
-        console.log("  " + chalk.gray("Org:     ") + (config.orgName || "-"));
-        console.log("  " + chalk.gray("Org ID:  ") + (config.orgId || "-"));
-        console.log("  " + chalk.gray("PAT:     ") + maskedPat);
+        console.log(`  ${chalk.gray(t("commands.auth.status.statusLabel", "Status:"))} ${chalk.green(t("commands.auth.status.authenticated", "Authenticated"))}`);
+        console.log(`  ${chalk.gray(t("commands.auth.status.userLabel", "User:"))} ${config.userName || "-"}`);
+        console.log(`  ${chalk.gray(t("commands.auth.status.userIdLabel", "User ID:"))} ${config.userId || "-"}`);
+        console.log(`  ${chalk.gray(t("commands.auth.status.orgLabel", "Org:"))} ${config.orgName || "-"}`);
+        console.log(`  ${chalk.gray(t("commands.auth.status.orgIdLabel", "Org ID:"))} ${config.orgId || "-"}`);
+        console.log(`  ${chalk.gray(t("commands.auth.status.patLabel", "PAT:"))} ${maskedPat}`);
       }
       console.log();
     });
@@ -205,14 +239,14 @@ export function registerAuthCommands(program) {
     .command("logout")
     .description("Clear local authentication configuration")
     .action(() => {
-      const config = loadSavedConfig();
+      const config = loadConfig();
       if (!config || !(config.token || config.pat)) {
-        console.log(chalk.yellow("Not currently authenticated."));
+        console.log(chalk.yellow(t("commands.auth.logout.notAuthenticated", "Not currently authenticated.")));
         return;
       }
-      clearConfig();
-      console.log(chalk.green("✓ Logged out successfully."));
-      console.log(chalk.gray("  Config cleared from ~/.yunxiao/config.json"));
+      clearSavedConfig();
+      console.log(chalk.green(`✓ ${t("commands.auth.logout.success", "Logged out successfully.")}`));
+      console.log(chalk.gray(`  ${t("commands.auth.configCleared", "Config cleared from ~/.yunxiao/config.json")}`));
       console.log();
     });
 }

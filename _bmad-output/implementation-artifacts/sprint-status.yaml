@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-03-31
-last_updated: 2026-04-20  # Story 11.1 done after audit, tests, and code review in worktree story/11-1-i18n-audit-rollout-scope
+last_updated: 2026-04-20  # Story 11.2 completed in worktree story/11-2-high-frequency-output-zh-rollout after code review and tests
 project: yunxiao-cli
 project_key: NOKEY
 tracking_system: file-system
@@ -133,7 +133,7 @@ development_status:
   # Epic 11: v1.2.0 CLI 可用性收口与中文化 rollout
   epic-11: in-progress
   11-1-i18n-audit-rollout-scope: done
-  11-2-high-frequency-i18n-rollout: backlog
+  11-2-high-frequency-i18n-rollout: done
   11-3-readme-skill-i18n-boundaries: backlog
   epic-11-retrospective: optional
 

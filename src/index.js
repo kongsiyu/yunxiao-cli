@@ -1,16 +1,15 @@
 #!/usr/bin/env node
 // src/index.js - yunxiao CLI entry point
 import { Command } from "commander";
-import chalk from "chalk";
-import { getCurrentUser, createClientWithPat } from "./api.js";
+import { createClientWithPat } from "./api.js";
 import { loadConfig } from "./config.js";
-import { AppError, ERROR_CODE } from "./errors.js";
 import { printError } from "./output.js";
 import { checkVersionAsync, getPackageVersion } from "./version-check.js";
 import { initI18n } from "./i18n/index.js";
 import { registerProjectCommands } from "./commands/project.js";
 import { registerWorkitemCommands } from "./commands/workitem.js";
 import { registerAuthCommands } from "./commands/auth.js";
+import { registerWhoamiCommand } from "./commands/whoami.js";
 import { registerSprintCommands } from "./commands/sprint.js";
 import { registerPipelineCommands } from "./commands/pipeline.js";
 import { registerStatusCommands } from "./commands/status.js";
@@ -70,23 +69,7 @@ if (token) {
   codeupClient = createCodeupClient(token);
 }
 
-// whoami 命令
-program
-  .command("whoami")
-  .description("Show current authenticated user")
-  .action(withErrorHandling(async () => {
-    if (!client) {
-      throw new AppError(ERROR_CODE.AUTH_MISSING, 'Authentication required. Run: yunxiao auth login');
-    }
-    const user = await getCurrentUser(client);
-    console.log(chalk.bold("\nCurrent user:\n"));
-    console.log("  " + chalk.gray("ID:      ") + user.id);
-    console.log("  " + chalk.gray("Name:    ") + (user.name || "-"));
-    console.log("  " + chalk.gray("Email:   ") + (user.email || "-"));
-    console.log("  " + chalk.gray("Org:     ") + (user.lastOrganization || "-"));
-    console.log("  " + chalk.gray("Created: ") + (user.createdAt ? user.createdAt.split("T")[0] : "-"));
-    console.log();
-  }));
+registerWhoamiCommand(program, client, withErrorHandling);
 
 // Always register all commands (auth is checked per-command at runtime)
 registerProjectCommands(program, client, orgId, withErrorHandling, jsonMode);
