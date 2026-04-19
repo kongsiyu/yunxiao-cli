@@ -114,7 +114,15 @@ Config 文件（~/.yunxiao/config.json，通过 auth login 写入）
 
 | 选项 | 说明 |
 |------|------|
-| `--json` | 所有命令均支持；将输出以纯 JSON 格式打印到 stdout（无颜色），适合脚本和 AI Agent 处理 |
+| `--json` | 全局选项，可传给所有命令；只有本文明确列出 `--json` schema 的命令才承诺稳定 JSON contract，stdout 始终保持纯 JSON（无颜色），适合脚本和 AI Agent 处理 |
+
+### v1.2.0 中文化边界
+
+- v1.2.0 当前只为高频命令的人类可读输出提供中文支持：`auth`、`whoami`、`project list`、`wi list/view/update`、`sprint list/view`。
+- 上述中文化仅作用于 human-readable 路径；`--json` 字段名、JSON schema、stdout 纯 JSON 约束与 `ERROR_CODE` 枚举保持英文，不翻译。
+- 这不表示全 CLI 已完成中文化。`project view`、`wi create/delete/comment/comments/types`、`user list/search`、`status list`、`pipeline*`、`repo*`、`mr*` 仍属于后置命令，当前默认以既有英文 / API 原样输出为主。
+- `whoami`、`auth status`、`auth logout` 当前没有稳定的 `--json` contract；自动化流程应优先使用具有明确 `--json` schema 的 list/view 命令。
+- 并非所有命令都承诺稳定 `--json` contract；只有本文明确列出 `--json` schema 的命令才适合直接接入自动化链路。
 
 ---
 
@@ -155,9 +163,14 @@ yunxiao auth status
 
 ```bash
 yunxiao auth status
-# Logged in
+# Authentication Status:
+#
+#   Status: Authenticated
+#   User: 张三
+#   User ID: user123456
+#   Org: 研发组织
 #   Org ID: myOrgId
-#   Config: ~/.yunxiao/config.json
+#   PAT: *****1234
 ```
 
 #### auth logout
@@ -170,7 +183,7 @@ yunxiao auth logout
 
 ```bash
 yunxiao auth logout
-# ✓ Logged out
+# ✓ Logged out successfully.
 ```
 
 ---
@@ -194,6 +207,8 @@ yunxiao whoami
 #   Org:     myOrgId
 #   Created: 2024-01-01
 ```
+
+> **注意**：`whoami` 当前只保证 human-readable 输出；没有稳定的 `--json` schema，不应把它作为自动化 JSON contract 使用。
 
 ---
 
@@ -245,6 +260,8 @@ yunxiao project view proj123
 #   Scope:    private
 #   Created:  2024-03-01
 ```
+
+> **注意**：`project view` 不在 v1.2.0 首批中文化范围内；当前 human-readable 输出仍以既有英文 label 为主。
 
 ---
 
@@ -390,6 +407,20 @@ yunxiao wi update GJBL-1 --assigned-to user789 --sprint sprint456 --project proj
 ```
 
 > **注意**：不提供任何更新字段时会报错，至少需要 `--title`、`--description`、`--status`、`--assigned-to`、`--sprint` 或 `--extra-json` 中的一个。
+
+**`--json` schema（更新后重新获取的完整工作项对象）：**
+```json
+{
+  "id": "string",
+  "serialNumber": "GJBL-42",
+  "subject": "工作项标题",
+  "status": { "id": "string", "displayName": "开发中" },
+  "assignedTo": { "id": "string", "name": "string" },
+  "iteration": { "name": "Sprint 2" },
+  "space": { "name": "项目名" },
+  "gmtModified": "ISO8601"
+}
+```
 
 #### wi delete
 
@@ -650,8 +681,10 @@ yunxiao status list --project proj123 --category Req
 #   status-uuid-005  已完成
 
 yunxiao status list --project proj123 --type-id type-uuid-001 --json
-# {"statuses":[{"id":"status-uuid-001","displayName":"待处理"},...],"total":5}
+# {"statuses":[{"id":"status-uuid-001","displayName":"待处理","name":"待处理","type":"INIT"}],"total":5}
 ```
+
+> **注意**：`status list` 不在 v1.2.0 首批中文化范围内；其 `--json` 字段名继续保持英文，human-readable 输出也不承诺中文化。
 
 ---
 
@@ -787,6 +820,13 @@ yunxiao wi list --sprint <sprintId>
 
 - **v0.1.1** - 认证命令：auth login/status/logout
 - **v0.1.0** - 基础功能：项目管理 + 工作项 CRUD + 评论
+
+## 已知限制
+
+- v1.2.0 只完成高频命令的人类可读中文化，不代表 `project view`、`wi create/delete/comment/comments/types`、`user list/search`、`status list`、`pipeline*`、`repo*`、`mr*` 已完成中文输出。
+- `--json` 模式下 stdout 只输出纯 JSON；本地化提示和错误说明应写入 stderr。`ERROR_CODE`、JSON key 和 schema 保持英文，不翻译。
+- `whoami`、`auth status`、`auth logout` 没有稳定的 `--json` contract；自动化流程应优先使用文档中明确列出 schema 的 `project list`、`wi list/view/update`、`sprint list/view` 等命令。
+- `sprint view` 工作项统计最多显示 100 条；超出部分不会进入 `stats` 统计。
 
 ---
 

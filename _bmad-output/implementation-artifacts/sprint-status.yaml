@@ -134,7 +134,7 @@ development_status:
   epic-11: in-progress
   11-1-i18n-audit-rollout-scope: done
   11-2-high-frequency-i18n-rollout: done
-  11-3-readme-skill-i18n-boundaries: backlog
+  11-3-readme-skill-i18n-boundaries: done
   epic-11-retrospective: optional
 
   # Epic 12: v1.2.0 AI workflow 契约加固与 release gate
