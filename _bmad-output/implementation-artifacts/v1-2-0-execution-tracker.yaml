@@ -1,0 +1,332 @@
+snapshot_date: 2026-04-20
+snapshot_note: >
+  This tracker combines planning artifacts with live Paperclip issue and GitHub PR state.
+  GitHub OPEN PRs are not merged; `issue_status: done` and `pr_state: OPEN` must be read separately.
+
+source_of_truth:
+  planning_artifacts:
+    - _bmad-output/planning-artifacts/epics.md
+    - _bmad-output/planning-artifacts/sprint-change-proposal-2026-04-19.md
+    - _bmad-output/planning-artifacts/implementation-readiness-report-2026-04-19.md
+    - _bmad-output/planning-artifacts/prd.md
+  implementation_artifacts:
+    - _bmad-output/implementation-artifacts/story-artifact-sync-rules.md
+    - _bmad-output/implementation-artifacts/sprint-status.yaml
+  execution_issues:
+    - HTH-201
+    - HTH-196
+    - HTH-197
+    - HTH-198
+    - HTH-199
+    - HTH-200
+    - HTH-209
+    - HTH-210
+    - HTH-211
+    - HTH-212
+    - HTH-213
+  github_prs:
+    - 83
+    - 84
+    - 85
+    - 86
+    - 88
+    - 89
+    - 90
+
+dispatch_interpretation:
+  issue_done_pr_open: "Issue complete in Paperclip, but PR is still OPEN and merged=false."
+  blocked_status_stale: "Issue still says blocked, but all explicit blockers are already done; Scrum Master should refresh/resume."
+  blocked_waiting_dependencies: "Issue cannot proceed yet because one or more blocker stories are not done."
+  in_progress_no_pr_yet: "Work is active and the branch does not have a published PR yet."
+  no_pr_yet: "No GitHub PR has been created for this story yet."
+
+phases:
+  P0:
+    status: done
+    goal: PRD / epics / change proposal / sprint status alignment
+    handoff_recipient: Scrum Master
+  P1:
+    status: in_progress
+    goal: create-story preparation and dispatch sequencing
+    handoff_recipient: Developer
+  P2:
+    status: in_progress
+    goal: development wave 1
+    handoff_recipient: Scrum Master
+  P3:
+    status: in_progress
+    goal: development wave 2
+    handoff_recipient: Scrum Master
+  P4:
+    status: pending
+    goal: review and acceptance waves
+    handoff_recipient: Reviewer / Test Architect
+  P5:
+    status: pending
+    goal: pre-release gate and GO/NO-GO
+    handoff_recipient: Scrum Master / Release Owner
+
+execution_order:
+  - order: 1
+    phase: P2
+    story_id: "13.1"
+    story_key: 13-1-story-artifact-sync-rules
+    title: Story 工件状态同步规则与 foundation-only 标记
+    paperclip_issue: HTH-196
+    issue_status: done
+    dependencies: []
+    next_handoff: Scrum Master
+    github_pr:
+      created: true
+      number: 83
+      url: https://github.com/kongsiyu/yunxiao-cli/pull/83
+      pr_state: OPEN
+      merged: false
+      merge_status: CLEAN
+      ci_status: all_checks_passed
+    combined_state: issue_done_pr_open
+
+  - order: 2
+    phase: P2
+    story_id: "11.1"
+    story_key: 11-1-i18n-audit-rollout-scope
+    title: i18n 缺口审计与 rollout 范围锁定
+    paperclip_issue: HTH-197
+    issue_status: done
+    dependencies: []
+    next_handoff: Scrum Master
+    github_pr:
+      created: true
+      number: 88
+      url: https://github.com/kongsiyu/yunxiao-cli/pull/88
+      pr_state: OPEN
+      merged: false
+      merge_status: CLEAN
+      ci_status: no_checks_reported
+    combined_state: issue_done_pr_open
+
+  - order: 3
+    phase: P2
+    story_id: "12.3"
+    story_key: 12-3-release-checklist-template
+    title: Release checklist 模板化
+    paperclip_issue: HTH-198
+    issue_status: done
+    dependencies: []
+    next_handoff: Scrum Master
+    github_pr:
+      created: true
+      number: 84
+      url: https://github.com/kongsiyu/yunxiao-cli/pull/84
+      pr_state: OPEN
+      merged: false
+      merge_status: CLEAN
+      ci_status: all_checks_passed
+    combined_state: issue_done_pr_open
+
+  - order: 4
+    phase: P2
+    story_id: "12.1"
+    story_key: 12-1-real-cli-smoke-matrix
+    title: 真实 CLI smoke matrix 与执行入口
+    paperclip_issue: HTH-199
+    issue_status: done
+    dependencies: []
+    next_handoff: Scrum Master
+    github_pr:
+      created: true
+      number: 85
+      url: https://github.com/kongsiyu/yunxiao-cli/pull/85
+      pr_state: OPEN
+      merged: false
+      merge_status: CLEAN
+      ci_status: all_checks_passed
+    combined_state: issue_done_pr_open
+
+  - order: 5
+    phase: P2
+    story_id: "13.2"
+    story_key: 13-2-codeup-evidence-ledger
+    title: Codeup evidence ledger
+    paperclip_issue: HTH-200
+    issue_status: done
+    dependencies:
+      - 13.1
+    next_handoff: Scrum Master
+    github_pr:
+      created: true
+      number: 86
+      url: https://github.com/kongsiyu/yunxiao-cli/pull/86
+      pr_state: OPEN
+      merged: false
+      merge_status: CLEAN
+      ci_status: no_checks_reported
+    combined_state: issue_done_pr_open
+
+  - order: 6
+    phase: P3
+    story_id: "11.2"
+    story_key: 11-2-high-frequency-i18n-rollout
+    title: 高频命令人类可读输出中文化 rollout
+    paperclip_issue: HTH-209
+    issue_status: done
+    dependencies:
+      - 11.1
+    next_handoff: Scrum Master
+    github_pr:
+      created: true
+      number: 89
+      url: https://github.com/kongsiyu/yunxiao-cli/pull/89
+      pr_state: OPEN
+      merged: false
+      merge_status: CLEAN
+      ci_status: no_checks_reported
+    combined_state: issue_done_pr_open
+
+  - order: 7
+    phase: P3
+    story_id: "12.2"
+    story_key: 12-2-json-stdio-error-contract-tests
+    title: JSON/stdout/stderr/error-code 契约回归测试补强
+    paperclip_issue: HTH-210
+    issue_status: done
+    dependencies:
+      - 12.1
+    next_handoff: Scrum Master
+    github_pr:
+      created: true
+      number: 90
+      url: https://github.com/kongsiyu/yunxiao-cli/pull/90
+      pr_state: OPEN
+      merged: false
+      merge_status: CLEAN
+      ci_status: no_checks_reported
+    combined_state: issue_done_pr_open
+
+  - order: 8
+    phase: P3
+    story_id: "11.3"
+    story_key: 11-3-readme-skill-i18n-boundaries
+    title: README / SKILL 边界补充
+    paperclip_issue: HTH-212
+    issue_status: blocked
+    dependencies:
+      - 11.1
+      - 11.2
+    blocker_snapshot:
+      - issue: HTH-209
+        status: done
+    next_handoff: Scrum Master -> Developer
+    github_pr:
+      created: false
+      pr_state: not_created
+      merged: false
+    combined_state: blocked_status_stale
+
+  - order: 9
+    phase: P3
+    story_id: "13.3"
+    story_key: 13-3-v1-2-0-handoff-index
+    title: v1.2.0 handoff index 与执行追踪工件
+    paperclip_issue: HTH-211
+    issue_status: in_progress
+    dependencies:
+      - HTH-201 execution snapshot
+      - PR 83/84/85/86/88/89/90 state snapshot
+    next_handoff: Scrum Master
+    github_pr:
+      created: false
+      pr_state: not_created
+      merged: false
+    combined_state: in_progress_no_pr_yet
+
+  - order: 10
+    phase: P5
+    story_id: "12.4"
+    story_key: 12-4-release-evidence-summary
+    title: v1.2.0 发布前验收与 release evidence 汇总
+    paperclip_issue: HTH-213
+    issue_status: blocked
+    dependencies:
+      - 11.2
+      - 12.2
+      - 11.3
+      - 13.3
+      - 12.3
+      - 12.1
+      - 13.2
+    blocker_snapshot:
+      - issue: HTH-209
+        status: done
+      - issue: HTH-210
+        status: done
+      - issue: HTH-212
+        status: blocked
+      - issue: HTH-211
+        status: in_progress
+    next_handoff: Scrum Master -> Developer -> Reviewer / Test Architect
+    github_pr:
+      created: false
+      pr_state: not_created
+      merged: false
+    combined_state: blocked_waiting_dependencies
+
+review_acceptance_waves:
+  - wave_id: wave-a-baseline-inputs
+    stories:
+      - 13.1
+      - 11.1
+      - 12.3
+      - 12.1
+      - 13.2
+    status: awaiting_merge_visibility
+    gate: artifact rules, i18n scope, release checklist, smoke matrix, Codeup evidence ledger all available and traceable
+
+  - wave_id: wave-b-rollout-contract-handoff
+    stories:
+      - 11.2
+      - 12.2
+      - 11.3
+      - 13.3
+    status: in_progress
+    gate: zh rollout, JSON contract regression guardrails, docs boundary, canonical handoff tracker all aligned
+
+  - wave_id: wave-c-release-go-no-go
+    stories:
+      - 12.4
+    status: blocked
+    gate: release evidence summary classifies blockers vs residual risks and confirms gate readiness
+
+release_gate:
+  owner: Scrum Master / Release Owner
+  summary_story: 12.4
+  blocked_by:
+    - HTH-212
+    - HTH-211
+    - unmerged implementation PRs
+  pre_release_checks:
+    - npm test
+    - critical CLI smoke evidence
+    - npm pack --dry-run
+    - runtime version / package.json / git tag alignment
+    - release note readiness
+    - publish workflow or pipeline status
+    - PR / commit traceability
+    - blocker vs residual risk classification
+
+deferred_scope:
+  v1_3_0_candidates:
+    - Codeup MR merge
+    - Codeup MR comment
+    - Codeup MR approval
+    - Codeup MR diff
+    - Codeup MR commits
+    - Codeup MR discussions
+  post_v1_2_0_backlog:
+    - Full CLI localization beyond the high-frequency scope
+    - Direct BMAD agent instruction edits outside repo-local workflows/artifacts
+  post_mvp_future:
+    - Shell completion
+    - Interactive TUI mode
+    - Multi-organization / multi-project fast switching
+    - Broader Yunxiao module expansion beyond the current evidence baseline

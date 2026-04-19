@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-03-31
-last_updated: 2026-04-19  # v1.2.0 Correct Course planning added Epic 11-13; create-story will generate story files per issue
+last_updated: 2026-04-20  # Story 13.3 handoff index closeout; Epic 13 fully delivered in this branch baseline
 project: yunxiao-cli
 project_key: NOKEY
 tracking_system: file-system
@@ -146,8 +146,8 @@ development_status:
   epic-12-retrospective: optional
 
   # Epic 13: v1.2.0 BMAD 工件卫生与 Codeup 证据治理
-  epic-13: in-progress
+  epic-13: done
   13-1-story-artifact-sync-rules: done
   13-2-codeup-evidence-ledger: done
-  13-3-v1-2-0-handoff-index: backlog
+  13-3-v1-2-0-handoff-index: done
   epic-13-retrospective: optional
