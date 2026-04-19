@@ -3,6 +3,7 @@ import chalk from "chalk";
 import { getWorkitem, createWorkitem, updateWorkitem, deleteWorkitem, addComment, listComments, getWorkitemTypes, resolveWorkitemId, searchWorkitems } from "../api.js";
 import { printJson, printError } from "../output.js";
 import { AppError, ERROR_CODE } from "../errors.js";
+import { t, tx } from "../i18n/index.js";
 
 function formatDate(ts) {
   if (!ts) return "-";
@@ -39,16 +40,18 @@ export function registerWorkitemCommands(program, client, orgId, defaultProjectI
     .option("--page <n>", "Page number", "1")
     .option("--limit <n>", "Per page", "20")
     .action(withErrorHandling(async (opts) => {
-      if (!client || !orgId) throw new AppError(ERROR_CODE.AUTH_MISSING, 'Authentication required. Run: yunxiao auth login');
+      if (!client || !orgId) {
+        throw new AppError(ERROR_CODE.AUTH_MISSING, t("errors.auth.required", "Authentication required. Run: yunxiao auth login"));
+      }
       const spaceId = opts.project || defaultProjectId;
       if (!spaceId) {
-        printError("INVALID_ARGS", "project ID required (--project or YUNXIAO_PROJECT_ID)", jsonMode);
+        printError("INVALID_ARGS", t("commands.wi.list.projectRequired", "project ID required (--project or YUNXIAO_PROJECT_ID)"), jsonMode);
         process.exit(1);
       }
       let assignedToId = opts.assignedTo;
       if (assignedToId === 'me') {
         if (!currentUserId) {
-          printError("INVALID_ARGS", "Cannot resolve 'me': current user ID unavailable", jsonMode);
+          printError("INVALID_ARGS", t("commands.wi.list.meResolutionUnavailable", "Cannot resolve 'me': current user ID unavailable"), jsonMode);
           process.exit(1);
         }
         assignedToId = currentUserId;
@@ -73,15 +76,19 @@ export function registerWorkitemCommands(program, client, orgId, defaultProjectI
         return;
       }
       if (!items || items.length === 0) {
-        console.log(chalk.yellow("No work items found"));
+        console.log(chalk.yellow(t("commands.wi.list.empty", "No work items found")));
         return;
       }
-      console.log(chalk.bold("\nFound " + items.length + " work item(s):\n"));
+      console.log(chalk.bold(`\n${tx("commands.wi.list.found", "Found {count} work item(s):", { count: items.length })}\n`));
       for (const item of items) {
         const sn = chalk.cyan((item.serialNumber || item.id.slice(0, 8)).padEnd(10));
         const status = statusColor(item.status?.displayName || item.status?.name);
         console.log(sn + " " + chalk.white(item.subject));
-        console.log("  " + chalk.gray("Status:") + " " + status + "  " + chalk.gray("Assignee:") + " " + (item.assignedTo?.name || "-") + "  " + chalk.gray("Created:") + " " + formatDate(item.gmtCreate));
+        console.log(
+          `  ${chalk.gray(`${t("output.header.status", "Status")}:`)} ${status}  ` +
+            `${chalk.gray(`${t("output.header.assignee", "Assignee")}:`)} ${item.assignedTo?.name || "-"}  ` +
+            `${chalk.gray(`${t("output.header.created", "Created")}:`)} ${formatDate(item.gmtCreate)}`
+        );
       }
     }));
 
@@ -90,10 +97,12 @@ export function registerWorkitemCommands(program, client, orgId, defaultProjectI
     .description("View work item details by ID or serial number (e.g. GJBL-1)")
     .option("-p, --project <id>", "Project ID (needed for serial number lookup)")
     .action(withErrorHandling(async (id, opts) => {
-      if (!client || !orgId) throw new AppError(ERROR_CODE.AUTH_MISSING, 'Authentication required. Run: yunxiao auth login');
+      if (!client || !orgId) {
+        throw new AppError(ERROR_CODE.AUTH_MISSING, t("errors.auth.required", "Authentication required. Run: yunxiao auth login"));
+      }
       const spaceId = opts.project || defaultProjectId;
       if (/^[A-Z]+-\d+$/i.test(id) && !spaceId) {
-        printError("INVALID_ARGS", "project ID required for serial number lookup", jsonMode);
+        printError("INVALID_ARGS", t("commands.wi.view.projectRequired", "project ID required for serial number lookup"), jsonMode);
         process.exit(1);
       }
       const resolvedId = await resolveWorkitemId(client, orgId, spaceId, id);
@@ -102,32 +111,32 @@ export function registerWorkitemCommands(program, client, orgId, defaultProjectI
         printJson(item);
         return;
       }
-      console.log(chalk.bold("\nWork Item Details:\n"));
-      console.log("  " + chalk.gray("Serial:     ") + (item.serialNumber || "-"));
-      console.log("  " + chalk.gray("ID:         ") + item.id);
-      console.log("  " + chalk.gray("Subject:    ") + item.subject);
-      console.log("  " + chalk.gray("Status:     ") + statusColor(item.status?.displayName || item.status?.name));
-      console.log("  " + chalk.gray("Type:       ") + (item.workitemType?.name || "-"));
+      console.log(chalk.bold(`\n${t("commands.wi.view.title", "Work Item Details:")}\n`));
+      console.log(`  ${chalk.gray(`${t("commands.wi.view.serial", "Serial")}:`)} ${item.serialNumber || "-"}`);
+      console.log(`  ${chalk.gray(`${t("output.header.id", "ID")}:`)} ${item.id}`);
+      console.log(`  ${chalk.gray(`${t("commands.wi.view.subject", "Subject")}:`)} ${item.subject}`);
+      console.log(`  ${chalk.gray(`${t("output.header.status", "Status")}:`)} ${statusColor(item.status?.displayName || item.status?.name)}`);
+      console.log(`  ${chalk.gray(`${t("commands.wi.view.type", "Type")}:`)} ${item.workitemType?.name || "-"}`);
       const priorityField = item.customFieldValues?.find(f => f.fieldName === "优先级");
       const priority = priorityField?.values?.[0]?.displayValue || item.priority?.displayName || item.priority?.name || "-";
-      console.log("  " + chalk.gray("Priority:   ") + priority);
-      console.log("  " + chalk.gray("Sprint:     ") + (item.iteration?.name || item.sprint?.name || "-"));
-      console.log("  " + chalk.gray("Project:    ") + (item.space?.name || "-"));
-      console.log("  " + chalk.gray("Assignee:   ") + (item.assignedTo?.name || "-"));
-      console.log("  " + chalk.gray("Creator:    ") + (item.creator?.name || "-"));
-      console.log("  " + chalk.gray("Created:    ") + formatDate(item.gmtCreate));
-      console.log("  " + chalk.gray("Updated:    ") + formatDate(item.gmtModified));
+      console.log(`  ${chalk.gray(`${t("commands.wi.view.priority", "Priority")}:`)} ${priority}`);
+      console.log(`  ${chalk.gray(`${t("commands.wi.view.sprint", "Sprint")}:`)} ${item.iteration?.name || item.sprint?.name || "-"}`);
+      console.log(`  ${chalk.gray(`${t("commands.wi.view.project", "Project")}:`)} ${item.space?.name || "-"}`);
+      console.log(`  ${chalk.gray(`${t("output.header.assignee", "Assignee")}:`)} ${item.assignedTo?.name || "-"}`);
+      console.log(`  ${chalk.gray(`${t("commands.wi.view.creator", "Creator")}:`)} ${item.creator?.name || "-"}`);
+      console.log(`  ${chalk.gray(`${t("output.header.created", "Created")}:`)} ${formatDate(item.gmtCreate)}`);
+      console.log(`  ${chalk.gray(`${t("output.header.updated", "Updated")}:`)} ${formatDate(item.gmtModified)}`);
       if (item.labels && item.labels.length > 0) {
-        console.log("  " + chalk.gray("Labels:     ") + item.labels.map(l => l.name).join(", "));
+        console.log(`  ${chalk.gray(`${t("commands.wi.view.labels", "Labels")}:`)} ${item.labels.map(l => l.name).join(", ")}`);
       }
       if (item.parentWorkitem) {
-        console.log("  " + chalk.gray("Parent:     ") + (item.parentWorkitem.serialNumber || item.parentWorkitem.id));
+        console.log(`  ${chalk.gray(`${t("commands.wi.view.parent", "Parent")}:`)} ${item.parentWorkitem.serialNumber || item.parentWorkitem.id}`);
       }
       if (item.children && item.children.length > 0) {
-        console.log("  " + chalk.gray("Children:   ") + item.children.map(c => c.serialNumber || c.id).join(", "));
+        console.log(`  ${chalk.gray(`${t("commands.wi.view.children", "Children")}:`)} ${item.children.map(c => c.serialNumber || c.id).join(", ")}`);
       }
       if (item.description) {
-        console.log("\n" + chalk.gray("Description:"));
+        console.log(`\n${chalk.gray(`${t("commands.wi.view.description", "Description")}:`)}`);
         console.log(item.description);
       }
     }));
@@ -205,7 +214,9 @@ export function registerWorkitemCommands(program, client, orgId, defaultProjectI
     .option("--sprint <sprintId>", "New sprint ID")
     .option("--extra-json <json>", "JSON string with additional fields (merged into request body)")
     .action(withErrorHandling(async (id, opts) => {
-      if (!client || !orgId) throw new AppError(ERROR_CODE.AUTH_MISSING, 'Authentication required. Run: yunxiao auth login');
+      if (!client || !orgId) {
+        throw new AppError(ERROR_CODE.AUTH_MISSING, t("errors.auth.required", "Authentication required. Run: yunxiao auth login"));
+      }
       const spaceId = opts.project || defaultProjectId;
       const resolvedId = await resolveWorkitemId(client, orgId, spaceId, id);
 
@@ -214,7 +225,7 @@ export function registerWorkitemCommands(program, client, orgId, defaultProjectI
         try {
           jsonFields = JSON.parse(opts.extraJson);
         } catch {
-          printError("INVALID_ARGS", "--extra-json value is not valid JSON", jsonMode);
+          printError("INVALID_ARGS", t("commands.wi.update.invalidExtraJson", "--extra-json value is not valid JSON"), jsonMode);
           process.exit(1);
         }
       }
@@ -225,7 +236,14 @@ export function registerWorkitemCommands(program, client, orgId, defaultProjectI
       if (opts.assignedTo) fields.assignedTo = opts.assignedTo;
       if (opts.sprint) fields.sprint = opts.sprint;
       if (Object.keys(fields).length === 0) {
-        printError("INVALID_ARGS", "No fields to update. Use --title, --description, --status, --assigned-to, --sprint, or --extra-json", jsonMode);
+        printError(
+          "INVALID_ARGS",
+          t(
+            "commands.wi.update.noFields",
+            "No fields to update. Use --title, --description, --status, --assigned-to, --sprint, or --extra-json"
+          ),
+          jsonMode
+        );
         process.exit(1);
       }
       await updateWorkitem(client, orgId, resolvedId, fields);
@@ -234,7 +252,7 @@ export function registerWorkitemCommands(program, client, orgId, defaultProjectI
         printJson(updated);
         return;
       }
-      console.log(chalk.green("\n✓ Work item " + id + " updated!\n"));
+      console.log(chalk.green(`\n✓ ${tx("commands.wi.update.success", "Work item {id} updated!", { id })}\n`));
     }));
 
   wi

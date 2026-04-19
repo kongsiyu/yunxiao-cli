@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert';
 import { detectLanguage } from '../src/i18n/detector.js';
-import { initI18n, t, getLanguage, setLanguage } from '../src/i18n/index.js';
+import { initI18n, t, tx, getLanguage, setLanguage } from '../src/i18n/index.js';
 
 test('i18n - Language Detection', async (t) => {
   await t.test('should use config language when set to zh', () => {
@@ -128,6 +128,18 @@ test('i18n - Translation System', async (suite) => {
     initI18n('zh');
     const result = t('commands.auth.login.success', 'Login successful');
     assert.strictEqual(result, '登录成功！');
+  });
+
+  await suite.test('should interpolate translated placeholder values', () => {
+    initI18n('zh');
+    const result = tx('commands.project.list.found', 'Found {count} project(s):', { count: 3 });
+    assert.strictEqual(result, '找到 3 个项目：');
+  });
+
+  await suite.test('should interpolate fallback text when translation key is missing', () => {
+    initI18n('zh');
+    const result = tx('nonexistent.template', 'Found {count} items', { count: 2 });
+    assert.strictEqual(result, 'Found 2 items');
   });
 });
 

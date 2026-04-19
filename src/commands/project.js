@@ -3,6 +3,7 @@ import chalk from "chalk";
 import { searchProjects, getProject } from "../api.js";
 import { printJson, padEndVisual } from "../output.js";
 import { AppError, ERROR_CODE } from "../errors.js";
+import { t, tx } from "../i18n/index.js";
 
 function formatDate(ts) {
   if (!ts) return "-";
@@ -19,7 +20,9 @@ export function registerProjectCommands(program, client, orgId, withErrorHandlin
     .option("--page <n>", "Page number", "1")
     .option("--limit <n>", "Per page", "20")
     .action(withErrorHandling(async (opts) => {
-      if (!client || !orgId) throw new AppError(ERROR_CODE.AUTH_MISSING, 'Authentication required. Run: yunxiao auth login');
+      if (!client || !orgId) {
+        throw new AppError(ERROR_CODE.AUTH_MISSING, t("errors.auth.required", "Authentication required. Run: yunxiao auth login"));
+      }
       const projects = await searchProjects(client, orgId, {
         name: opts.name,
         page: parseInt(opts.page),
@@ -31,13 +34,16 @@ export function registerProjectCommands(program, client, orgId, withErrorHandlin
         return;
       }
       if (!projects || projects.length === 0) {
-        console.log(chalk.yellow("No projects found"));
+        console.log(chalk.yellow(t("commands.project.list.empty", "No projects found")));
         return;
       }
-      console.log(chalk.bold(`\nFound ${projects.length} project(s):\n`));
+      console.log(chalk.bold(`\n${tx("commands.project.list.found", "Found {count} project(s):", { count: projects.length })}\n`));
       for (const p of projects) {
         console.log(`${chalk.cyan(p.customCode.padEnd(12))} ${chalk.white(padEndVisual(p.name, 30))} ${chalk.gray(p.id)}`);
-        console.log(`  ${chalk.gray("Status:")} ${p.status?.name || "-"}  ${chalk.gray("Created:")} ${formatDate(p.gmtCreate)}`);
+        console.log(
+          `  ${chalk.gray(`${t("output.header.status", "Status")}:`)} ${p.status?.name || "-"}  ` +
+            `${chalk.gray(`${t("output.header.created", "Created")}:`)} ${formatDate(p.gmtCreate)}`
+        );
       }
     }));
 

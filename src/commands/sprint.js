@@ -3,6 +3,7 @@ import chalk from "chalk";
 import { listSprints, getSprintInfo, searchWorkitems } from "../api.js";
 import { printJson, printError } from "../output.js";
 import { AppError, ERROR_CODE } from "../errors.js";
+import { t, tx } from "../i18n/index.js";
 
 function formatDate(ts) {
   if (!ts) return "-";
@@ -42,10 +43,12 @@ export function registerSprintCommands(program, client, orgId, defaultProjectId,
     .option("--page <n>", "Page number", "1")
     .option("--limit <n>", "Per page", "20")
     .action(withErrorHandling(async (opts) => {
-      if (!client || !orgId) throw new AppError(ERROR_CODE.AUTH_MISSING, 'Authentication required. Run: yunxiao auth login');
+      if (!client || !orgId) {
+        throw new AppError(ERROR_CODE.AUTH_MISSING, t("errors.auth.required", "Authentication required. Run: yunxiao auth login"));
+      }
       const spaceId = opts.project || defaultProjectId;
       if (!spaceId) {
-        printError("INVALID_ARGS", "project ID required (--project or YUNXIAO_PROJECT_ID)", jsonMode);
+        printError("INVALID_ARGS", t("commands.sprint.projectRequired", "project ID required (--project or YUNXIAO_PROJECT_ID)"), jsonMode);
         process.exit(1);
       }
       const sprints = await listSprints(client, orgId, spaceId, {
@@ -58,10 +61,10 @@ export function registerSprintCommands(program, client, orgId, defaultProjectId,
         return;
       }
       if (!sprints || sprints.length === 0) {
-        console.log(chalk.yellow("No sprints found"));
+        console.log(chalk.yellow(t("commands.sprint.list.empty", "No sprints found")));
         return;
       }
-      console.log(chalk.bold(`\nFound ${sprints.length} sprint(s):\n`));
+      console.log(chalk.bold(`\n${tx("commands.sprint.list.found", "Found {count} sprint(s):", { count: sprints.length })}\n`));
       for (const s of sprints) {
         const id = chalk.cyan((s.id || "").toString().padEnd(10));
         const name = chalk.white((s.name || "-").padEnd(30));
@@ -69,7 +72,7 @@ export function registerSprintCommands(program, client, orgId, defaultProjectId,
         console.log(`${id} ${name} ${status}`);
         const start = formatDate(s.startDate || s.gmtStart);
         const end = formatDate(s.endDate || s.gmtEnd);
-        console.log(`  ${chalk.gray("Period:")} ${start} ~ ${end}`);
+        console.log(`  ${chalk.gray(`${t("commands.sprint.period", "Period")}:`)} ${start} ~ ${end}`);
       }
     }));
 
@@ -78,10 +81,12 @@ export function registerSprintCommands(program, client, orgId, defaultProjectId,
     .description("View sprint details including workitem completion statistics")
     .option("-p, --project <id>", "Project ID (default: YUNXIAO_PROJECT_ID)")
     .action(withErrorHandling(async (id, opts) => {
-      if (!client || !orgId) throw new AppError(ERROR_CODE.AUTH_MISSING, 'Authentication required. Run: yunxiao auth login');
+      if (!client || !orgId) {
+        throw new AppError(ERROR_CODE.AUTH_MISSING, t("errors.auth.required", "Authentication required. Run: yunxiao auth login"));
+      }
       const spaceId = opts.project || defaultProjectId;
       if (!spaceId) {
-        printError("INVALID_ARGS", "project ID required (--project or YUNXIAO_PROJECT_ID)", jsonMode);
+        printError("INVALID_ARGS", t("commands.sprint.projectRequired", "project ID required (--project or YUNXIAO_PROJECT_ID)"), jsonMode);
         process.exit(1);
       }
 
@@ -116,25 +121,25 @@ export function registerSprintCommands(program, client, orgId, defaultProjectId,
         return;
       }
 
-      console.log(chalk.bold("\nSprint Details:\n"));
-      console.log(`  ${chalk.gray("ID:")}      ${sprint.id}`);
-      console.log(`  ${chalk.gray("Name:")}    ${sprint.name || "-"}`);
-      console.log(`  ${chalk.gray("Status:")}  ${statusColor(sprint.status)}`);
+      console.log(chalk.bold(`\n${t("commands.sprint.view.title", "Sprint Details:")}\n`));
+      console.log(`  ${chalk.gray(`${t("output.header.id", "ID")}:`)} ${sprint.id}`);
+      console.log(`  ${chalk.gray(`${t("output.header.name", "Name")}:`)} ${sprint.name || "-"}`);
+      console.log(`  ${chalk.gray(`${t("output.header.status", "Status")}:`)} ${statusColor(sprint.status)}`);
       const start = formatDate(sprint.startDate || sprint.gmtStart);
       const end = formatDate(sprint.endDate || sprint.gmtEnd);
-      console.log(`  ${chalk.gray("Period:")}  ${start} ~ ${end}`);
+      console.log(`  ${chalk.gray(`${t("commands.sprint.period", "Period")}:`)} ${start} ~ ${end}`);
       if (sprint.goal) {
-        console.log(`  ${chalk.gray("Goal:")}    ${sprint.goal}`);
+        console.log(`  ${chalk.gray(`${t("commands.sprint.view.goal", "Goal")}:`)} ${sprint.goal}`);
       }
 
-      console.log(chalk.bold("\nWorkitem Statistics:\n"));
+      console.log(chalk.bold(`\n${t("commands.sprint.view.statsTitle", "Workitem Statistics:")}\n`));
       if (truncated) {
-        console.log(chalk.yellow("  (showing first 100 items; sprint may have more)"));
+        console.log(chalk.yellow(`  (${t("commands.sprint.view.truncated", "showing first 100 items; sprint may have more")})`));
       }
-      console.log(`  ${chalk.gray("Total:")}     ${total}`);
-      console.log(`  ${chalk.gray("Done:")}      ${chalk.green(done)} / ${total}`);
+      console.log(`  ${chalk.gray(`${t("commands.sprint.view.total", "Total")}:`)} ${total}`);
+      console.log(`  ${chalk.gray(`${t("commands.sprint.view.done", "Done")}:`)} ${chalk.green(done)} / ${total}`);
       if (Object.keys(byCategory).length > 0) {
-        console.log(`  ${chalk.gray("By Type:")}`);
+        console.log(`  ${chalk.gray(`${t("commands.sprint.view.byType", "By Type")}:`)}`);
         for (const [cat, count] of Object.entries(byCategory)) {
           console.log(`    ${chalk.cyan(cat.padEnd(10))} ${count}`);
         }
