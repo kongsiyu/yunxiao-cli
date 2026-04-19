@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-03-31
-last_updated: 2026-04-19  # v1.2.0 Correct Course planning added Epic 11-13; create-story will generate story files per issue
+last_updated: 2026-04-20  # Story 12.4 release evidence summary completed
 project: yunxiao-cli
 project_key: NOKEY
 tracking_system: file-system
@@ -142,7 +142,7 @@ development_status:
   12-1-real-cli-smoke-matrix: backlog
   12-2-json-stdio-error-contract-tests: backlog
   12-3-release-checklist-template: backlog
-  12-4-release-evidence-summary: backlog
+  12-4-release-evidence-summary: done
   epic-12-retrospective: optional
 
   # Epic 13: v1.2.0 BMAD 工件卫生与 Codeup 证据治理
