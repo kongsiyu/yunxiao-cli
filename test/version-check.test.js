@@ -6,7 +6,7 @@ import path from 'path';
 import os from 'os';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'url';
-import { checkVersionAsync, getVersionCheckCacheFileForTest, setTestCacheFile } from '../src/version-check.js';
+import { checkVersionAsync, getPackageVersion, getVersionCheckCacheFileForTest, setTestCacheFile } from '../src/version-check.js';
 
 // Mock cache directory for testing
 const testCacheDir = path.join(os.tmpdir(), 'yunxiao-test-cache');
@@ -153,11 +153,16 @@ test('version comparison - minor version difference', async () => {
 });
 
 test('version comparison - patch version difference', async () => {
+  const packageJson = JSON.parse(
+    fs.readFileSync(new URL('../package.json', import.meta.url), 'utf-8')
+  );
+  const [major, minor, patch] = packageJson.version.split('.').map(Number);
+
   setupTestCache();
   writeMockCache({
     lastCheckTime: Date.now(),
-    latestVersion: '1.0.2',
-    localVersion: '1.0.1'
+    latestVersion: `${major}.${minor}.${patch + 1}`,
+    localVersion: packageJson.version
   });
 
   const result = await checkVersionAsync();
@@ -196,6 +201,14 @@ test('version check - cache file path exists', () => {
   assert(cacheFile.includes('version-check-cache.json'));
 });
 
+test('package version helper reads current package.json version', () => {
+  const packageJson = JSON.parse(
+    fs.readFileSync(new URL('../package.json', import.meta.url), 'utf-8')
+  );
+
+  assert.strictEqual(getPackageVersion(), packageJson.version);
+});
+
 test('cli entrypoint prints update notice from cache during a normal command', () => {
   const tempHome = fs.mkdtempSync(path.join(os.tmpdir(), 'yunxiao-cli-home-'));
   const cacheDir = path.join(tempHome, '.yunxiao');
@@ -228,4 +241,20 @@ test('cli entrypoint prints update notice from cache during a normal command', (
   } finally {
     fs.rmSync(tempHome, { recursive: true, force: true });
   }
+});
+
+test('cli --version matches package.json version', () => {
+  const repoRoot = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
+  const packageJson = JSON.parse(
+    fs.readFileSync(new URL('../package.json', import.meta.url), 'utf-8')
+  );
+
+  const result = spawnSync(process.execPath, ['src/index.js', '--version'], {
+    cwd: repoRoot,
+    env: { ...process.env },
+    encoding: 'utf-8'
+  });
+
+  assert.strictEqual(result.status, 0, result.stderr || result.stdout);
+  assert.strictEqual(result.stdout.trim(), packageJson.version);
 });

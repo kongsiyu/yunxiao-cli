@@ -21,7 +21,7 @@ export function setTestCacheFile(filePath) {
   testCacheFilePath = filePath;
 }
 
-function readPackageVersion() {
+export function getPackageVersion() {
   try {
     const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf-8'));
     return packageJson.version;
@@ -89,7 +89,7 @@ async function fetchLatestVersion() {
 }
 
 export async function checkVersionAsync() {
-  const localVersion = readPackageVersion();
+  const localVersion = getPackageVersion();
   if (!localVersion) return { hasUpdate: false, latestVersion: null };
 
   // Check cache first

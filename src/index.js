@@ -6,7 +6,7 @@ import { getCurrentUser, createClientWithPat } from "./api.js";
 import { loadConfig } from "./config.js";
 import { AppError, ERROR_CODE } from "./errors.js";
 import { printError } from "./output.js";
-import { checkVersionAsync } from "./version-check.js";
+import { checkVersionAsync, getPackageVersion } from "./version-check.js";
 import { initI18n } from "./i18n/index.js";
 import { registerProjectCommands } from "./commands/project.js";
 import { registerWorkitemCommands } from "./commands/workitem.js";
@@ -30,7 +30,7 @@ initI18n(config.language);
 program
   .name("yunxiao")
   .description("CLI for Aliyun Yunxiao (云效) DevOps platform")
-  .version("0.1.1")
+  .version(getPackageVersion() || "0.0.0")
   .option("--json", "Output results as JSON (pure JSON to stdout, no chalk)");
 
 function withErrorHandling(fn) {
